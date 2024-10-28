@@ -1,6 +1,6 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { exec, execSync } = require('child_process');
+const { exec, spawn } = require('child_process');
 const path = require('path');
 const { unlink } = require('node:fs');
 const fetch = require('node-fetch');
@@ -17,7 +17,7 @@ import { v2 } from '@google-cloud/translate';
 //client
 const client = new Client({ intents: [] });
 
-//opanai
+// //opanai
 const OPENAI_API_KEYTWO = process.env.OPENAI_API_KEYTWO;
 const openai = new OpenAI({ apiKey: OPENAI_API_KEYTWO });
 
@@ -93,30 +93,51 @@ async function stackGifs(files) {
     // Download GIFs
     const downloadedFiles = await downloadGifs(files);
     // Get durations for each GIF
-    const durations = await Promise.all(downloadedFiles.map(getGifDuration));
+    const durations = await Promise.all(files.map(getGifDuration));
     const maxDuration = Math.max(...durations.filter((value) => !Number.isNaN(value)));
     console.log(`Max duration: ${maxDuration}`);
-    const inputArgs = downloadedFiles.map((file) => `-stream_loop -1 -t ${maxDuration} -i "${file}"`).join(' ');
-    const filterComplex =
-      downloadedFiles
-        .map((_, index) => {
-          return `[${index}:v]scale=-1:64,fps=30[v${index}]`;
-        })
-        .join('; ') +
-      `; ` +
-      downloadedFiles.map((_, index) => `[v${index}]`).join('') +
-      `hstack=inputs=${downloadedFiles.length}[stacked];[stacked]split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse`;
+    const has_animated: boolean = maxDuration != -Infinity;
 
-    const ffmpegCommand = `ffmpeg ${inputArgs} -filter_complex "${filterComplex}" -t ${maxDuration} -y -fs 25M output.gif`;
-    console.log(`Running command: ${ffmpegCommand}`);
-
-    execSync(ffmpegCommand, (error) => {
-      if (error) {
-        console.error(`Error in FFmpeg command: ${error.message}`);
-      } else {
-        console.log('GIFs stacked successfully!');
+    const args = [];
+    downloadedFiles.forEach((file) => {
+      if (has_animated) {
+        args.push('-stream_loop');
+        args.push('-1');
+        args.push('-t');
+        args.push(`${maxDuration}`);
       }
+      args.push('-i');
+      args.push(`${file}`);
     });
+
+    args.push('-filter_complex');
+
+    const filterString =
+      files
+        .map((_, index) => {
+          if (has_animated) {
+            return `[${index}:v]scale=-1:64,fps=30[v${index}];`;
+          }
+          return `[${index}:v]scale=-1:64[v${index}];`;
+        })
+        .join('') +
+      downloadedFiles.map((_, index) => `[v${index}]`).join('') +
+      `hstack=inputs=${files.length}[stacked];[stacked]split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse`;
+
+    args.push(filterString);
+
+    if (has_animated) {
+      args.push('-t');
+      args.push(`${maxDuration}`);
+    }
+
+    args.push('-y');
+    args.push('-fs');
+    args.push('25M');
+    args.push('output.gif');
+
+    console.log('Running command: ffmpeg ' + args.join(' '));
+    return spawn('ffmpeg', args);
   } catch (error) {
     console.error(`Error stacking GIFs: ${error}`);
   }
@@ -431,10 +452,24 @@ client.on('interactionCreate', async (interaction) => {
       }
     }
     // Dont need try catch if it works 100% of the time YEP
-    await stackGifs(emoteUrls)
-      .catch(console.error)
-      .then(() => interaction.editReply({ files: ['output.gif'] }).then(() => fs.removeSync(tempDir)));
-    unlink('output.gif', (err) => {});
+    const ffmpeg_process = await stackGifs(emoteUrls);
+
+    ffmpeg_process.on(
+      'close',
+      (function (interaction) {
+        //Here you can get the exit code of the script
+        return function (code) {
+          if (code == 0) {
+            interaction.editReply({ files: ['output.gif'] }).then((message) => {
+              return unlink('output.gif', (err) => {});
+            });
+            return;
+          }
+          interaction.editReply({ content: 'gif creation failed' });
+          unlink('output.gif', (err) => {});
+        };
+      })(interaction) // closure to keep |interaction|
+    );
   }
 
   //interaction chatgpt
