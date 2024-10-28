@@ -366,7 +366,7 @@ client.on( 'interactionCreate', async interaction => {
     //hstack
     filter.push('hstack=inputs=' + emoteUrls.length);
     // make gif
-    filter.push(',split=2[s][1p];[1p]palettegen[p];[s][p]paletteuse')
+    filter.push(',fps=fps=30,split=2[s][1p];[1p]palettegen[p];[s][p]paletteuse')
 
     args.push(filter.join(''));
     let gifname = "" + interaction.id + ".gif";
@@ -379,6 +379,7 @@ client.on( 'interactionCreate', async interaction => {
       if (code == 0) {
         await interaction.editReply({content: "", files: [gifname]}).then();
       } else {
+        console.log('ffmpeg '+ args.join(' '))
         await interaction.editReply('conversion failed');
       }
       // delete file.
