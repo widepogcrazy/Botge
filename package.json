@@ -1,10 +1,11 @@
 {
   "name": "botge",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "commandgeupdate": "node c.js",
+    "start": "tsc && node dist/index.js",
+    "commandgeupdate": "tsc && node dist/c.js",
+    "lint": "eslint . --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,5 +19,8 @@
     "fs-extra": "^11.2.0",
     "openai": "^4.68.4"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
 }
