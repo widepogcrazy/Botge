@@ -355,9 +355,9 @@ client.on( 'interactionCreate', async interaction => {
     args.push("-filter_complex")
     let filter = []
 
-    // align everything to height=128px
+    // align everything to height=64px
     for (let i = 0; i< emoteUrls.length; i++) {
-      filter.push("[" + i + "]scale=h=128:w=-1[" + i + 's];');
+      filter.push("[" + i + "]scale=h=64:w=-1[" + i + 's];');
     }
     for (let i = 0; i< emoteUrls.length; i++) {
       filter.push("[" + i + 's]');
