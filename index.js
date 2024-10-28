@@ -40,27 +40,10 @@ const urlBTTVGlobal = "https://api.betterttv.net/3/cached/emotes/global";
 const urlFFZCutedog = "https://api.frankerfacez.com/v1/room/cutedog_";
 const urlFFZGlobal = "https://api.frankerfacez.com/v1/set/global";
 
-//on ready
-client.on( 'ready', () => {
-  console.log( `Logged in as ${client.user.tag}!` );
-});
 
-//interaction
-client.on( 'interactionCreate', async interaction => {
-  //interaction not
-  //interaction not
-  if ( !interaction.isChatInputCommand() ) return;
-
-  //interaction emote
-  //interaction emote
-  if ( interaction.commandName === 'emote' ) {
-    //name
-    const optionsName = String( interaction.options.get( 'name' ).value );
-    const optionsNameLowerCase = optionsName.toLowerCase();
-
-    //size
-    const optionsSize = interaction.options.get( 'size' );
-    const size = ( optionsSize === null ? 2 : parseInt( optionsSize.value ) );
+// returns a url, or undefined if not found
+async function matchEmotes(query, size ) {
+    let optionsName = query;
 
     //urlge
     const urlgePrefix = "https:";
@@ -69,7 +52,7 @@ client.on( 'interactionCreate', async interaction => {
     //size invalid
     if( !(size > 0 && size < 5) ) return;
 
-    //emotes
+    // emotes
     let emotes;
 
 
@@ -93,8 +76,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( name === optionsName ) {
-        interaction.reply( urlgePrefix + urlge + urlgeSuffix );
-        return;
+        return  urlgePrefix + urlge + urlgeSuffix ;
       }
     } } catch ( error ) {
       console.log(`Error at 7TVCuteDog1 --> ${error}`);
@@ -111,7 +93,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase === optionsNameLowerCase ) {
-        interaction.reply( urlgePrefix + urlge + urlgeSuffix );
+        return urlgePrefix + urlge + urlgeSuffix ;
         return;
       }
     } } catch ( error ) {
@@ -129,8 +111,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase.includes( optionsNameLowerCase ) ) {
-        interaction.reply( urlgePrefix + urlge + urlgeSuffix );
-        return;
+        return urlgePrefix + urlge + urlgeSuffix ;
       }
     } } catch ( error ) {
       console.log( `Error at 7TVCuteDog3 --> ${error}` );
@@ -158,7 +139,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( name === optionsName ) {
-        interaction.reply( urlgePrefix + urlge + urlgeSuffix );
+        return ( urlgePrefix + urlge + urlgeSuffix );
         return;
       }
     } } catch ( error ) {
@@ -176,7 +157,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase === optionsNameLowerCase ) {
-        interaction.reply( urlgePrefix + urlge + urlgeSuffix );
+        return ( urlgePrefix + urlge + urlgeSuffix );
         return;
       }
     } } catch ( error ) {
@@ -208,7 +189,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase === optionsNameLowerCase ) {
-        interaction.reply( urlgePrefixBTTV + urlge + urlgeSuffix );
+        return ( urlgePrefixBTTV + urlge + urlgeSuffix );
         return;
       }
     } } catch ( error ) {
@@ -240,8 +221,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase === optionsNameLowerCase ) {
-        interaction.reply( urlgePrefixBTTV + urlge + urlgeSuffix );
-        return;
+        return ( urlgePrefixBTTV + urlge + urlgeSuffix );
       }
     } } catch ( error ) {
       console.log( `Error at BTTV --> ${error}` );
@@ -270,8 +250,7 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase === optionsNameLowerCase ) {
-        interaction.reply( urlge );
-        return;
+        return ( urlge );
       }
     } } catch ( error ) {
       console.log(`Error at FFZCutedog --> ${error}`);
@@ -300,14 +279,43 @@ client.on( 'interactionCreate', async interaction => {
 
       //check
       if( nameLowerCase === optionsNameLowerCase ) {
-        interaction.reply( urlge );
-        return;
+        return ( urlge );
       }
     } } catch ( error ) {
       console.log( `Error at FFZ --> ${error}` );
       return;
     }
+    return;
+}
 
+//on ready
+client.on( 'ready', () => {
+  console.log( `Logged in as ${client.user.tag}!` );
+});
+
+//interaction
+client.on( 'interactionCreate', async interaction => {
+  //interaction not
+  //interaction not
+  if ( !interaction.isChatInputCommand() ) return;
+
+  //interaction emote
+  //interaction emote
+  if ( interaction.commandName === 'emote' ) {
+    //name
+    const optionsName = String( interaction.options.get( 'name' ).value );
+
+    //size
+    const optionsSize = interaction.options.get( 'size' );
+    const size = ( optionsSize === null ? 2 : parseInt( optionsSize.value ) );
+
+    
+    const ret = await matchEmotes(optionsName.toLowerCase(), size);
+    console.log(ret);
+    if (ret) {
+     interaction.reply(ret);
+     return;
+    }
 
     //no emote found. reply
     interaction.reply( "jij" );
