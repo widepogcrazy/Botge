@@ -2,8 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 import { REST, Routes } from 'discord.js';
 
-declare function require(name: string);
-const process = require('node:process');
+import process from 'node:process';
 
 const commands = [
   {
