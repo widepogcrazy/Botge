@@ -5,7 +5,8 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "commandgeupdate": "tsc && node dist/c.js",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint src",
+    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,6 +22,11 @@
   },
   "type": "module",
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.11.0"
   }
 }
