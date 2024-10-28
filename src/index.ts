@@ -17,7 +17,7 @@ import { v2 } from '@google-cloud/translate';
 //client
 const client = new Client({ intents: [] });
 
-// //opanai
+//openai
 const OPENAI_API_KEYTWO = process.env.OPENAI_API_KEYTWO;
 const openai = new OpenAI({ apiKey: OPENAI_API_KEYTWO });
 
@@ -50,11 +50,25 @@ const urlFFZGlobal = 'https://api.frankerfacez.com/v1/set/global';
 
 // Temporary storage for downloaded GIFs
 const tempDir = './temp_gifs';
-
+// Clear directory of temp gifs after each use
+function resetDirectory() {
+  try {
+    // Ensure the directory exists
+    fs.ensureDirSync(tempDir);
+    
+    // Remove the directory
+    fs.removeSync(tempDir);
+    
+    // Ensure the directory exists again
+    fs.ensureDirSync(tempDir);
+    
+    console.log(`Directory ${tempDir} has been reset.`);
+  } catch (error) {
+    console.error(`Error resetting directory: ${error.message}`);
+  }
+}
 // Ensure the temporary directory exists and is empty (in case bot crashes mid-download)
-fs.ensureDirSync(tempDir);
-fs.removeSync(tempDir);
-fs.ensureDirSync(tempDir);
+resetDirectory();
 // Function to download GIFs from URLs
 async function downloadGifs(urls) {
   const downloadedFiles = [];
@@ -72,7 +86,8 @@ async function downloadGifs(urls) {
   return downloadedFiles;
 }
 
-function getGifDuration(file): Promise<number> {
+
+function getGifDuration(file) {
   return new Promise((resolve, reject) => {
     exec(
       `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${file}"`,
@@ -81,16 +96,24 @@ function getGifDuration(file): Promise<number> {
           reject(`Error getting duration: ${stderr}`);
           return;
         }
-        resolve(parseFloat(stdout.trim()));
+        const duration = stdout.trim();
+        const default_duration = 3 // :3
+        // Check if duration is "N/A" or empty, and use a default value
+        if (duration === "N/A" || duration === "") {
+          resolve(default_duration); // or any default value you prefer
+        } else {
+          resolve(parseFloat(duration));
+        }
       }
     );
   });
 }
 
+
 async function stackGifs(files) {
   try {
-    fs.ensureDirSync(tempDir);
-    // Download GIFs
+    resetDirectory();
+    // Download GIFs - having local files is faster when using ffmpeg
     const downloadedFiles = await downloadGifs(files);
     // Get durations for each GIF
     const durations = await Promise.all(files.map(getGifDuration));
@@ -469,6 +492,7 @@ client.on('interactionCreate', async (interaction) => {
           unlink('output.gif', (err) => {});
         };
       })(interaction) // closure to keep |interaction|
+    
     );
   }
 
