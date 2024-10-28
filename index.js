@@ -331,6 +331,7 @@ client.on( 'interactionCreate', async interaction => {
 
   if ( interaction.commandName === 'combine' ) {
     //name
+    await interaction.deferReply();
     const query = String( interaction.options.get( 'emotes' ).value );
     const emotes = query.split(' ');
 
@@ -376,9 +377,9 @@ client.on( 'interactionCreate', async interaction => {
 
 
       if (code == 0) {
-        await interaction.reply({content: "", files: [gifname]}).then();
+        await interaction.editReply({content: "", files: [gifname]}).then();
       } else {
-        await interaction.reply('conversion failed');
+        await interaction.editReply('conversion failed');
       }
       // delete file.
       unlink(gifname, (err) => {
