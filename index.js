@@ -1,3 +1,10 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+const { spawn } = require('node:child_process');
+const { unlink } = require('node:fs');
+
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -42,8 +49,9 @@ const urlFFZGlobal = "https://api.frankerfacez.com/v1/set/global";
 
 
 // returns a url, or undefined if not found
-async function matchEmotes(query, size ) {
+async function matchEmotes(query, size) {
     let optionsName = query;
+    let optionsNameLowerCase = query.toLowerCase();
 
     //urlge
     const urlgePrefix = "https:";
@@ -310,8 +318,7 @@ client.on( 'interactionCreate', async interaction => {
     const size = ( optionsSize === null ? 2 : parseInt( optionsSize.value ) );
 
     
-    const ret = await matchEmotes(optionsName.toLowerCase(), size);
-    console.log(ret);
+    const ret = await matchEmotes(optionsName, size);
     if (ret) {
      interaction.reply(ret);
      return;
@@ -320,6 +327,63 @@ client.on( 'interactionCreate', async interaction => {
     //no emote found. reply
     interaction.reply( "jij" );
     return;
+  }
+
+  if ( interaction.commandName === 'combine' ) {
+    //name
+    const query = String( interaction.options.get( 'emotes' ).value );
+    const emotes = query.split(' ');
+
+    let emoteUrls = [];
+    for (var i in emotes) {
+      if (emotes[i] == "") {
+        continue;
+      }
+      let url = await matchEmotes(emotes[i], 4);
+      if (url) { emoteUrls.push(url); }
+    }
+
+
+    let args = [];
+    for (var i in emoteUrls) {
+      args.push("-i");
+      args.push(emoteUrls[i]);
+    }
+
+
+    args.push("-filter_complex")
+    let filter = []
+
+    // align everything to height=128px
+    for (let i = 0; i< emoteUrls.length; i++) {
+      filter.push("[" + i + "]scale=h=128:w=-1[" + i + 's];');
+    }
+    for (let i = 0; i< emoteUrls.length; i++) {
+      filter.push("[" + i + 's]');
+    }
+
+    //hstack
+    filter.push('hstack=inputs=' + emoteUrls.length);
+    // make gif
+    filter.push(',split=2[s][1p];[1p]palettegen[p];[s][p]paletteuse')
+
+    args.push(filter.join(''));
+    let gifname = "" + interaction.id + ".gif";
+    args.push(gifname);
+
+    const ffmpeg = spawn( "ffmpeg" , args);
+    ffmpeg.on('close', async function(code) {
+
+
+      if (code == 0) {
+        await interaction.reply({content: "", files: [gifname]}).then();
+      } else {
+        await interaction.reply('conversion failed');
+      }
+      // delete file.
+      unlink(gifname, (err) => {
+      });
+    });
   }
 
 
