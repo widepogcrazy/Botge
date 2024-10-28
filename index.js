@@ -1,9 +1,10 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-
-const { spawn } = require('node:child_process');
+const {exec , execSync } = require('child_process');
+const path = require('path');
 const { unlink } = require('node:fs');
-
+const fetch = require('node-fetch');
+const fs = require('fs-extra');
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -48,6 +49,73 @@ const urlFFZCutedog = "https://api.frankerfacez.com/v1/room/cutedog_";
 const urlFFZGlobal = "https://api.frankerfacez.com/v1/set/global";
 
 
+// Temporary storage for downloaded GIFs
+const tempDir = './temp_gifs';
+
+// Ensure the temporary directory exists and is empty (in case bot crashes mid-download)
+fs.ensureDirSync(tempDir);
+fs.removeSync(tempDir);
+fs.ensureDirSync(tempDir);
+// Function to download GIFs from URLs
+async function downloadGifs(urls) {
+  const downloadedFiles = [];
+  let counter = 1
+  for (const url of urls) {
+      const response = await fetch(url);
+      const buffer = await response.buffer();
+      let fileName = path.basename(url);
+      fileName = `${counter}_${fileName}`;
+      const filePath = path.join(tempDir, fileName);
+      await fs.writeFile(filePath, buffer);
+      downloadedFiles.push(filePath);
+      counter++;
+  }
+  return downloadedFiles;
+}
+
+function getGifDuration(file) {
+  return new Promise((resolve, reject) => {
+      exec(`ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${file}"`, (error, stdout, stderr) => {
+          if (error) {
+              reject(`Error getting duration: ${stderr}`);
+              return;
+          }
+          resolve(parseFloat(stdout.trim()));
+      });
+  });
+}
+
+async function stackGifs(files) {
+  try {
+      fs.ensureDirSync(tempDir);
+      // Download GIFs
+      const downloadedFiles = await downloadGifs(files);
+      // Get durations for each GIF
+      const durations = await Promise.all(downloadedFiles.map(getGifDuration));
+      const maxDuration = Math.max(...durations.filter(value => !Number.isNaN(value)));
+      console.log(`Max duration: ${maxDuration}`);
+      const inputArgs = downloadedFiles.map((file) => `-stream_loop -1 -t ${maxDuration} -i "${file}"`).join(' ');
+      const filterComplex = downloadedFiles.map((_, index) => {
+        return `[${index}:v]scale=-1:64,fps=30[v${index}]`;
+      }).join('; ') +
+      `; ` + 
+      downloadedFiles.map((_, index) => `[v${index}]`).join('') +
+      `hstack=inputs=${downloadedFiles.length}[stacked];[stacked]split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse`;
+      
+      const ffmpegCommand = `ffmpeg ${inputArgs} -filter_complex "${filterComplex}" -t ${maxDuration} -y -fs 25M output.gif`;       
+      console.log(`Running command: ${ffmpegCommand}`);
+
+      execSync(ffmpegCommand, (error) => {
+          if (error) {
+              console.error(`Error in FFmpeg command: ${error.message}`);
+          } else {
+              console.log('GIFs stacked successfully!');
+          }
+      });
+  } catch (error) {
+      console.error(`Error stacking GIFs: ${error}`);
+  }
+}
 // returns a url, or undefined if not found
 async function matchEmotes(query, size) {
     let optionsName = query;
@@ -62,7 +130,6 @@ async function matchEmotes(query, size) {
 
     // emotes
     let emotes;
-
 
     //7TV CuteDog
     //fetch
@@ -304,10 +371,8 @@ client.on( 'ready', () => {
 //interaction
 client.on( 'interactionCreate', async interaction => {
   //interaction not
-  //interaction not
   if ( !interaction.isChatInputCommand() ) return;
 
-  //interaction emote
   //interaction emote
   if ( interaction.commandName === 'emote' ) {
     //name
@@ -343,57 +408,15 @@ client.on( 'interactionCreate', async interaction => {
       let url = await matchEmotes(emotes[i], 4);
       if (url) { emoteUrls.push(url); }
     }
-
-
-    let args = [];
-    for (var i in emoteUrls) {
-      args.push("-i");
-      args.push(emoteUrls[i]);
-    }
-
-
-    args.push("-filter_complex")
-    let filter = []
-
-    // align everything to height=64px
-    for (let i = 0; i< emoteUrls.length; i++) {
-      filter.push("[" + i + "]scale=h=64:w=-1[" + i + 's];');
-    }
-    for (let i = 0; i< emoteUrls.length; i++) {
-      filter.push("[" + i + 's]');
-    }
-
-    //hstack
-    filter.push('hstack=inputs=' + emoteUrls.length);
-    // make gif
-    filter.push(',fps=fps=30,split=2[s][1p];[1p]palettegen[p];[s][p]paletteuse')
-
-    args.push(filter.join(''));
-    let gifname = "" + interaction.id + ".gif";
-    args.push(gifname);
-
-    const ffmpeg = spawn( "ffmpeg" , args);
-    ffmpeg.on('close', async function(code) {
-
-
-      if (code == 0) {
-        try {
-          await interaction.editReply({content: "", files: [gifname]}).then();
-        } catch ( error ) {
-          console.log( `Error at combine --> ${error}` );
-          return;
-      } } else {
-        console.log('ffmpeg '+ args.join(' '))
-        await interaction.editReply('conversion failed');
-      }
-      // delete file.
-      unlink(gifname, (err) => {
-      });
+    // Dont need try catch if it works 100% of the time YEP
+    await stackGifs(emoteUrls).catch(console.error).then(
+      () => interaction.editReply({files: ['output.gif']}).then
+      (() => fs.removeSync(tempDir))
+    );
+    unlink('output.gif', (err) => {
     });
   }
 
-
-  //interaction chatgpt
   //interaction chatgpt
   if ( interaction.commandName === 'chatgpt' ) {
     try {
@@ -415,7 +438,6 @@ client.on( 'interactionCreate', async interaction => {
   }
 
   //interaction translate
-  //interaction translate
   if ( interaction.commandName === 'translate' ) {
     try {
       const text = interaction.options.get( 'text' ).value;
@@ -434,7 +456,6 @@ client.on( 'interactionCreate', async interaction => {
     }
   }
 
-  //interaction help
   //interaction help
   if ( interaction.commandName === 'help' ) {
     try {
