@@ -400,8 +400,8 @@ client.on('interactionCreate', async (interaction) => {
     const optionsName = String(interaction.options.get('name').value);
 
     //size
-    const optionsSize: string = interaction.options.get('size').value as string;
-    const size = optionsSize === null ? 2 : parseInt(optionsSize);
+    const optionsSize: string = interaction.options.get('size')?.value as string;
+    const size = optionsSize === undefined ? 2 : parseInt(optionsSize);
 
     const ret = await matchEmotes(optionsName, size);
     if (ret) {
