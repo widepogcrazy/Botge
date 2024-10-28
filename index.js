@@ -377,8 +377,12 @@ client.on( 'interactionCreate', async interaction => {
 
 
       if (code == 0) {
-        await interaction.editReply({content: "", files: [gifname]}).then();
-      } else {
+        try {
+          await interaction.editReply({content: "", files: [gifname]}).then();
+        } catch ( error ) {
+          console.log( `Error at combine --> ${error}` );
+          return;
+      } } else {
         console.log('ffmpeg '+ args.join(' '))
         await interaction.editReply('conversion failed');
       }
