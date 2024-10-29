@@ -16,6 +16,8 @@ FROM node:${NODE_VERSION}-alpine as release
 
 WORKDIR /app
 
+RUN apk add --update ffmpeg
+
 COPY package*.json .
 
 RUN npm ci --only=production
@@ -24,6 +26,6 @@ COPY --from=build /app/dist ./dist
 
 USER node
 
-# VOLUME ['/app/temp_gifs']
+VOLUME ["/app/temp_gifs"]
 
 CMD ["node", "dist/index.js"]
