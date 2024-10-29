@@ -1,0 +1,17 @@
+services:
+  server:
+    # image: ghcr.io/Tresster/Botge:latest
+    build:
+      context: .
+    environment:
+      - NODE_ENV=production
+      # discord
+      - APP_ID=
+      - DISCORD_TOKEN=
+      
+      # open ai
+      - OPENAI_API_KEYTWO=
+      
+      # google
+      - CREDENTIALS=
+    restart: always
