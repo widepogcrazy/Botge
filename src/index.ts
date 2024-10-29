@@ -55,13 +55,13 @@ function resetDirectory() {
   try {
     // Ensure the directory exists
     fs.ensureDirSync(tempDir);
-    
+
     // Remove the directory
     fs.removeSync(tempDir);
-    
+
     // Ensure the directory exists again
     fs.ensureDirSync(tempDir);
-    
+
     console.log(`Directory ${tempDir} has been reset.`);
   } catch (error) {
     console.error(`Error resetting directory: ${error.message}`);
@@ -86,7 +86,6 @@ async function downloadGifs(urls) {
   return downloadedFiles;
 }
 
-
 function getGifDuration(file) {
   return new Promise((resolve, reject) => {
     exec(
@@ -97,9 +96,9 @@ function getGifDuration(file) {
           return;
         }
         const duration = stdout.trim();
-        const default_duration = 3 // :3
+        const default_duration = 3; // :3
         // Check if duration is "N/A" or empty, and use a default value
-        if (duration === "N/A" || duration === "") {
+        if (duration === 'N/A' || duration === '') {
           resolve(default_duration); // or any default value you prefer
         } else {
           resolve(parseFloat(duration));
@@ -109,8 +108,7 @@ function getGifDuration(file) {
   });
 }
 
-
-async function stackGifs(files) {
+async function stackGifs(files, outputfile) {
   try {
     resetDirectory();
     // Download GIFs - having local files is faster when using ffmpeg
@@ -157,7 +155,7 @@ async function stackGifs(files) {
     args.push('-y');
     args.push('-fs');
     args.push('25M');
-    args.push('output.gif');
+    args.push(outputfile);
 
     console.log('Running command: ffmpeg ' + args.join(' '));
     return spawn('ffmpeg', args);
@@ -474,8 +472,10 @@ client.on('interactionCreate', async (interaction) => {
         emoteUrls.push(url);
       }
     }
+
+    const outputfile = './temp_gifs/output.gif';
     // Dont need try catch if it works 100% of the time YEP
-    const ffmpeg_process = await stackGifs(emoteUrls);
+    const ffmpeg_process = await stackGifs(emoteUrls, outputfile);
 
     ffmpeg_process.on(
       'close',
@@ -483,16 +483,15 @@ client.on('interactionCreate', async (interaction) => {
         //Here you can get the exit code of the script
         return function (code) {
           if (code == 0) {
-            interaction.editReply({ files: ['output.gif'] }).then((message) => {
-              return unlink('output.gif', (err) => {});
+            interaction.editReply({ files: [outputfile] }).then((message) => {
+              return unlink(outputfile, (err) => {});
             });
             return;
           }
           interaction.editReply({ content: 'gif creation failed' });
-          unlink('output.gif', (err) => {});
+          unlink(outputfile, (err) => {});
         };
       })(interaction) // closure to keep |interaction|
-    
     );
   }
 
