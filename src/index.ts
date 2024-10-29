@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+
 const require = createRequire(import.meta.url);
 const { exec, spawn } = require('child_process');
 const path = require('path');
@@ -13,6 +14,8 @@ dotenv.config();
 import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
+import https from 'https';
+import CacheableRequest, { CacheResponse } from 'cacheable-request';
 
 //client
 const client = new Client({ intents: [] });
@@ -29,6 +32,57 @@ const translate = new Translate({
   projectId: CREDENTIALS.project_id
 });
 
+//cachable-request
+const cacheableRequest = new CacheableRequest( https.request ).request();
+
+//options
+const options7TVCuteDog = {
+  hostname: '7tv.io',
+  path: '/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
+  method: 'GET'
+};
+const options7TVGlobal = {
+  hostname: '7tv.io',
+  path: '/v3/emote-sets/global',
+  method: 'GET'
+};
+const optionsBTTVCuteDog = {
+  hostname: 'api.betterttv.net',
+  path: '/3/users/5809977263c97c037fc9e66c',
+  method: 'GET'
+};
+const optionsBTTVGlobal = {
+  hostname: 'api.betterttv.net',
+  path: '/3/cached/emotes/global',
+  method: 'GET'
+};
+const optionsFFZCutedog = {
+  hostname: 'api.frankerfacez.com',
+  path: '/v1/room/cutedog_',
+  method: 'GET'
+};
+const optionsFFZGlobal = {
+  hostname: 'api.frankerfacez.com',
+  path: '/v1/set/global',
+  method: 'GET'
+};
+
+//cacheReq
+async function cacheReq( options: { hostname: string; path: string; method: string; } ) : Promise<any> {
+  return new Promise( ( resolve, reject ) => {
+      let data: any = [];
+      cacheableRequest( options )
+      .on( "response", ( res: any ) => {
+          res.on( "data", ( d: any ) => { data.push( d ); })
+          .on( "end", () => {
+              resolve( JSON.parse( Buffer.concat( data ).toString() ) );
+          });
+      })
+      .on( "request", ( req: any ) => { req.end(); } )
+      .on( "error", ( err: any ) => reject( err ) );
+  });
+};
+
 //translateText
 const translateText = async (text, targetLanguage) => {
   try {
@@ -39,14 +93,6 @@ const translateText = async (text, targetLanguage) => {
     return 0;
   }
 };
-
-//consts
-const url7TVCuteDog = 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3';
-const url7TVGlobal = 'https://7tv.io/v3/emote-sets/global';
-const urlBTTVCuteDog = 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c';
-const urlBTTVGlobal = 'https://api.betterttv.net/3/cached/emotes/global';
-const urlFFZCutedog = 'https://api.frankerfacez.com/v1/room/cutedog_';
-const urlFFZGlobal = 'https://api.frankerfacez.com/v1/set/global';
 
 // Temporary storage for downloaded GIFs
 const tempDir = './temp_gifs';
@@ -86,8 +132,10 @@ async function downloadGifs(urls) {
   return downloadedFiles;
 }
 
-function getGifDuration(file) {
+
+function getGifDuration(file) : Promise<number> {
   return new Promise((resolve, reject) => {
+    console.log(file)
     exec(
       `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${file}"`,
       (error, stdout, stderr) => {
@@ -114,7 +162,7 @@ async function stackGifs(files, outputfile) {
     // Download GIFs - having local files is faster when using ffmpeg
     const downloadedFiles = await downloadGifs(files);
     // Get durations for each GIF
-    const durations = await Promise.all(files.map(getGifDuration));
+    const durations = await Promise.all( (downloadedFiles.map(getGifDuration )));
     const maxDuration = Math.max(...durations.filter((value) => !Number.isNaN(value)));
     console.log(`Max duration: ${maxDuration}`);
     const has_animated: boolean = maxDuration != -Infinity;
@@ -176,19 +224,13 @@ async function matchEmotes(query, size) {
   if (!(size > 0 && size < 5)) return;
 
   // emotes
+  let cachereq;
   let emotes;
 
   //7TV CuteDog
   //fetch
-  emotes = await fetch(url7TVCuteDog)
-    .then((res) => res.json())
-    .then((out) => {
-      return out.emotes;
-    })
-    .catch(function (err) {
-      console.log(`Error at Fetch 7TVCuteDog: ${err}`);
-      return;
-    });
+  cachereq = await cacheReq(options7TVCuteDog);
+  emotes = cachereq.emotes;
   //1-3
   try {
     for (const id in emotes) {
@@ -247,15 +289,8 @@ async function matchEmotes(query, size) {
 
   //7TV Global
   //fetch
-  emotes = await fetch(url7TVGlobal)
-    .then((res2) => res2.json())
-    .then((out2) => {
-      return out2.emotes;
-    })
-    .catch(function (err) {
-      console.log(`Error at Fetch 7TVGLOBAL: ${err}`);
-      return;
-    });
+  cachereq = await cacheReq(options7TVGlobal);
+  emotes = cachereq.emotes;
   //1-2
   try {
     for (const id in emotes) {
@@ -297,15 +332,8 @@ async function matchEmotes(query, size) {
 
   //BTTV CuteDog
   //fetch
-  emotes = await fetch(urlBTTVCuteDog)
-    .then((res3) => res3.json())
-    .then((out3) => {
-      return out3['channelEmotes'];
-    })
-    .catch(function (err) {
-      console.log(`Error at Fetch BTTVCuteDog: ${err}`);
-      return;
-    });
+  cachereq = await cacheReq(optionsBTTVCuteDog);
+  emotes = cachereq['channelEmotes'];
   //1-1
   try {
     for (const id in emotes) {
@@ -331,15 +359,8 @@ async function matchEmotes(query, size) {
 
   //BTTV Global
   //fetch
-  emotes = await fetch(urlBTTVGlobal)
-    .then((res4) => res4.json())
-    .then((out4) => {
-      return out4;
-    })
-    .catch(function (err) {
-      console.log(`Error at Fetch BTTV: ${err}`);
-      return;
-    });
+  cachereq = await cacheReq(optionsBTTVGlobal);
+  emotes = cachereq;
   //1-1
   try {
     for (const id in emotes) {
@@ -364,15 +385,8 @@ async function matchEmotes(query, size) {
 
   //FFZ Cutedog
   //fetch
-  emotes = await fetch(urlFFZCutedog)
-    .then((res5) => res5.json())
-    .then((out5) => {
-      return out5.sets['295317'].emoticons;
-    })
-    .catch(function (err) {
-      console.log(`Error at Fetch FFZCutedog: ${err}`);
-      return;
-    });
+  cachereq = await cacheReq(optionsFFZCutedog);
+  emotes = cachereq.sets['295317'].emoticons;
   //1-1
   try {
     for (const id in emotes) {
@@ -395,15 +409,8 @@ async function matchEmotes(query, size) {
 
   //FFZ Global
   //fetch
-  emotes = await fetch(urlFFZGlobal)
-    .then((res6) => res6.json())
-    .then((out6) => {
-      return out6.sets['3'].emoticons;
-    })
-    .catch(function (err) {
-      console.log(`Error at Fetch FFZ: ${err}`);
-      return;
-    });
+  cachereq = await cacheReq(optionsFFZGlobal);
+  emotes = cachereq.sets['3'].emoticons;
   //1-1
   try {
     for (const id in emotes) {
