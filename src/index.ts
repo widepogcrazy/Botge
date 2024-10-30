@@ -13,7 +13,7 @@ dotenv.config();
 import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
-import https from 'https';
+import * as https from "https";
 import CacheableRequest from 'cacheable-request';
 
 //client
