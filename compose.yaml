@@ -14,6 +14,10 @@ services:
       
       # google
       - CREDENTIALS=
+
+      # twitch
+      - TWITCH_CLIENT_ID=
+      - TWITCH_SECRET=
     volumes:
       - ./temp_gifs:/app/temp_gifs
     restart: always

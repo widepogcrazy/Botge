@@ -13,7 +13,7 @@ dotenv.config();
 import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
-import * as https from "https";
+import * as https from 'https';
 import CacheableRequest from 'cacheable-request';
 
 //client
@@ -34,7 +34,17 @@ const translate = new Translate({
 //cachable-request
 const cacheableRequest = new CacheableRequest(https.request).request();
 
+//twitch
+const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
+const TWITCH_SECRET = process.env.TWITCH_SECRET;
+const postDataTwitchAccessToken = `client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_SECRET}&grant_type=client_credentials`;
+
 //options
+const optionsTwitchAccessToken = {
+  hostname: 'id.twitch.tv',
+  path: '/oauth2/token',
+  method: 'POST'
+};
 const options7TVCuteDog = {
   hostname: '7tv.io',
   path: '/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
@@ -85,7 +95,28 @@ async function cacheReq(options: { hostname: string; path: string; method: strin
       })
       .on('error', (err: any) => reject(err));
   });
-};
+}
+
+//postdata
+async function postData(options: any, postdata: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let data: any = [];
+    const req = https
+      .request(options)
+      .on('response', (res: any) => {
+        res
+          .on('data', (d: any) => {
+            data.push(d);
+          })
+          .on('end', () => {
+            resolve(Buffer.concat(data).toString());
+          });
+      })
+      .on('error', (err: any) => reject(err));
+    req.write(postdata);
+    req.end();
+  });
+}
 
 //translateText
 const translateText = async (text, targetLanguage) => {
@@ -206,30 +237,62 @@ async function matchEmotes(query, size) {
   if (!(size > 0 && size < 5)) return;
 
   //functions
-  function matchEmotes7TV( emotes : any, isLowerCase : boolean, isInclude : boolean ) : string | undefined {
+  function matchEmotesTwitchGlobal(emotes: any, template: string): string | undefined {
+    try {
+      const sizege = size === 4 ? 2 : size;
+      for (const id in emotes) {
+        //consts
+        const emote = emotes[id];
+        const emote_id = emote.id;
+        const nameLowerCase = String(emote.name).toLowerCase();
+        const format = emote.format;
+        const scale = emote.scale;
+        const theme_mode = emote.theme_mode;
+
+        //check
+        if (nameLowerCase === optionsNameLowerCase) {
+          const urlge = template
+            .replace('{{id}}', emote_id)
+            .replace('{{format}}', format.length === 2 ? format[1] : format[0])
+            .replace('{{theme_mode}}', theme_mode.length === 2 ? theme_mode[1] : theme_mode[0])
+            .replace('{{scale}}', scale[sizege - 1]);
+
+          return urlge;
+        }
+      }
+
+      return undefined;
+    } catch (error) {
+      console.log(`Error at matchEmotes7TV --> ${error}`);
+      return undefined;
+    }
+  }
+  function matchEmotes7TV(emotes: any, isLowerCase: boolean, isInclude: boolean): string | undefined {
     try {
       for (const id in emotes) {
         //consts
         const emote = emotes[id];
         const is_animated = emote.data.animated;
         const urlge = emote.data.host.url;
-        const name =  isLowerCase ? String( emote.name ).toLowerCase() : String( emote.name );
+        const name = isLowerCase ? String(emote.name).toLowerCase() : String(emote.name);
         const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-  
+
         //check
-        if ( isInclude ? ( name.includes( optionsNameLowerCase ) ) : ( name === ( isLowerCase ? optionsNameLowerCase : optionsName ) ) ) {
+        if (
+          isInclude ? name.includes(optionsNameLowerCase) : name === (isLowerCase ? optionsNameLowerCase : optionsName)
+        ) {
           return urlgePrefix + urlge + urlgeSuffix;
-        };
-      };
+        }
+      }
 
       return undefined;
     } catch (error) {
       console.log(`Error at matchEmotes7TV --> ${error}`);
       return undefined;
-    };
-  };
+    }
+  }
 
-  function matchEmotesBTTV( emotes : any ) : string | undefined {
+  function matchEmotesBTTV(emotes: any): string | undefined {
     try {
       //size 4 is not accaptable, work with size 2
       const sizege = size === 4 ? 2 : size;
@@ -241,21 +304,21 @@ async function matchEmotes(query, size) {
         const urlge = emote.id;
         const nameLowerCase = String(emote.code).toLowerCase();
         const urlgeSuffix = '/' + sizege + 'x.' + (is_animated ? 'gif' : 'webp');
-  
+
         //check
         if (nameLowerCase === optionsNameLowerCase) {
           return urlgePrefixBTTV + urlge + urlgeSuffix;
-        };
-      };
+        }
+      }
 
       return undefined;
     } catch (error) {
       console.log(`Error at matchEmotesBTTV --> ${error}`);
       return undefined;
-    };
-  };
+    }
+  }
 
-  function matchEmotesFFZ( emotes : any ) : string | undefined {
+  function matchEmotesFFZ(emotes: any): string | undefined {
     try {
       //size 4 is not accaptable, work with size 2
       const sizege = size === 3 ? 2 : size;
@@ -265,38 +328,38 @@ async function matchEmotes(query, size) {
         const emote = emotes[id];
         const nameLowerCase = String(emote.name).toLowerCase();
         const urlge = emote.urls[sizege];
-  
+
         //check
         if (nameLowerCase === optionsNameLowerCase) {
           return urlge;
-        };
-      };
+        }
+      }
 
       return undefined;
     } catch (error) {
       console.log(`Error at matchEmotesFFZ --> ${error}`);
       return undefined;
-    };
-  };
+    }
+  }
 
   //7TV CuteDog
   //cacheReq & emotes
   const cachereq7TV_CD = await cacheReq(options7TVCuteDog);
   const emotes7TV_CD = cachereq7TV_CD.emotes;
   //matchEmotes - default check
-  const matchemotes7TV_CD_1 = matchEmotes7TV( emotes7TV_CD, false, false );
-  if( matchemotes7TV_CD_1 !== undefined ) return matchemotes7TV_CD_1;
+  const matchemotes7TV_CD_1 = matchEmotes7TV(emotes7TV_CD, false, false);
+  if (matchemotes7TV_CD_1 !== undefined) return matchemotes7TV_CD_1;
   //matchEmotes - lowercase check
-  const matchemotes7TV_CD_2 = matchEmotes7TV( emotes7TV_CD, true, false );
-  if(  matchemotes7TV_CD_2 !== undefined ) return  matchemotes7TV_CD_2;
+  const matchemotes7TV_CD_2 = matchEmotes7TV(emotes7TV_CD, true, false);
+  if (matchemotes7TV_CD_2 !== undefined) return matchemotes7TV_CD_2;
 
   //7TV Global
   //cacheReq & emotes
   const cachereq7TV_G = await cacheReq(options7TVGlobal);
   const emotes7TV_G = cachereq7TV_G.emotes;
   //matchEmotes
-  const matchemotes7TV_G = matchEmotes7TV( emotes7TV_G, true, false );
-  if( matchemotes7TV_G !== undefined ) return matchemotes7TV_G;
+  const matchemotes7TV_G = matchEmotes7TV(emotes7TV_G, true, false);
+  if (matchemotes7TV_G !== undefined) return matchemotes7TV_G;
 
   //BTTV CuteDog
   //cacheReq
@@ -306,47 +369,71 @@ async function matchEmotes(query, size) {
   //emotes
   const emotesBTTV_CD_1 = cachereqBTTV_CD['channelEmotes'];
   //matchEmotes
-  const matchemotesBTTV_CD_1 = matchEmotesBTTV( emotesBTTV_CD_1 );
-  if( matchemotesBTTV_CD_1 !== undefined ) return matchemotesBTTV_CD_1;
+  const matchemotesBTTV_CD_1 = matchEmotesBTTV(emotesBTTV_CD_1);
+  if (matchemotesBTTV_CD_1 !== undefined) return matchemotesBTTV_CD_1;
 
   //BTTV CuteDog 2-2 Shared Emotes
   //emotes
   const emotesBTTV_CD_2 = cachereqBTTV_CD['sharedEmotes'];
   //matchEmotes
-  const matchemotesBTTV_CD_2 = matchEmotesBTTV( emotesBTTV_CD_2 );
-  if( matchemotesBTTV_CD_2 !== undefined ) return matchemotesBTTV_CD_2;
+  const matchemotesBTTV_CD_2 = matchEmotesBTTV(emotesBTTV_CD_2);
+  if (matchemotesBTTV_CD_2 !== undefined) return matchemotesBTTV_CD_2;
 
   //BTTV Global
   //cacheReq & emotes
   const cachereqBTTV_G = await cacheReq(optionsBTTVGlobal);
   const emotesBTTV_G = cachereqBTTV_G;
   //matchEmotes
-  const matchemotesBTTV_G = matchEmotesBTTV( emotesBTTV_G );
-  if( matchemotesBTTV_G !== undefined ) return matchemotesBTTV_G;
+  const matchemotesBTTV_G = matchEmotesBTTV(emotesBTTV_G);
+  if (matchemotesBTTV_G !== undefined) return matchemotesBTTV_G;
 
   //FFZ Cutedog
   //cacheReq & emotes
   const cachereqFFZ_CD = await cacheReq(optionsFFZCutedog);
   const emotesFFZ_CD = cachereqFFZ_CD.sets['295317'].emoticons;
   //matchEmotes
-  const matchemotesFFZ_CD = matchEmotesFFZ( emotesFFZ_CD );
-  if( matchemotesFFZ_CD !== undefined ) return matchemotesFFZ_CD;
+  const matchemotesFFZ_CD = matchEmotesFFZ(emotesFFZ_CD);
+  if (matchemotesFFZ_CD !== undefined) return matchemotesFFZ_CD;
 
   //FFZ Global
   //cacheReq & emotes
   const cachereqFFZ_G = await cacheReq(optionsFFZGlobal);
   const emotesFFZ_G = cachereqFFZ_G.sets['3'].emoticons;
   //matchEmotes
-  const matchemotesFFZ_G = matchEmotesFFZ( emotesFFZ_G );
-  if( matchemotesFFZ_G !== undefined ) return matchemotesFFZ_G;
+  const matchemotesFFZ_G = matchEmotesFFZ(emotesFFZ_G);
+  if (matchemotesFFZ_G !== undefined) return matchemotesFFZ_G;
+
+  //Twitch Global
+  //postdata & access token
+  const postdata = await postData(optionsTwitchAccessToken, postDataTwitchAccessToken);
+  const postdataJSON = JSON.parse(postdata);
+  const access_token = postdataJSON.access_token;
+
+  const optionsTwitchGlobal = {
+    hostname: 'api.twitch.tv',
+    path: '/helix/chat/emotes/global',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      'Client-Id': TWITCH_CLIENT_ID
+    }
+  };
+  //cacheReq & emotes
+  const cachereqTwitch_G = await cacheReq(optionsTwitchGlobal);
+  const templateTwitch_G = String(cachereqTwitch_G.template);
+  const emotesTwitch_G = cachereqTwitch_G.data;
+
+  //matchEmotes
+  const matchemotesTwitch_G = matchEmotesTwitchGlobal(emotesTwitch_G, templateTwitch_G);
+  if (matchemotesTwitch_G !== undefined) return matchemotesTwitch_G;
 
   //7TV CuteDog - Last check, if nothing matched so far
   //matchEmotes - lowercase include check
-  const matchemotes7TV_CD_3 = matchEmotes7TV( emotes7TV_CD, true, true );
-  if( matchemotes7TV_CD_3 !== undefined ) return matchemotes7TV_CD_3;
+  const matchemotes7TV_CD_3 = matchEmotes7TV(emotes7TV_CD, true, true);
+  if (matchemotes7TV_CD_3 !== undefined) return matchemotes7TV_CD_3;
 
   return;
-};
+}
 
 //on ready
 client.on('ready', () => {
