@@ -1,6 +1,6 @@
 services:
   server:
-    # image: ghcr.io/tresster/botge:latest
+    image: ghcr.io/tresster/botge:main
     build:
       context: .
     environment:

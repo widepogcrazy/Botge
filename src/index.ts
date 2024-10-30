@@ -99,8 +99,7 @@ const translateText = async (text, targetLanguage) => {
   }
 };
 
-// Temporary storage for downloaded GIFs
-const tempDir = './temp_gifs';
+
 // Clear directory of temp gifs after each use
 function resetDirectory() {
   try {
@@ -121,15 +120,14 @@ function resetDirectory() {
 // Ensure the temporary directory exists and is empty (in case bot crashes mid-download)
 resetDirectory();
 // Function to download GIFs from URLs
-async function downloadGifs(urls) {
+async function downloadGifs(urls, outdir) {
   const downloadedFiles = [];
   let counter = 1;
   for (const url of urls) {
     const response = await fetch(url);
     const buffer = await response.buffer();
-    let fileName = path.basename(url);
-    fileName = `${counter}_${fileName}`;
-    const filePath = path.join(tempDir, fileName);
+    const fileName = `${counter}_${fileName}`;
+    const filePath = path.join(outdir, fileName);
     await fs.writeFile(filePath, buffer);
     downloadedFiles.push(filePath);
     counter++;
@@ -160,11 +158,11 @@ function getGifDuration(file): Promise<number> {
   });
 }
 
-async function stackGifs(files, outputfile) {
+async function stackGifs(files, outdir) {
   try {
     resetDirectory();
     // Download GIFs - having local files is faster when using ffmpeg
-    const downloadedFiles = await downloadGifs(files);
+    const downloadedFiles = await downloadGifs(files, outdir);
     // Get durations for each GIF
     const durations = await Promise.all(downloadedFiles.map(getGifDuration));
     const maxDuration = Math.max(...durations.filter((value) => !Number.isNaN(value)));
@@ -207,6 +205,8 @@ async function stackGifs(files, outputfile) {
     args.push('-y');
     args.push('-fs');
     args.push('25M');
+
+    const outputfile = path.join(outdir, 'output.gif')
     args.push(outputfile);
 
     console.log('Running command: ffmpeg ' + args.join(' '));
@@ -485,10 +485,9 @@ client.on('interactionCreate', async (interaction) => {
         emoteUrls.push(url);
       }
     }
-
-    const outputfile = './temp_gifs/output.gif';
+    const out_dir = fs.ensureDirSync('temp_gifs', interaction.id);
     // Dont need try catch if it works 100% of the time YEP
-    const ffmpeg_process = await stackGifs(emoteUrls, outputfile);
+    const ffmpeg_process = await stackGifs(emoteUrls, out_dir);
 
     ffmpeg_process.on(
       'close',
