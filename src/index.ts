@@ -15,7 +15,7 @@ import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
 import https from 'https';
-import CacheableRequest, { CacheResponse } from 'cacheable-request';
+import CacheableRequest from 'cacheable-request';
 
 //client
 const client = new Client({ intents: [] });
@@ -33,7 +33,7 @@ const translate = new Translate({
 });
 
 //cachable-request
-const cacheableRequest = new CacheableRequest( https.request ).request();
+const cacheableRequest = new CacheableRequest(https.request).request();
 
 //options
 const options7TVCuteDog = {
@@ -68,20 +68,25 @@ const optionsFFZGlobal = {
 };
 
 //cacheReq
-async function cacheReq( options: { hostname: string; path: string; method: string; } ) : Promise<any> {
-  return new Promise( ( resolve, reject ) => {
-      let data: any = [];
-      cacheableRequest( options )
-      .on( "response", ( res: any ) => {
-          res.on( "data", ( d: any ) => { data.push( d ); })
-          .on( "end", () => {
-              resolve( JSON.parse( Buffer.concat( data ).toString() ) );
+async function cacheReq(options: { hostname: string; path: string; method: string }): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let data: any = [];
+    cacheableRequest(options)
+      .on('response', (res: any) => {
+        res
+          .on('data', (d: any) => {
+            data.push(d);
+          })
+          .on('end', () => {
+            resolve(JSON.parse(Buffer.concat(data).toString()));
           });
       })
-      .on( "request", ( req: any ) => { req.end(); } )
-      .on( "error", ( err: any ) => reject( err ) );
+      .on('request', (req: any) => {
+        req.end();
+      })
+      .on('error', (err: any) => reject(err));
   });
-};
+}
 
 //translateText
 const translateText = async (text, targetLanguage) => {
@@ -132,10 +137,9 @@ async function downloadGifs(urls) {
   return downloadedFiles;
 }
 
-
-function getGifDuration(file) : Promise<number> {
+function getGifDuration(file): Promise<number> {
   return new Promise((resolve, reject) => {
-    console.log(file)
+    console.log(file);
     exec(
       `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${file}"`,
       (error, stdout, stderr) => {
@@ -162,7 +166,7 @@ async function stackGifs(files, outputfile) {
     // Download GIFs - having local files is faster when using ffmpeg
     const downloadedFiles = await downloadGifs(files);
     // Get durations for each GIF
-    const durations = await Promise.all( (downloadedFiles.map(getGifDuration )));
+    const durations = await Promise.all(downloadedFiles.map(getGifDuration));
     const maxDuration = Math.max(...durations.filter((value) => !Number.isNaN(value)));
     console.log(`Max duration: ${maxDuration}`);
     const has_animated: boolean = maxDuration != -Infinity;
@@ -228,10 +232,10 @@ async function matchEmotes(query, size) {
   let emotes;
 
   //7TV CuteDog
-  //fetch
+  //cacheReq
   cachereq = await cacheReq(options7TVCuteDog);
   emotes = cachereq.emotes;
-  //1-3
+  //1-2
   try {
     for (const id in emotes) {
       //consts
@@ -249,7 +253,7 @@ async function matchEmotes(query, size) {
     console.log(`Error at 7TVCuteDog1 --> ${error}`);
     return;
   }
-  //2-3
+  //2-2
   try {
     for (const id in emotes) {
       //consts
@@ -261,34 +265,15 @@ async function matchEmotes(query, size) {
       //check
       if (nameLowerCase === optionsNameLowerCase) {
         return urlgePrefix + urlge + urlgeSuffix;
-        return;
       }
     }
   } catch (error) {
     console.log(`Error at 7TVCuteDog2 --> ${error}`);
     return;
   }
-  //3-3
-  try {
-    for (const id in emotes) {
-      //consts
-      const is_animated = emotes[id].data.animated;
-      const urlge = emotes[id].data.host.url;
-      const nameLowerCase = String(emotes[id].name).toLowerCase();
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (nameLowerCase.includes(optionsNameLowerCase)) {
-        return urlgePrefix + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at 7TVCuteDog3 --> ${error}`);
-    return;
-  }
 
   //7TV Global
-  //fetch
+  //cacheReq
   cachereq = await cacheReq(options7TVGlobal);
   emotes = cachereq.emotes;
   //1-2
@@ -303,7 +288,6 @@ async function matchEmotes(query, size) {
       //check
       if (name === optionsName) {
         return urlgePrefix + urlge + urlgeSuffix;
-        return;
       }
     }
   } catch (error) {
@@ -322,7 +306,6 @@ async function matchEmotes(query, size) {
       //check
       if (nameLowerCase === optionsNameLowerCase) {
         return urlgePrefix + urlge + urlgeSuffix;
-        return;
       }
     }
   } catch (error) {
@@ -331,7 +314,7 @@ async function matchEmotes(query, size) {
   }
 
   //BTTV CuteDog
-  //fetch
+  //cacheReq
   cachereq = await cacheReq(optionsBTTVCuteDog);
   emotes = cachereq['channelEmotes'];
   //1-1
@@ -349,7 +332,6 @@ async function matchEmotes(query, size) {
       //check
       if (nameLowerCase === optionsNameLowerCase) {
         return urlgePrefixBTTV + urlge + urlgeSuffix;
-        return;
       }
     }
   } catch (error) {
@@ -358,7 +340,7 @@ async function matchEmotes(query, size) {
   }
 
   //BTTV Global
-  //fetch
+  //cacheReq
   cachereq = await cacheReq(optionsBTTVGlobal);
   emotes = cachereq;
   //1-1
@@ -384,7 +366,7 @@ async function matchEmotes(query, size) {
   }
 
   //FFZ Cutedog
-  //fetch
+  //cacheReq
   cachereq = await cacheReq(optionsFFZCutedog);
   emotes = cachereq.sets['295317'].emoticons;
   //1-1
@@ -408,7 +390,7 @@ async function matchEmotes(query, size) {
   }
 
   //FFZ Global
-  //fetch
+  //cacheReq
   cachereq = await cacheReq(optionsFFZGlobal);
   emotes = cachereq.sets['3'].emoticons;
   //1-1
@@ -430,6 +412,30 @@ async function matchEmotes(query, size) {
     console.log(`Error at FFZ --> ${error}`);
     return;
   }
+
+  //7TV CuteDog - Last check, if nothing matched so far
+  //cacheReq
+  cachereq = await cacheReq(options7TVCuteDog);
+  emotes = cachereq.emotes;
+  //3-3
+  try {
+    for (const id in emotes) {
+      //consts
+      const is_animated = emotes[id].data.animated;
+      const urlge = emotes[id].data.host.url;
+      const nameLowerCase = String(emotes[id].name).toLowerCase();
+      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
+
+      //check
+      if (nameLowerCase.includes(optionsNameLowerCase)) {
+        return urlgePrefix + urlge + urlgeSuffix;
+      }
+    }
+  } catch (error) {
+    console.log(`Error at 7TVCuteDog3 --> ${error}`);
+    return;
+  }
+
   return;
 }
 
