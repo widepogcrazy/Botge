@@ -3,7 +3,6 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { exec, spawn } = require('child_process');
 const path = require('path');
-const { unlink } = require('node:fs');
 const fetch = require('node-fetch');
 const fs = require('fs-extra');
 
@@ -99,26 +98,6 @@ const translateText = async (text, targetLanguage) => {
   }
 };
 
-
-// Clear directory of temp gifs after each use
-function resetDirectory() {
-  try {
-    // Ensure the directory exists
-    fs.ensureDirSync(tempDir);
-
-    // Remove the directory
-    fs.removeSync(tempDir);
-
-    // Ensure the directory exists again
-    fs.ensureDirSync(tempDir);
-
-    console.log(`Directory ${tempDir} has been reset.`);
-  } catch (error) {
-    console.error(`Error resetting directory: ${error.message}`);
-  }
-}
-// Ensure the temporary directory exists and is empty (in case bot crashes mid-download)
-resetDirectory();
 // Function to download GIFs from URLs
 async function downloadGifs(urls, outdir) {
   const downloadedFiles = [];
@@ -126,7 +105,7 @@ async function downloadGifs(urls, outdir) {
   for (const url of urls) {
     const response = await fetch(url);
     const buffer = await response.buffer();
-    const fileName = `${counter}_${fileName}`;
+    const fileName = `${counter}_` + path.basename(url);
     const filePath = path.join(outdir, fileName);
     await fs.writeFile(filePath, buffer);
     downloadedFiles.push(filePath);
@@ -160,7 +139,6 @@ function getGifDuration(file): Promise<number> {
 
 async function stackGifs(files, outdir) {
   try {
-    resetDirectory();
     // Download GIFs - having local files is faster when using ffmpeg
     const downloadedFiles = await downloadGifs(files, outdir);
     // Get durations for each GIF
@@ -206,7 +184,7 @@ async function stackGifs(files, outdir) {
     args.push('-fs');
     args.push('25M');
 
-    const outputfile = path.join(outdir, 'output.gif')
+    const outputfile = path.join(outdir, 'output.gif');
     args.push(outputfile);
 
     console.log('Running command: ffmpeg ' + args.join(' '));
@@ -485,9 +463,10 @@ client.on('interactionCreate', async (interaction) => {
         emoteUrls.push(url);
       }
     }
-    const out_dir = fs.ensureDirSync('temp_gifs', interaction.id);
+    const outdir = path.join('temp_gifs', interaction.id);
+    fs.ensureDirSync(outdir);
     // Dont need try catch if it works 100% of the time YEP
-    const ffmpeg_process = await stackGifs(emoteUrls, out_dir);
+    const ffmpeg_process = await stackGifs(emoteUrls, outdir);
 
     ffmpeg_process.on(
       'close',
@@ -495,13 +474,13 @@ client.on('interactionCreate', async (interaction) => {
         //Here you can get the exit code of the script
         return function (code) {
           if (code == 0) {
-            interaction.editReply({ files: [outputfile] }).then((message) => {
-              return unlink(outputfile, (err) => {});
+            interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
+              fs.removeSync(outdir);
             });
             return;
           }
           interaction.editReply({ content: 'gif creation failed' });
-          unlink(outputfile, (err) => {});
+          fs.removeSync(outdir);
         };
       })(interaction) // closure to keep |interaction|
     );
