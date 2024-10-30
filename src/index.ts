@@ -85,7 +85,7 @@ async function cacheReq(options: { hostname: string; path: string; method: strin
       })
       .on('error', (err: any) => reject(err));
   });
-}
+};
 
 //translateText
 const translateText = async (text, targetLanguage) => {
@@ -205,217 +205,148 @@ async function matchEmotes(query, size) {
   //size invalid
   if (!(size > 0 && size < 5)) return;
 
-  // emotes
-  let cachereq;
-  let emotes;
+  //functions
+  function matchEmotes7TV( emotes : any, isLowerCase : boolean, isInclude : boolean ) : string | undefined {
+    try {
+      for (const id in emotes) {
+        //consts
+        const emote = emotes[id];
+        const is_animated = emote.data.animated;
+        const urlge = emote.data.host.url;
+        const name =  isLowerCase ? String( emote.name ).toLowerCase() : String( emote.name );
+        const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
+  
+        //check
+        if ( isInclude ? ( name.includes( optionsNameLowerCase ) ) : ( name === ( isLowerCase ? optionsNameLowerCase : optionsName ) ) ) {
+          return urlgePrefix + urlge + urlgeSuffix;
+        };
+      };
+
+      return undefined;
+    } catch (error) {
+      console.log(`Error at matchEmotes7TV --> ${error}`);
+      return undefined;
+    };
+  };
+
+  function matchEmotesBTTV( emotes : any ) : string | undefined {
+    try {
+      //size 4 is not accaptable, work with size 2
+      const sizege = size === 4 ? 2 : size;
+
+      for (const id in emotes) {
+        //consts
+        const emote = emotes[id];
+        const is_animated = emote.animated;
+        const urlge = emote.id;
+        const nameLowerCase = String(emote.code).toLowerCase();
+        const urlgeSuffix = '/' + sizege + 'x.' + (is_animated ? 'gif' : 'webp');
+  
+        //check
+        if (nameLowerCase === optionsNameLowerCase) {
+          return urlgePrefixBTTV + urlge + urlgeSuffix;
+        };
+      };
+
+      return undefined;
+    } catch (error) {
+      console.log(`Error at matchEmotesBTTV --> ${error}`);
+      return undefined;
+    };
+  };
+
+  function matchEmotesFFZ( emotes : any ) : string | undefined {
+    try {
+      //size 4 is not accaptable, work with size 2
+      const sizege = size === 3 ? 2 : size;
+
+      for (const id in emotes) {
+        //consts
+        const emote = emotes[id];
+        const nameLowerCase = String(emote.name).toLowerCase();
+        const urlge = emote.urls[sizege];
+  
+        //check
+        if (nameLowerCase === optionsNameLowerCase) {
+          return urlge;
+        };
+      };
+
+      return undefined;
+    } catch (error) {
+      console.log(`Error at matchEmotesFFZ --> ${error}`);
+      return undefined;
+    };
+  };
 
   //7TV CuteDog
-  //cacheReq
-  cachereq = await cacheReq(options7TVCuteDog);
-  emotes = cachereq.emotes;
-  //1-2
-  try {
-    for (const id in emotes) {
-      //consts
-      const is_animated = emotes[id].data.animated;
-      const urlge = emotes[id].data.host.url;
-      const name = emotes[id].name;
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (name === optionsName) {
-        return urlgePrefix + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at 7TVCuteDog1 --> ${error}`);
-    return;
-  }
-  //2-2
-  try {
-    for (const id in emotes) {
-      //consts
-      const is_animated = emotes[id].data.animated;
-      const urlge = emotes[id].data.host.url;
-      const nameLowerCase = String(emotes[id].name).toLowerCase();
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (nameLowerCase === optionsNameLowerCase) {
-        return urlgePrefix + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at 7TVCuteDog2 --> ${error}`);
-    return;
-  }
+  //cacheReq & emotes
+  const cachereq7TV_CD = await cacheReq(options7TVCuteDog);
+  const emotes7TV_CD = cachereq7TV_CD.emotes;
+  //matchEmotes - default check
+  const matchemotes7TV_CD_1 = matchEmotes7TV( emotes7TV_CD, false, false );
+  if( matchemotes7TV_CD_1 !== undefined ) return matchemotes7TV_CD_1;
+  //matchEmotes - lowercase check
+  const matchemotes7TV_CD_2 = matchEmotes7TV( emotes7TV_CD, true, false );
+  if(  matchemotes7TV_CD_2 !== undefined ) return  matchemotes7TV_CD_2;
 
   //7TV Global
-  //cacheReq
-  cachereq = await cacheReq(options7TVGlobal);
-  emotes = cachereq.emotes;
-  //1-2
-  try {
-    for (const id in emotes) {
-      //consts
-      const is_animated = emotes[id].data.animated;
-      const urlge = emotes[id].data.host.url;
-      const name = emotes[id].name;
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (name === optionsName) {
-        return urlgePrefix + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at 7TVGlobal1 --> ${error}`);
-    return;
-  }
-  //2-2
-  try {
-    for (const id in emotes) {
-      //consts
-      const is_animated = emotes[id].data.animated;
-      const urlge = emotes[id].data.host.url;
-      const nameLowerCase = String(emotes[id].name).toLowerCase();
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (nameLowerCase === optionsNameLowerCase) {
-        return urlgePrefix + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at 7TVGlobal2 --> ${error}`);
-    return;
-  }
+  //cacheReq & emotes
+  const cachereq7TV_G = await cacheReq(options7TVGlobal);
+  const emotes7TV_G = cachereq7TV_G.emotes;
+  //matchEmotes
+  const matchemotes7TV_G = matchEmotes7TV( emotes7TV_G, true, false );
+  if( matchemotes7TV_G !== undefined ) return matchemotes7TV_G;
 
   //BTTV CuteDog
   //cacheReq
-  cachereq = await cacheReq(optionsBTTVCuteDog);
-  emotes = cachereq['channelEmotes'];
-  //1-1
-  try {
-    for (const id in emotes) {
-      //size 4 is not accaptable
-      if (size === 4) break;
+  const cachereqBTTV_CD = await cacheReq(optionsBTTVCuteDog);
 
-      //consts
-      const is_animated = emotes[id].animated;
-      const urlge = emotes[id].id;
-      const nameLowerCase = String(emotes[id].code).toLowerCase();
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
+  //BTTV CuteDog 1-2 Channel Emotes
+  //emotes
+  const emotesBTTV_CD_1 = cachereqBTTV_CD['channelEmotes'];
+  //matchEmotes
+  const matchemotesBTTV_CD_1 = matchEmotesBTTV( emotesBTTV_CD_1 );
+  if( matchemotesBTTV_CD_1 !== undefined ) return matchemotesBTTV_CD_1;
 
-      //check
-      if (nameLowerCase === optionsNameLowerCase) {
-        return urlgePrefixBTTV + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at BTTVCuteDog --> ${error}`);
-    return;
-  }
+  //BTTV CuteDog 2-2 Shared Emotes
+  //emotes
+  const emotesBTTV_CD_2 = cachereqBTTV_CD['sharedEmotes'];
+  //matchEmotes
+  const matchemotesBTTV_CD_2 = matchEmotesBTTV( emotesBTTV_CD_2 );
+  if( matchemotesBTTV_CD_2 !== undefined ) return matchemotesBTTV_CD_2;
 
   //BTTV Global
-  //cacheReq
-  cachereq = await cacheReq(optionsBTTVGlobal);
-  emotes = cachereq;
-  //1-1
-  try {
-    for (const id in emotes) {
-      //size 4 is not acceptable
-      if (size === 4) break;
-
-      //consts
-      const is_animated = emotes[id].animated;
-      const urlge = emotes[id].id;
-      const nameLowerCase = String(emotes[id].code).toLowerCase();
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (nameLowerCase === optionsNameLowerCase) {
-        return urlgePrefixBTTV + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at BTTV --> ${error}`);
-    return;
-  }
+  //cacheReq & emotes
+  const cachereqBTTV_G = await cacheReq(optionsBTTVGlobal);
+  const emotesBTTV_G = cachereqBTTV_G;
+  //matchEmotes
+  const matchemotesBTTV_G = matchEmotesBTTV( emotesBTTV_G );
+  if( matchemotesBTTV_G !== undefined ) return matchemotesBTTV_G;
 
   //FFZ Cutedog
-  //cacheReq
-  cachereq = await cacheReq(optionsFFZCutedog);
-  emotes = cachereq.sets['295317'].emoticons;
-  //1-1
-  try {
-    for (const id in emotes) {
-      //size 3 is not accaptable
-      if (size === 3) break;
-
-      //consts
-      const nameLowerCase = String(emotes[id].name).toLowerCase();
-      const urlge = emotes[id].urls[size];
-
-      //check
-      if (nameLowerCase === optionsNameLowerCase) {
-        return urlge;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at FFZCutedog --> ${error}`);
-    return;
-  }
+  //cacheReq & emotes
+  const cachereqFFZ_CD = await cacheReq(optionsFFZCutedog);
+  const emotesFFZ_CD = cachereqFFZ_CD.sets['295317'].emoticons;
+  //matchEmotes
+  const matchemotesFFZ_CD = matchEmotesFFZ( emotesFFZ_CD );
+  if( matchemotesFFZ_CD !== undefined ) return matchemotesFFZ_CD;
 
   //FFZ Global
-  //cacheReq
-  cachereq = await cacheReq(optionsFFZGlobal);
-  emotes = cachereq.sets['3'].emoticons;
-  //1-1
-  try {
-    for (const id in emotes) {
-      //size 3 is not acceptable
-      if (size === 3) break;
-
-      //consts
-      const nameLowerCase = String(emotes[id].name).toLowerCase();
-      const urlge = emotes[id].urls[size];
-
-      //check
-      if (nameLowerCase === optionsNameLowerCase) {
-        return urlge;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at FFZ --> ${error}`);
-    return;
-  }
+  //cacheReq & emotes
+  const cachereqFFZ_G = await cacheReq(optionsFFZGlobal);
+  const emotesFFZ_G = cachereqFFZ_G.sets['3'].emoticons;
+  //matchEmotes
+  const matchemotesFFZ_G = matchEmotesFFZ( emotesFFZ_G );
+  if( matchemotesFFZ_G !== undefined ) return matchemotesFFZ_G;
 
   //7TV CuteDog - Last check, if nothing matched so far
-  //cacheReq
-  cachereq = await cacheReq(options7TVCuteDog);
-  emotes = cachereq.emotes;
-  //3-3
-  try {
-    for (const id in emotes) {
-      //consts
-      const is_animated = emotes[id].data.animated;
-      const urlge = emotes[id].data.host.url;
-      const nameLowerCase = String(emotes[id].name).toLowerCase();
-      const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-      //check
-      if (nameLowerCase.includes(optionsNameLowerCase)) {
-        return urlgePrefix + urlge + urlgeSuffix;
-      }
-    }
-  } catch (error) {
-    console.log(`Error at 7TVCuteDog3 --> ${error}`);
-    return;
-  }
+  //matchEmotes - lowercase include check
+  const matchemotes7TV_CD_3 = matchEmotes7TV( emotes7TV_CD, true, true );
+  if( matchemotes7TV_CD_3 !== undefined ) return matchemotes7TV_CD_3;
 
   return;
-}
+};
 
 //on ready
 client.on('ready', () => {
