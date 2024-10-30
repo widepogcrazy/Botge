@@ -77,7 +77,7 @@ const optionsFFZGlobal = {
 };
 
 //cacheReq
-async function cacheReq(options: { hostname: string; path: string; method: string }): Promise<any> {
+async function cacheReq(options: any): Promise<any> {
   return new Promise((resolve, reject) => {
     let data: any = [];
     cacheableRequest(options)
