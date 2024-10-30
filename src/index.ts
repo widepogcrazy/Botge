@@ -448,6 +448,7 @@ client.on('interactionCreate', async (interaction) => {
   //interaction emote
   if (interaction.commandName === 'emote') {
     //name
+    await interaction.deferReply();
     const optionsName = String(interaction.options.get('name').value);
 
     //size
@@ -456,12 +457,12 @@ client.on('interactionCreate', async (interaction) => {
 
     const ret = await matchEmotes(optionsName, size);
     if (ret) {
-      interaction.reply(ret);
+      interaction.editReply(ret);
       return;
     }
 
     //no emote found. reply
-    interaction.reply('jij');
+    interaction.editReply('jij');
     return;
   }
 
