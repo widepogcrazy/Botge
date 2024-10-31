@@ -31,6 +31,9 @@ const translate = new Translate({
   projectId: CREDENTIALS.project_id
 });
 
+// print stack on warnings
+process.on('warning', e => console.warn(e.stack));
+
 //cachable-request
 const cacheableRequest = new CacheableRequest(https.request).request();
 
