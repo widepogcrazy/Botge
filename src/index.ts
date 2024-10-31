@@ -76,6 +76,26 @@ const optionsFFZGlobal = {
   method: 'GET'
 };
 
+//reqWithStatusCode
+async function reqWithStatusCode(options: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let data: any = [];
+    const reqge = https
+      .request(options)
+      .on('response', (res: any) => {
+        res
+          .on('data', (d: any) => {
+            data.push(d);
+          })
+          .on('end', () => {
+            resolve([Buffer.concat(data).toString(), res.statusCode]);
+          });
+      })
+      .on('error', (err: any) => reject(err));
+    reqge.end();
+  });
+}
+
 //cacheReq
 async function cacheReq(options: any): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -116,6 +136,72 @@ async function postData(options: any, postdata: any): Promise<any> {
     req.write(postdata);
     req.end();
   });
+}
+
+let access_tokenge;
+let access_tokenge_statusCode;
+
+async function getTwitchAccessToken() {
+  const postdata = await postData(optionsTwitchAccessToken, postDataTwitchAccessToken);
+  const postdataJSON = JSON.parse(postdata);
+  const access_token = postdataJSON.access_token;
+  access_tokenge = access_token;
+  console.log('Got Twitch Access Token.');
+}
+
+async function validateTwitchAccessToken(access_token: any): Promise<any> {
+  const optionsTwitchAccessTokenValidate = {
+    hostname: 'id.twitch.tv',
+    path: '/oauth2/validate',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${access_token}`
+    }
+  };
+
+  const res = await reqWithStatusCode(optionsTwitchAccessTokenValidate);
+  const resJSON = JSON.parse(res[0]);
+  const resStatusCode = res[1];
+  if (resStatusCode === 401) {
+    console.log(`TwitchAccessToken is invalid. statusCode: ${resStatusCode}`);
+  } else {
+    console.log(`TwitchAccessToken is valid. statusCode: ${resStatusCode}`);
+  }
+  console.log(resJSON);
+  return resStatusCode;
+}
+
+function getOptionsTwitchGlobal(access_token: any): any | undefined {
+  if (access_tokenge_statusCode === 401) {
+    return undefined;
+  }
+  const optionsTwitchGlobal = {
+    hostname: 'api.twitch.tv',
+    path: '/helix/chat/emotes/global',
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      'Client-Id': TWITCH_CLIENT_ID
+    }
+  };
+  return optionsTwitchGlobal;
+}
+
+try {
+  await getTwitchAccessToken();
+  await validateTwitchAccessToken(access_tokenge);
+  setInterval(
+    async function () {
+      console.log('Hourly Twitch Access Token Check.');
+      if ((await validateTwitchAccessToken(access_tokenge)) === 401) {
+        await getTwitchAccessToken();
+        await validateTwitchAccessToken(access_tokenge);
+      }
+    },
+    60 * 60 * 1000
+  );
+} catch (err) {
+  console.log(err);
 }
 
 //translateText
@@ -404,28 +490,18 @@ async function matchEmotes(query, size) {
   if (matchemotesFFZ_G !== undefined) return matchemotesFFZ_G;
 
   //Twitch Global
-  //postdata & access token
-  const postdata = await postData(optionsTwitchAccessToken, postDataTwitchAccessToken);
-  const postdataJSON = JSON.parse(postdata);
-  const access_token = postdataJSON.access_token;
+  //options
+  const optionsTwitchGlobal = await getOptionsTwitchGlobal(access_tokenge);
+  if (optionsTwitchGlobal !== undefined) {
+    //cacheReq & emotes
+    const cachereqTwitch_G = await cacheReq(optionsTwitchGlobal);
+    const templateTwitch_G = String(cachereqTwitch_G.template);
+    const emotesTwitch_G = cachereqTwitch_G.data;
 
-  const optionsTwitchGlobal = {
-    hostname: 'api.twitch.tv',
-    path: '/helix/chat/emotes/global',
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-      'Client-Id': TWITCH_CLIENT_ID
-    }
-  };
-  //cacheReq & emotes
-  const cachereqTwitch_G = await cacheReq(optionsTwitchGlobal);
-  const templateTwitch_G = String(cachereqTwitch_G.template);
-  const emotesTwitch_G = cachereqTwitch_G.data;
-
-  //matchEmotes
-  const matchemotesTwitch_G = matchEmotesTwitchGlobal(emotesTwitch_G, templateTwitch_G);
-  if (matchemotesTwitch_G !== undefined) return matchemotesTwitch_G;
+    //matchEmotes
+    const matchemotesTwitch_G = matchEmotesTwitchGlobal(emotesTwitch_G, templateTwitch_G);
+    if (matchemotesTwitch_G !== undefined) return matchemotesTwitch_G;
+  }
 
   //7TV CuteDog - Last check, if nothing matched so far
   //matchEmotes - lowercase include check
@@ -457,12 +533,12 @@ client.on('interactionCreate', async (interaction) => {
 
     const ret = await matchEmotes(optionsName, size);
     if (ret) {
-      interaction.editReply(ret);
+      await interaction.editReply(ret);
       return;
     }
 
     //no emote found. reply
-    interaction.editReply('jij');
+    await interaction.editReply('jij');
     return;
   }
 
