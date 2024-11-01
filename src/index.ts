@@ -1,20 +1,18 @@
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const { exec, spawn } = require('child_process');
-const path = require('path');
-const fetch = require('node-fetch');
-const fs = require('fs-extra');
-
 import dotenv from 'dotenv';
-dotenv.config();
-
-//import
+import { exec, spawn } from 'child_process';
+import * as path from 'path';
+import fetch from 'node-fetch';
+import * as fs from 'fs-extra';
 import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
 import * as https from 'https';
 import CacheableRequest from 'cacheable-request';
+
+import { TranslateHandler } from './command/translate.js';
+import { chatgptHandler } from './command/openai.js';
+
+dotenv.config();
 
 //client
 const client = new Client({ intents: [] });
@@ -316,6 +314,7 @@ async function stackGifs(files, outdir) {
     console.error(`Error stacking GIFs: ${error}`);
   }
 }
+
 // returns a url, or undefined if not found
 async function matchEmotes(query, size) {
   const optionsName = query;
@@ -595,37 +594,12 @@ client.on('interactionCreate', async (interaction) => {
 
   //interaction chatgpt
   if (interaction.commandName === 'chatgpt') {
-    try {
-      await interaction.deferReply();
-      const text: string = interaction.options.get('text').value as string;
-
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: text }]
-      });
-
-      await interaction.editReply(completion.choices[0].message.content);
-      return;
-    } catch (error) {
-      console.log(`Error at chatgpt --> ${error}`);
-      await interaction.editReply('failed to translate.');
-      return;
-    }
+    chatgptHandler(openai)(interaction);
   }
 
   //interaction translate
   if (interaction.commandName === 'translate') {
-    try {
-      await interaction.deferReply();
-      const text = interaction.options.get('text').value;
-
-      const translatedText = String(await translateText(text, 'en'));
-      await interaction.editReply(translatedText);
-    } catch (error) {
-      console.log(`Error at translate --> ${error}`);
-      await interaction.editReply('Failed to translate.');
-      return;
-    }
+    TranslateHandler(translate)(interaction);
   }
 
   //interaction help
