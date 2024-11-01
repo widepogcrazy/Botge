@@ -45,36 +45,47 @@ const optionsTwitchAccessToken = {
   path: '/oauth2/token',
   method: 'POST'
 };
-const options7TVCuteDog = {
-  hostname: '7tv.io',
-  path: '/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
-  method: 'GET'
+
+// emotes
+const emote_endpoints = {
+  sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
+  sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
+  bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
+  bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
+  ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
+  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global'
 };
-const options7TVGlobal = {
-  hostname: '7tv.io',
-  path: '/v3/emote-sets/global',
-  method: 'GET'
-};
-const optionsBTTVCuteDog = {
-  hostname: 'api.betterttv.net',
-  path: '/3/users/5809977263c97c037fc9e66c',
-  method: 'GET'
-};
-const optionsBTTVGlobal = {
-  hostname: 'api.betterttv.net',
-  path: '/3/cached/emotes/global',
-  method: 'GET'
-};
-const optionsFFZCutedog = {
-  hostname: 'api.frankerfacez.com',
-  path: '/v1/room/cutedog_',
-  method: 'GET'
-};
-const optionsFFZGlobal = {
-  hostname: 'api.frankerfacez.com',
-  path: '/v1/set/global',
-  method: 'GET'
-};
+
+export async function newEmoteMatcher(): Promise<EmoteMatcher> {
+  try {
+    const sevenPersonal = fetch(emote_endpoints.sevenPersonal);
+    const sevenGlobal = fetch(emote_endpoints.sevenGlobal);
+    const bttvPersonal = fetch(emote_endpoints.bttvPersonal);
+    const bttvGlobal = fetch(emote_endpoints.bttvGlobal);
+    const ffzPersonal = fetch(emote_endpoints.ffzPersonal);
+    const ffzGlobal = fetch(emote_endpoints.ffzGlobal);
+    return new EmoteMatcher(
+      await (await sevenPersonal).json(),
+      await (await sevenGlobal).json(),
+      await (await bttvPersonal).json(),
+      await (await bttvGlobal).json(),
+      await (await ffzPersonal).json(),
+      await (await ffzGlobal).json()
+    );
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+let em = await newEmoteMatcher();
+console.log('Emote cache ready');
+
+// update ever 5 minutes
+schedule.scheduleJob('*/5 * * * *', async () => {
+  console.log('Emote cache refreshing');
+  em = await newEmoteMatcher();
+  console.log('Emote cache refreshed');
+});
 
 //reqWithStatusCode
 async function reqWithStatusCode(options: any): Promise<any> {
@@ -198,13 +209,13 @@ const translateText = async (text, targetLanguage) => {
 };
 
 // Function to download GIFs from URLs
-async function downloadGifs(urls, outdir) {
+async function downloadGifs(emotes: AssetInfo[], outdir) {
   const downloadedFiles = [];
   let counter = 1;
-  for (const url of urls) {
-    const response = await fetch(url);
+  for (const emote of emotes) {
+    const response = await fetch(emote.url);
     const buffer = await response.buffer();
-    const fileName = `${counter}_` + path.basename(url);
+    const fileName = `${counter}_` + path.basename(emote.url);
     const filePath = path.join(outdir, fileName);
     await writeFile(filePath, buffer);
     downloadedFiles.push(filePath);
@@ -236,10 +247,10 @@ function getGifDuration(file): Promise<number> {
   });
 }
 
-async function stackGifs(files, outdir) {
+async function stackGifs(emotes: AssetInfo[], outdir: string) {
   try {
     // Download GIFs - having local files is faster when using ffmpeg
-    const downloadedFiles = await downloadGifs(files, outdir);
+    const downloadedFiles = await downloadGifs(emotes, outdir);
     // Get durations for each GIF
     const durations = await Promise.all(downloadedFiles.map(getGifDuration));
     const maxDuration = Math.max(...durations.filter((value) => !Number.isNaN(value)));
@@ -261,7 +272,7 @@ async function stackGifs(files, outdir) {
     args.push('-filter_complex');
 
     const filterString =
-      files
+      downloadedFiles
         .map((_, index) => {
           if (has_animated) {
             return `[${index}:v]scale=-1:64,fps=30[v${index}];`;
@@ -270,7 +281,7 @@ async function stackGifs(files, outdir) {
         })
         .join('') +
       downloadedFiles.map((_, index) => `[v${index}]`).join('') +
-      `hstack=inputs=${files.length}[stacked];[stacked]split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse`;
+      `hstack=inputs=${downloadedFiles.length}[stacked];[stacked]split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse`;
 
     args.push(filterString);
 
@@ -293,51 +304,6 @@ async function stackGifs(files, outdir) {
   }
 }
 
-const api_endpoints = {
-  sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
-  sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
-  bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
-  bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
-  ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
-  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global'
-};
-
-export async function newEmoteMatcher(): Promise<EmoteMatcher> {
-  try {
-    const sevenPersonal = fetch(api_endpoints.sevenPersonal);
-    const sevenGlobal = fetch(api_endpoints.sevenGlobal);
-    const bttvPersonal = fetch(api_endpoints.bttvPersonal);
-    const bttvGlobal = fetch(api_endpoints.bttvGlobal);
-    const ffzPersonal = fetch(api_endpoints.ffzPersonal);
-    const ffzGlobal = fetch(api_endpoints.ffzGlobal);
-    return new EmoteMatcher(
-      await (await sevenPersonal).json(),
-      await (await sevenGlobal).json(),
-      await (await bttvPersonal).json(),
-      await (await bttvGlobal).json(),
-      await (await ffzPersonal).json(),
-      await (await ffzGlobal).json()
-    );
-  } catch (err) {
-    console.log(err);
-  }
-}
-
-let em = await newEmoteMatcher();
-console.log("Emote cache ready");
-
-// returns a url, or undefined if not found
-function matchEmote(query, size): string | undefined {
-  return em.matchSingle(query).url;
-}
-
-// update ever 5 minutes
-schedule.scheduleJob('*/5 * * * *', async () => {
-  console.log("Emote cache refreshing");
-  em = await newEmoteMatcher();
-  console.log("Emote cache refreshed");
-});
-
 //on ready
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -359,9 +325,9 @@ client.on('interactionCreate', async (interaction) => {
       const optionsSize: string = interaction.options.get('size')?.value as string;
       const size = optionsSize === undefined ? 2 : parseInt(optionsSize);
 
-      const ret = await matchEmote(optionsName, size);
+      const ret = em.matchSingle(optionsName);
       if (ret) {
-        await interaction.editReply(ret);
+        await interaction.editReply(ret.url);
         return;
       } else {
         //no emote found. reply
@@ -380,22 +346,11 @@ client.on('interactionCreate', async (interaction) => {
     //name
     await interaction.deferReply();
     const query = String(interaction.options.get('emotes').value);
-    const emotes = query.split(' ');
-
-    const emoteUrls = [];
-    for (const i in emotes) {
-      if (emotes[i] == '') {
-        continue;
-      }
-      const url = await matchEmote(emotes[i], 4);
-      if (url) {
-        emoteUrls.push(url);
-      }
-    }
+    const emotes: AssetInfo[] = em.matchMulti(query);
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);
     // Dont need try catch if it works 100% of the time YEP
-    const ffmpeg_process = await stackGifs(emoteUrls, outdir);
+    const ffmpeg_process = await stackGifs(emotes, outdir);
 
     ffmpeg_process.on(
       'close',
