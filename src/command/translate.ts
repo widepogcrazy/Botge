@@ -9,6 +9,7 @@ export function TranslateHandler(translate: v2.Translate) {
       const resp = await translate.translate(text, 'en');
       const translatedText = resp[0];
       // const api_resp = resp[1];  // how to check error?
+      await defer;
       await interaction.editReply(translatedText);
     } catch (error) {
       console.log(`Error at translate --> ${error}`);
