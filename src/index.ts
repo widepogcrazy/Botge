@@ -32,7 +32,7 @@ const translate = new Translate({
 });
 
 // print stack on warnings
-process.on('warning', e => console.warn(e.stack));
+process.on('warning', (e) => console.log(e.stack));
 
 //cachable-request
 const cacheableRequest = new CacheableRequest(https.request).request();
@@ -203,6 +203,9 @@ try {
     },
     60 * 60 * 1000
   );
+
+  //login
+  client.login(process.env.DISCORD_TOKEN);
 } catch (err) {
   console.log(err);
 }
@@ -526,23 +529,29 @@ client.on('interactionCreate', async (interaction) => {
 
   //interaction emote
   if (interaction.commandName === 'emote') {
-    //name
-    await interaction.deferReply();
-    const optionsName = String(interaction.options.get('name').value);
+    try {
+      //name
+      await interaction.deferReply();
+      const optionsName = String(interaction.options.get('name').value);
 
-    //size
-    const optionsSize: string = interaction.options.get('size')?.value as string;
-    const size = optionsSize === undefined ? 2 : parseInt(optionsSize);
+      //size
+      const optionsSize: string = interaction.options.get('size')?.value as string;
+      const size = optionsSize === undefined ? 2 : parseInt(optionsSize);
 
-    const ret = await matchEmotes(optionsName, size);
-    if (ret) {
-      await interaction.editReply(ret);
+      const ret = await matchEmotes(optionsName, size);
+      if (ret) {
+        await interaction.editReply(ret);
+        return;
+      } else {
+        //no emote found. reply
+        await interaction.editReply('jij');
+        return;
+      }
+    } catch (error) {
+      console.log(`Error at emote --> ${error}`);
+      await interaction.editReply('Failed to provide emote.');
       return;
     }
-
-    //no emote found. reply
-    await interaction.editReply('jij');
-    return;
   }
 
   if (interaction.commandName === 'combine') {
@@ -570,14 +579,14 @@ client.on('interactionCreate', async (interaction) => {
       'close',
       (function (interaction) {
         //Here you can get the exit code of the script
-        return function (code) {
+        return async function (code) {
           if (code == 0) {
-            interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
+            await interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
               fs.removeSync(outdir);
             });
             return;
           }
-          interaction.editReply({ content: 'gif creation failed' });
+          await interaction.editReply({ content: 'gif creation failed' });
           fs.removeSync(outdir);
         };
       })(interaction) // closure to keep |interaction|
@@ -587,6 +596,7 @@ client.on('interactionCreate', async (interaction) => {
   //interaction chatgpt
   if (interaction.commandName === 'chatgpt') {
     try {
+      await interaction.deferReply();
       const text: string = interaction.options.get('text').value as string;
 
       const completion = await openai.chat.completions.create({
@@ -594,10 +604,11 @@ client.on('interactionCreate', async (interaction) => {
         messages: [{ role: 'user', content: text }]
       });
 
-      await interaction.reply(completion.choices[0].message.content);
+      await interaction.editReply(completion.choices[0].message.content);
       return;
     } catch (error) {
       console.log(`Error at chatgpt --> ${error}`);
+      await interaction.editReply('failed to translate.');
       return;
     }
   }
@@ -605,19 +616,14 @@ client.on('interactionCreate', async (interaction) => {
   //interaction translate
   if (interaction.commandName === 'translate') {
     try {
+      await interaction.deferReply();
       const text = interaction.options.get('text').value;
 
-      translateText(text, 'en')
-        .then((res: string) => {
-          interaction.reply(res);
-          return;
-        })
-        .catch((err) => {
-          console.log(err);
-          return;
-        });
+      const translatedText = String(await translateText(text, 'en'));
+      await interaction.editReply(translatedText);
     } catch (error) {
       console.log(`Error at translate --> ${error}`);
+      await interaction.editReply('Failed to translate.');
       return;
     }
   }
@@ -625,16 +631,15 @@ client.on('interactionCreate', async (interaction) => {
   //interaction help
   if (interaction.commandName === 'help') {
     try {
-      interaction.reply(
+      await interaction.deferReply();
+      await interaction.editReply(
         'https://cdn.discordapp.com/attachments/251211223012474880/1300042554934300722/image.png?ex=671f667a&is=671e14fa&hm=703c0932387a3bc78522323b9f1d7ba21440b18921d6405e9899b14a4d1b96eb&'
       );
       return;
     } catch (error) {
       console.log(`Error at help --> ${error}`);
+      await interaction.editReply('Failed to help.');
       return;
     }
   }
 });
-
-//login
-client.login(process.env.DISCORD_TOKEN);
