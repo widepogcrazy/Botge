@@ -3,6 +3,7 @@ import { exec, spawn } from 'child_process';
 import * as path from 'path';
 import fetch from 'node-fetch';
 import * as fs from 'fs-extra';
+import { writeFile, rm } from 'node:fs/promises';
 import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
@@ -205,7 +206,7 @@ async function downloadGifs(urls, outdir) {
     const buffer = await response.buffer();
     const fileName = `${counter}_` + path.basename(url);
     const filePath = path.join(outdir, fileName);
-    await fs.writeFile(filePath, buffer);
+    await writeFile(filePath, buffer);
     downloadedFiles.push(filePath);
     counter++;
   }
@@ -400,12 +401,12 @@ client.on('interactionCreate', async (interaction) => {
         return async function (code) {
           if (code == 0) {
             await interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
-              fs.removeSync(outdir);
+              rm(outdir, { recursive: true });
             });
             return;
           }
           await interaction.editReply({ content: 'gif creation failed' });
-          fs.removeSync(outdir);
+          rm(outdir, { recursive: true });
         };
       })(interaction) // closure to keep |interaction|
     );
