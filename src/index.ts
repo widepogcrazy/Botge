@@ -324,6 +324,7 @@ export async function newEmoteMatcher(): Promise<EmoteMatcher> {
 }
 
 let em = await newEmoteMatcher();
+console.log("Emote cache ready");
 
 // returns a url, or undefined if not found
 function matchEmote(query, size): string | undefined {
@@ -332,7 +333,9 @@ function matchEmote(query, size): string | undefined {
 
 // update ever 5 minutes
 schedule.scheduleJob('*/5 * * * *', async () => {
+  console.log("Emote cache refreshing");
   em = await newEmoteMatcher();
+  console.log("Emote cache refreshed");
 });
 
 //on ready

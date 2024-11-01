@@ -72,7 +72,10 @@ class SuffixTree {
   }
 
   addAllSuffix(asset: AssetInfo, priority: number) {
-    this._addAllSuffix(asset.name.toLowerCase(), priority, asset);
+    const normalized = asset.name.toLowerCase();
+    for (let i = 0; i < normalized.length; i++) {
+      this._addAllSuffix(normalized.slice(i), priority, asset);
+    }
   }
 
   _query(normalizedSuffix: string, original: string): AssetInfo | undefined {
