@@ -7,10 +7,11 @@ import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
 import * as https from 'https';
-import CacheableRequest from 'cacheable-request';
 
 import { TranslateHandler } from './command/translate.js';
 import { chatgptHandler } from './command/openai.js';
+import { AssetInfo, EmoteMatcher } from './emoteMatcher.js';
+import * as schedule from 'node-schedule';
 
 dotenv.config();
 
@@ -31,9 +32,6 @@ const translate = new Translate({
 
 // print stack on warnings
 process.on('warning', (e) => console.log(e.stack));
-
-//cachable-request
-const cacheableRequest = new CacheableRequest(https.request).request();
 
 //twitch
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
@@ -94,27 +92,6 @@ async function reqWithStatusCode(options: any): Promise<any> {
       })
       .on('error', (err: any) => reject(err));
     reqge.end();
-  });
-}
-
-//cacheReq
-async function cacheReq(options: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    let data: any = [];
-    cacheableRequest(options)
-      .on('response', (res: any) => {
-        res
-          .on('data', (d: any) => {
-            data.push(d);
-          })
-          .on('end', () => {
-            resolve(JSON.parse(Buffer.concat(data).toString()));
-          });
-      })
-      .on('request', (req: any) => {
-        req.end();
-      })
-      .on('error', (err: any) => reject(err));
   });
 }
 
@@ -315,206 +292,47 @@ async function stackGifs(files, outdir) {
   }
 }
 
-// returns a url, or undefined if not found
-async function matchEmotes(query, size) {
-  const optionsName = query;
-  const optionsNameLowerCase = query.toLowerCase();
+const api_endpoints = {
+  sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
+  sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
+  bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
+  bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
+  ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
+  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global'
+};
 
-  //urlge
-  const urlgePrefix = 'https:';
-  const urlgePrefixBTTV = 'https://cdn.betterttv.net/emote/';
-
-  //size invalid
-  if (!(size > 0 && size < 5)) return;
-
-  //functions
-  function matchEmotesTwitchGlobal(emotes: any, template: string): string | undefined {
-    try {
-      const sizege = size === 4 ? 2 : size;
-      for (const id in emotes) {
-        //consts
-        const emote = emotes[id];
-        const emote_id = emote.id;
-        const nameLowerCase = String(emote.name).toLowerCase();
-        const format = emote.format;
-        const scale = emote.scale;
-        const theme_mode = emote.theme_mode;
-
-        //check
-        if (nameLowerCase === optionsNameLowerCase) {
-          const urlge = template
-            .replace('{{id}}', emote_id)
-            .replace('{{format}}', format.length === 2 ? format[1] : format[0])
-            .replace('{{theme_mode}}', theme_mode.length === 2 ? theme_mode[1] : theme_mode[0])
-            .replace('{{scale}}', scale[sizege - 1]);
-
-          return urlge;
-        }
-      }
-
-      return undefined;
-    } catch (error) {
-      console.log(`Error at matchEmotes7TV --> ${error}`);
-      return undefined;
-    }
+export async function newEmoteMatcher(): Promise<EmoteMatcher> {
+  try {
+    const sevenPersonal = fetch(api_endpoints.sevenPersonal);
+    const sevenGlobal = fetch(api_endpoints.sevenGlobal);
+    const bttvPersonal = fetch(api_endpoints.bttvPersonal);
+    const bttvGlobal = fetch(api_endpoints.bttvGlobal);
+    const ffzPersonal = fetch(api_endpoints.ffzPersonal);
+    const ffzGlobal = fetch(api_endpoints.ffzGlobal);
+    return new EmoteMatcher(
+      await (await sevenPersonal).json(),
+      await (await sevenGlobal).json(),
+      await (await bttvPersonal).json(),
+      await (await bttvGlobal).json(),
+      await (await ffzPersonal).json(),
+      await (await ffzGlobal).json()
+    );
+  } catch (err) {
+    console.log(err);
   }
-  function matchEmotes7TV(emotes: any, isLowerCase: boolean, isInclude: boolean): string | undefined {
-    try {
-      for (const id in emotes) {
-        //consts
-        const emote = emotes[id];
-        const is_animated = emote.data.animated;
-        const urlge = emote.data.host.url;
-        const name = isLowerCase ? String(emote.name).toLowerCase() : String(emote.name);
-        const urlgeSuffix = '/' + size + 'x.' + (is_animated ? 'gif' : 'webp');
-
-        //check
-        if (
-          isInclude ? name.includes(optionsNameLowerCase) : name === (isLowerCase ? optionsNameLowerCase : optionsName)
-        ) {
-          return urlgePrefix + urlge + urlgeSuffix;
-        }
-      }
-
-      return undefined;
-    } catch (error) {
-      console.log(`Error at matchEmotes7TV --> ${error}`);
-      return undefined;
-    }
-  }
-
-  function matchEmotesBTTV(emotes: any): string | undefined {
-    try {
-      //size 4 is not accaptable, work with size 2
-      const sizege = size === 4 ? 2 : size;
-
-      for (const id in emotes) {
-        //consts
-        const emote = emotes[id];
-        const is_animated = emote.animated;
-        const urlge = emote.id;
-        const nameLowerCase = String(emote.code).toLowerCase();
-        const urlgeSuffix = '/' + sizege + 'x.' + (is_animated ? 'gif' : 'webp');
-
-        //check
-        if (nameLowerCase === optionsNameLowerCase) {
-          return urlgePrefixBTTV + urlge + urlgeSuffix;
-        }
-      }
-
-      return undefined;
-    } catch (error) {
-      console.log(`Error at matchEmotesBTTV --> ${error}`);
-      return undefined;
-    }
-  }
-
-  function matchEmotesFFZ(emotes: any): string | undefined {
-    try {
-      //size 4 is not accaptable, work with size 2
-      const sizege = size === 3 ? 2 : size;
-
-      for (const id in emotes) {
-        //consts
-        const emote = emotes[id];
-        const nameLowerCase = String(emote.name).toLowerCase();
-        const urlge = emote.urls[sizege];
-
-        //check
-        if (nameLowerCase === optionsNameLowerCase) {
-          return urlge;
-        }
-      }
-
-      return undefined;
-    } catch (error) {
-      console.log(`Error at matchEmotesFFZ --> ${error}`);
-      return undefined;
-    }
-  }
-
-  //7TV CuteDog
-  //cacheReq & emotes
-  const cachereq7TV_CD = await cacheReq(options7TVCuteDog);
-  const emotes7TV_CD = cachereq7TV_CD.emotes;
-  //matchEmotes - default check
-  const matchemotes7TV_CD_1 = matchEmotes7TV(emotes7TV_CD, false, false);
-  if (matchemotes7TV_CD_1 !== undefined) return matchemotes7TV_CD_1;
-  //matchEmotes - lowercase check
-  const matchemotes7TV_CD_2 = matchEmotes7TV(emotes7TV_CD, true, false);
-  if (matchemotes7TV_CD_2 !== undefined) return matchemotes7TV_CD_2;
-
-  //7TV Global
-  //cacheReq & emotes
-  const cachereq7TV_G = await cacheReq(options7TVGlobal);
-  const emotes7TV_G = cachereq7TV_G.emotes;
-  //matchEmotes
-  const matchemotes7TV_G = matchEmotes7TV(emotes7TV_G, true, false);
-  if (matchemotes7TV_G !== undefined) return matchemotes7TV_G;
-
-  //BTTV CuteDog
-  //cacheReq
-  const cachereqBTTV_CD = await cacheReq(optionsBTTVCuteDog);
-
-  //BTTV CuteDog 1-2 Channel Emotes
-  //emotes
-  const emotesBTTV_CD_1 = cachereqBTTV_CD['channelEmotes'];
-  //matchEmotes
-  const matchemotesBTTV_CD_1 = matchEmotesBTTV(emotesBTTV_CD_1);
-  if (matchemotesBTTV_CD_1 !== undefined) return matchemotesBTTV_CD_1;
-
-  //BTTV CuteDog 2-2 Shared Emotes
-  //emotes
-  const emotesBTTV_CD_2 = cachereqBTTV_CD['sharedEmotes'];
-  //matchEmotes
-  const matchemotesBTTV_CD_2 = matchEmotesBTTV(emotesBTTV_CD_2);
-  if (matchemotesBTTV_CD_2 !== undefined) return matchemotesBTTV_CD_2;
-
-  //BTTV Global
-  //cacheReq & emotes
-  const cachereqBTTV_G = await cacheReq(optionsBTTVGlobal);
-  const emotesBTTV_G = cachereqBTTV_G;
-  //matchEmotes
-  const matchemotesBTTV_G = matchEmotesBTTV(emotesBTTV_G);
-  if (matchemotesBTTV_G !== undefined) return matchemotesBTTV_G;
-
-  //FFZ Cutedog
-  //cacheReq & emotes
-  const cachereqFFZ_CD = await cacheReq(optionsFFZCutedog);
-  const emotesFFZ_CD = cachereqFFZ_CD.sets['295317'].emoticons;
-  //matchEmotes
-  const matchemotesFFZ_CD = matchEmotesFFZ(emotesFFZ_CD);
-  if (matchemotesFFZ_CD !== undefined) return matchemotesFFZ_CD;
-
-  //FFZ Global
-  //cacheReq & emotes
-  const cachereqFFZ_G = await cacheReq(optionsFFZGlobal);
-  const emotesFFZ_G = cachereqFFZ_G.sets['3'].emoticons;
-  //matchEmotes
-  const matchemotesFFZ_G = matchEmotesFFZ(emotesFFZ_G);
-  if (matchemotesFFZ_G !== undefined) return matchemotesFFZ_G;
-
-  //Twitch Global
-  //options
-  const optionsTwitchGlobal = await getOptionsTwitchGlobal(access_tokenge);
-  if (optionsTwitchGlobal !== undefined) {
-    //cacheReq & emotes
-    const cachereqTwitch_G = await cacheReq(optionsTwitchGlobal);
-    const templateTwitch_G = String(cachereqTwitch_G.template);
-    const emotesTwitch_G = cachereqTwitch_G.data;
-
-    //matchEmotes
-    const matchemotesTwitch_G = matchEmotesTwitchGlobal(emotesTwitch_G, templateTwitch_G);
-    if (matchemotesTwitch_G !== undefined) return matchemotesTwitch_G;
-  }
-
-  //7TV CuteDog - Last check, if nothing matched so far
-  //matchEmotes - lowercase include check
-  const matchemotes7TV_CD_3 = matchEmotes7TV(emotes7TV_CD, true, true);
-  if (matchemotes7TV_CD_3 !== undefined) return matchemotes7TV_CD_3;
-
-  return;
 }
+
+let em = await newEmoteMatcher();
+
+// returns a url, or undefined if not found
+function matchEmote(query, size): string | undefined {
+  return em.matchSingle(query).url;
+}
+
+// update ever 5 minutes
+schedule.scheduleJob('*/5 * * * *', async () => {
+  em = await newEmoteMatcher();
+});
 
 //on ready
 client.on('ready', () => {
@@ -537,7 +355,7 @@ client.on('interactionCreate', async (interaction) => {
       const optionsSize: string = interaction.options.get('size')?.value as string;
       const size = optionsSize === undefined ? 2 : parseInt(optionsSize);
 
-      const ret = await matchEmotes(optionsName, size);
+      const ret = await matchEmote(optionsName, size);
       if (ret) {
         await interaction.editReply(ret);
         return;
@@ -547,6 +365,7 @@ client.on('interactionCreate', async (interaction) => {
         return;
       }
     } catch (error) {
+      console.log(error.stack);
       console.log(`Error at emote --> ${error}`);
       await interaction.editReply('Failed to provide emote.');
       return;
@@ -564,7 +383,7 @@ client.on('interactionCreate', async (interaction) => {
       if (emotes[i] == '') {
         continue;
       }
-      const url = await matchEmotes(emotes[i], 4);
+      const url = await matchEmote(emotes[i], 4);
       if (url) {
         emoteUrls.push(url);
       }
