@@ -7,7 +7,6 @@ import { writeFile, rm } from 'node:fs/promises';
 import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
-import * as https from 'https';
 
 import { TranslateHandler } from './command/translate.js';
 import { chatgptHandler } from './command/openai.js';
@@ -87,7 +86,7 @@ const emote_endpoints = {
 
 export async function newEmoteMatcher(): Promise<EmoteMatcher> {
   try {
-    const twitchGlobalOptions = await twitchglobalhandler.getOptionsTwitchGlobal();
+    const twitchGlobalOptions = await twitchglobalhandler.getTwitchGlobalOptions();
 
     const sevenPersonal = fetch(emote_endpoints.sevenPersonal);
     const sevenGlobal = fetch(emote_endpoints.sevenGlobal);
@@ -119,17 +118,6 @@ schedule.scheduleJob('*/5 * * * *', async () => {
   em = await newEmoteMatcher();
   console.log('Emote cache refreshed');
 });
-
-//translateText
-const translateText = async (text, targetLanguage) => {
-  try {
-    const [response] = await translate.translate(text, targetLanguage);
-    return response;
-  } catch (error) {
-    console.log(`Error at translateText --> ${error}`);
-    return 0;
-  }
-};
 
 // Function to download GIFs from URLs
 async function downloadGifs(emotes: AssetInfo[], outdir) {

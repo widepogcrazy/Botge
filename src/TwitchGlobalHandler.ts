@@ -58,7 +58,7 @@ export class TwitchGlobalHandler {
     this.access_token_validation_status = twitchAccessTokenValidation.status;
   }
 
-  getOptionsTwitchGlobal(): any | undefined {
+  getTwitchGlobalOptions(): any | undefined {
     if (!this.gotAccessToken() || !this.isAccessTokenValidated()) {
       return undefined;
     }

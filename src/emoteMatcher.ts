@@ -1,8 +1,3 @@
-import { stringify } from 'openai/internal/qs/stringify.mjs';
-import { assign_single_source } from 'openai/internal/qs/utils.mjs';
-import { AssistantStream } from 'openai/lib/AssistantStream.mjs';
-import fetch from 'node-fetch';
-
 export interface AssetInfo {
   name: string;
   url: string;
@@ -113,21 +108,21 @@ class SuffixTree {
 function sevenToAsset(emote: any): AssetInfo {
   return {
     name: emote.name,
-    url: 'https:' + emote.data.host.url + '/4x.' + (emote.data.animated ? 'gif' : 'png')
+    url: 'https:' + emote.data.host.url + '/2x.' + (emote.data.animated ? 'gif' : 'png')
   };
 }
 
 function bttvToAsset(emote: any): AssetInfo {
   return {
     name: emote.code,
-    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/3x.' + (emote.animated ? 'gif' : 'webp')
+    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/2x.' + (emote.animated ? 'gif' : 'webp')
   };
 }
 
 function ffzToAsset(emote: any): AssetInfo {
   return {
     name: emote.name,
-    url: emote.urls['4']
+    url: emote.urls['2']
   };
 }
 
