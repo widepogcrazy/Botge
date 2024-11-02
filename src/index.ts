@@ -12,6 +12,7 @@ import * as https from 'https';
 import { TranslateHandler } from './command/translate.js';
 import { chatgptHandler } from './command/openai.js';
 import { AssetInfo, EmoteMatcher } from './emoteMatcher.js';
+import { TwitchGlobalHandler } from './TwitchGlobalHandler.js';
 import * as schedule from 'node-schedule';
 
 dotenv.config();
@@ -37,14 +38,41 @@ process.on('warning', (e) => console.log(e.stack));
 //twitch
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const TWITCH_SECRET = process.env.TWITCH_SECRET;
-const postDataTwitchAccessToken = `client_id=${TWITCH_CLIENT_ID}&client_secret=${TWITCH_SECRET}&grant_type=client_credentials`;
+const twitchglobalhandler = TwitchGlobalHandler.getInstance(TWITCH_CLIENT_ID, TWITCH_SECRET);
 
-//options
-const optionsTwitchAccessToken = {
-  hostname: 'id.twitch.tv',
-  path: '/oauth2/token',
-  method: 'POST'
-};
+async function getAndValidateTwitchAccessToken() {
+  await twitchglobalhandler.getTwitchAccessToken();
+  await twitchglobalhandler.validateTwitchAccessToken();
+}
+
+function logGotAccessToken() {
+  if (twitchglobalhandler.gotAccessToken()) {
+    console.log('Got Twitch Access Token.');
+  } else {
+    console.log('Failed to get Twitch Access Token.');
+  }
+}
+function logIsAccessTokenValidated() {
+  if (twitchglobalhandler.isAccessTokenValidated()) {
+    console.log('Twitch Access Token is valid.');
+  } else {
+    console.log('Twitch Access Token is invalid.');
+  }
+}
+
+await getAndValidateTwitchAccessToken();
+logGotAccessToken();
+logIsAccessTokenValidated();
+
+schedule.scheduleJob('*/60 * * * *', async () => {
+  await twitchglobalhandler.validateTwitchAccessToken();
+  logIsAccessTokenValidated();
+  if (!twitchglobalhandler.isAccessTokenValidated()) {
+    await getAndValidateTwitchAccessToken();
+    logGotAccessToken();
+    logIsAccessTokenValidated();
+  }
+});
 
 // emotes
 const emote_endpoints = {
@@ -53,24 +81,29 @@ const emote_endpoints = {
   bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
   bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
   ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
-  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global'
+  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global',
+  twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
 };
 
 export async function newEmoteMatcher(): Promise<EmoteMatcher> {
   try {
+    const twitchGlobalOptions = await twitchglobalhandler.getOptionsTwitchGlobal();
+
     const sevenPersonal = fetch(emote_endpoints.sevenPersonal);
     const sevenGlobal = fetch(emote_endpoints.sevenGlobal);
     const bttvPersonal = fetch(emote_endpoints.bttvPersonal);
     const bttvGlobal = fetch(emote_endpoints.bttvGlobal);
     const ffzPersonal = fetch(emote_endpoints.ffzPersonal);
     const ffzGlobal = fetch(emote_endpoints.ffzGlobal);
+    const twitchGlobal = twitchGlobalOptions ? fetch(emote_endpoints.twitchGlobal, twitchGlobalOptions) : undefined;
     return new EmoteMatcher(
       await (await sevenPersonal).json(),
       await (await sevenGlobal).json(),
       await (await bttvPersonal).json(),
       await (await bttvGlobal).json(),
       await (await ffzPersonal).json(),
-      await (await ffzGlobal).json()
+      await (await ffzGlobal).json(),
+      await (await twitchGlobal)?.json()
     );
   } catch (err) {
     console.log(err);
@@ -86,116 +119,6 @@ schedule.scheduleJob('*/5 * * * *', async () => {
   em = await newEmoteMatcher();
   console.log('Emote cache refreshed');
 });
-
-//reqWithStatusCode
-async function reqWithStatusCode(options: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    let data: any = [];
-    const reqge = https
-      .request(options)
-      .on('response', (res: any) => {
-        res
-          .on('data', (d: any) => {
-            data.push(d);
-          })
-          .on('end', () => {
-            resolve([Buffer.concat(data).toString(), res.statusCode]);
-          });
-      })
-      .on('error', (err: any) => reject(err));
-    reqge.end();
-  });
-}
-
-//postdata
-async function postData(options: any, postdata: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    let data: any = [];
-    const req = https
-      .request(options)
-      .on('response', (res: any) => {
-        res
-          .on('data', (d: any) => {
-            data.push(d);
-          })
-          .on('end', () => {
-            resolve(Buffer.concat(data).toString());
-          });
-      })
-      .on('error', (err: any) => reject(err));
-    req.write(postdata);
-    req.end();
-  });
-}
-
-let access_tokenge;
-let access_tokenge_statusCode;
-
-async function getTwitchAccessToken() {
-  const postdata = await postData(optionsTwitchAccessToken, postDataTwitchAccessToken);
-  const postdataJSON = JSON.parse(postdata);
-  const access_token = postdataJSON.access_token;
-  access_tokenge = access_token;
-  console.log('Got Twitch Access Token.');
-}
-
-async function validateTwitchAccessToken(access_token: any): Promise<any> {
-  const optionsTwitchAccessTokenValidate = {
-    hostname: 'id.twitch.tv',
-    path: '/oauth2/validate',
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${access_token}`
-    }
-  };
-
-  const res = await reqWithStatusCode(optionsTwitchAccessTokenValidate);
-  const resJSON = JSON.parse(res[0]);
-  const resStatusCode = res[1];
-  if (resStatusCode === 401) {
-    console.log(`TwitchAccessToken is invalid. statusCode: ${resStatusCode}`);
-  } else {
-    console.log(`TwitchAccessToken is valid. statusCode: ${resStatusCode}`);
-  }
-  console.log(resJSON);
-  return resStatusCode;
-}
-
-function getOptionsTwitchGlobal(access_token: any): any | undefined {
-  if (access_tokenge_statusCode === 401) {
-    return undefined;
-  }
-  const optionsTwitchGlobal = {
-    hostname: 'api.twitch.tv',
-    path: '/helix/chat/emotes/global',
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-      'Client-Id': TWITCH_CLIENT_ID
-    }
-  };
-  return optionsTwitchGlobal;
-}
-
-try {
-  await getTwitchAccessToken();
-  await validateTwitchAccessToken(access_tokenge);
-  setInterval(
-    async function () {
-      console.log('Hourly Twitch Access Token Check.');
-      if ((await validateTwitchAccessToken(access_tokenge)) === 401) {
-        await getTwitchAccessToken();
-        await validateTwitchAccessToken(access_tokenge);
-      }
-    },
-    60 * 60 * 1000
-  );
-
-  //login
-  client.login(process.env.DISCORD_TOKEN);
-} catch (err) {
-  console.log(err);
-}
 
 //translateText
 const translateText = async (text, targetLanguage) => {

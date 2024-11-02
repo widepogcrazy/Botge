@@ -131,9 +131,18 @@ function ffzToAsset(emote: any): AssetInfo {
   };
 }
 
+function twitchToAsset(emote: any): AssetInfo {
+  const format = emote.format.length === 2 ? emote.format[1] : emote.format[0];
+  const theme_mode = emote.theme_mode.length === 2 ? emote.theme_mode[1] : emote.theme_mode[0];
+  return {
+    name: emote.name,
+    url: `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/${format}/${theme_mode}/2.0`
+  };
+}
+
 export class EmoteMatcher {
   root: SuffixTree;
-  constructor(sevenPersonal, sevenGlobal, bttvPersonal, bttvGlobal, ffzPersonal, ffzGlobal) {
+  constructor(sevenPersonal, sevenGlobal, bttvPersonal, bttvGlobal, ffzPersonal, ffzGlobal, twitchGlobal?) {
     this.root = new SuffixTree();
     // console.log(sevenPersonal)
     for (const emote of sevenPersonal.emotes) {
@@ -158,6 +167,11 @@ export class EmoteMatcher {
     for (const set_id of ffzGlobal.default_sets) {
       for (const emote of ffzGlobal.sets[set_id].emoticons) {
         this.root.addAllSuffix(ffzToAsset(emote), 6);
+      }
+    }
+    if (twitchGlobal) {
+      for (const emote of twitchGlobal.data) {
+        this.root.addAllSuffix(twitchToAsset(emote), 7);
       }
     }
   }
