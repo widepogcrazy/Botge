@@ -286,11 +286,11 @@ async function overlayGifs(emotes: AssetInfo[], outdir: string) {
     let fileCount = 0;
     let letterCount = 0;
     let lastletter;
-    let filterstring = `"pad=${maxWidth}:${maxHeight}:(${maxWidth}-iw)/2:(${maxHeight}-ih):color=black@0.0[0];`;
+    let filterstring = `pad=${maxWidth}:${maxHeight}:(${maxWidth}-iw)/2:(${maxHeight}-ih):color=black@0.0[0];`;
     downloadedFiles.slice(1).forEach(() => {
       filterstring += `[${letterCount === 0 ? 0 : toLetters(letterCount)}][${++fileCount}]overlay=(W-w)/2:(H-h)/2[${(lastletter = toLetters(++letterCount))}];`;
     });
-    filterstring += `[${lastletter}]split=2[${lastletter}][palette];[palette]palettegen[p];[${lastletter}][p]paletteuse"`;
+    filterstring += `[${lastletter}]split=2[${lastletter}][palette];[palette]palettegen[p];[${lastletter}][p]paletteuse`;
 
     args.push(filterstring);
 
