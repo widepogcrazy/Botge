@@ -158,6 +158,31 @@ function getGifDuration(file): Promise<number> {
   });
 }
 
+function getGifWidthAndHeight(file): Promise<[number, number]> {
+  return new Promise((resolve, reject) => {
+    exec(
+      `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 ${file}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(`Error getting widthAndHeight: ${stderr}`);
+          return;
+        }
+        const widthAndHeight = stdout.trim();
+
+        // Check if duration is "N/A" or empty, reject if so
+        if (widthAndHeight === 'N/A' || widthAndHeight === '') {
+          reject();
+        } else {
+          const widthAndHeight2 = widthAndHeight.split('x');
+          const width = Number(widthAndHeight2[0]);
+          const height = Number(widthAndHeight2[1]);
+          resolve([width, height]);
+        }
+      }
+    );
+  });
+}
+
 async function stackGifs(emotes: AssetInfo[], outdir: string) {
   try {
     // Download GIFs - having local files is faster when using ffmpeg
@@ -215,6 +240,77 @@ async function stackGifs(emotes: AssetInfo[], outdir: string) {
   }
 }
 
+async function overlayGifs(emotes: AssetInfo[], outdir: string) {
+  try {
+    function toLetters(num) {
+      'use strict';
+      var mod = num % 26,
+        pow = (num / 26) | 0,
+        out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
+      return pow ? toLetters(pow) + out : out;
+    }
+
+    // Download GIFs - having local files is faster when using ffmpeg
+    const downloadedFiles = await downloadGifs(emotes, outdir);
+    // Get durations for each GIF
+    const durations = await Promise.all(downloadedFiles.map(getGifDuration));
+    const maxDuration = Math.max(...durations.filter((value) => !Number.isNaN(value)));
+    console.log(`Max duration: ${maxDuration}`);
+    const has_animated: boolean = maxDuration != -Infinity;
+
+    const widthAndHeights = await Promise.all(downloadedFiles.map(getGifWidthAndHeight));
+    const maxWidthAndHeightMultiplied = Math.max(
+      ...widthAndHeights.map((widthAndHeight) => widthAndHeight[0] * widthAndHeight[1])
+    );
+    const maxWidthAndHeight = widthAndHeights.find(
+      (widthAndHeight) => widthAndHeight[0] * widthAndHeight[1] === maxWidthAndHeightMultiplied
+    );
+    const maxWidth = maxWidthAndHeight[0];
+    const maxHeight = maxWidthAndHeight[1];
+    console.log(`Max widthAndHeight: ${maxWidthAndHeight}`);
+
+    const args = [];
+    downloadedFiles.forEach((file) => {
+      if (has_animated) {
+        args.push('-stream_loop');
+        args.push('-1');
+        args.push('-t');
+        args.push(`${maxDuration}`);
+      }
+      args.push('-i');
+      args.push(`${file}`);
+    });
+
+    args.push('-filter_complex');
+
+    let fileCount = 0;
+    let letterCount = 0;
+    let lastletter;
+    let filterstring = `"pad=${maxWidth}:${maxHeight}:(${maxWidth}-iw)/2:(${maxHeight}-ih):color=black@0.0[0];`;
+    downloadedFiles.slice(1).forEach(() => {
+      filterstring += `[${letterCount === 0 ? 0 : toLetters(letterCount)}][${++fileCount}]overlay=(W-w)/2:(H-h)/2[${(lastletter = toLetters(++letterCount))}];`;
+    });
+    filterstring += `[${lastletter}]split=2[${lastletter}][palette];[palette]palettegen[p];[${lastletter}][p]paletteuse"`;
+
+    args.push(filterstring);
+
+    args.push('-t');
+    args.push(`${maxDuration}`);
+
+    args.push('-y');
+    args.push('-fs');
+    args.push('25M');
+
+    const outputfile = path.join(outdir, 'output.gif');
+    args.push(outputfile);
+
+    console.log('Running command: ffmpeg ' + args.join(' '));
+    return spawn('ffmpeg', args);
+  } catch (error) {
+    console.error(`Error overlaying GIFs: ${error}`);
+  }
+}
+
 //on ready
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -262,6 +358,34 @@ client.on('interactionCreate', async (interaction) => {
     fs.ensureDirSync(outdir);
     // Dont need try catch if it works 100% of the time YEP
     const ffmpeg_process = await stackGifs(emotes, outdir);
+
+    ffmpeg_process.on(
+      'close',
+      (function (interaction) {
+        //Here you can get the exit code of the script
+        return async function (code) {
+          if (code == 0) {
+            await interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
+              rm(outdir, { recursive: true });
+            });
+            return;
+          }
+          await interaction.editReply({ content: 'gif creation failed' });
+          rm(outdir, { recursive: true });
+        };
+      })(interaction) // closure to keep |interaction|
+    );
+  }
+
+  if (interaction.commandName === 'zerowidth') {
+    //name
+    await interaction.deferReply();
+    const query = String(interaction.options.get('emotes').value);
+    const emotes: AssetInfo[] = em.matchMulti(query);
+    const outdir = path.join('temp_gifs', interaction.id);
+    fs.ensureDirSync(outdir);
+    // Dont need try catch if it works 100% of the time YEP
+    const ffmpeg_process = await overlayGifs(emotes, outdir);
 
     ffmpeg_process.on(
       'close',

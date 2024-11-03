@@ -59,6 +59,18 @@ const commands = [
     ]
   },
   {
+    name: 'zerowidth',
+    description: 'overlay a list of emotes into a single image',
+    options: [
+      {
+        type: 3,
+        name: 'emotes',
+        description: 'list of emotes separated by space',
+        required: true
+      }
+    ]
+  },
+  {
     name: 'help',
     description: 'links an image with helpful directions to adding the bot.'
   }
