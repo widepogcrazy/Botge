@@ -211,6 +211,10 @@ async function stackGifs(emotes: AssetInfo[], outdir: string, callback : Functio
     const filterString =
       downloadedFiles
         .map((_, index) => {
+          const is_animated = !Number.isNaN(durations[index]);
+          if (is_animated) {
+            return `[${index}:v]scale=-1:64,fps=25[v${index}];`;
+          }
           return `[${index}:v]scale=-1:64[v${index}];`;
         })
         .join('') +
@@ -222,8 +226,6 @@ async function stackGifs(emotes: AssetInfo[], outdir: string, callback : Functio
     if (has_animated) {
       args.push('-t');
       args.push(`${maxDuration}`);
-      args.push('-vsync');
-      args.push('1');
     }
 
     args.push('-y');
