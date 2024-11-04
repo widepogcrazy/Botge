@@ -115,7 +115,7 @@ function sevenToAsset(emote: any): AssetInfo {
 function bttvToAsset(emote: any): AssetInfo {
   return {
     name: emote.code,
-    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/2x.' + (emote.animated ? 'gif' : 'webp')
+    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/2x.' + (emote.animated ? 'gif' : 'png')
   };
 }
 

@@ -149,7 +149,7 @@ function getGifDuration(file): Promise<number> {
         const default_duration = 3; // :3
         // Check if duration is "N/A" or empty, and use a default value
         if (duration === 'N/A' || duration === '') {
-          resolve(default_duration); // or any default value you prefer
+          resolve(NaN); // or any default value you prefer
         } else {
           resolve(parseFloat(duration));
         }
@@ -183,7 +183,7 @@ function getGifWidthAndHeight(file): Promise<[number, number]> {
   });
 }
 
-async function stackGifs(emotes: AssetInfo[], outdir: string) {
+async function stackGifs(emotes: AssetInfo[], outdir: string, callback : Function) {
   try {
     // Download GIFs - having local files is faster when using ffmpeg
     const downloadedFiles = await downloadGifs(emotes, outdir);
@@ -194,8 +194,9 @@ async function stackGifs(emotes: AssetInfo[], outdir: string) {
     const has_animated: boolean = maxDuration != -Infinity;
 
     const args = [];
-    downloadedFiles.forEach((file) => {
-      if (has_animated) {
+    downloadedFiles.forEach((file, i) => {
+      const is_animated = !Number.isNaN(durations[i]);
+      if (is_animated) {
         args.push('-stream_loop');
         args.push('-1');
         args.push('-t');
@@ -210,9 +211,6 @@ async function stackGifs(emotes: AssetInfo[], outdir: string) {
     const filterString =
       downloadedFiles
         .map((_, index) => {
-          if (has_animated) {
-            return `[${index}:v]scale=-1:64,fps=30[v${index}];`;
-          }
           return `[${index}:v]scale=-1:64[v${index}];`;
         })
         .join('') +
@@ -224,13 +222,17 @@ async function stackGifs(emotes: AssetInfo[], outdir: string) {
     if (has_animated) {
       args.push('-t');
       args.push(`${maxDuration}`);
+      args.push('-vsync');
+      args.push('1');
     }
 
     args.push('-y');
     args.push('-fs');
     args.push('25M');
 
-    const outputfile = path.join(outdir, 'output.gif');
+    const outputfileextension = has_animated ? 'gif' : 'png';
+    const outputfile = path.join(outdir, `output.${outputfileextension}`);
+    callback(outputfile);
     args.push(outputfile);
 
     console.log('Running command: ffmpeg ' + args.join(' '));
@@ -240,7 +242,7 @@ async function stackGifs(emotes: AssetInfo[], outdir: string) {
   }
 }
 
-async function overlayGifs(emotes: AssetInfo[], outdir: string) {
+async function overlayGifs(emotes: AssetInfo[], outdir: string, callback : Function) {
   try {
     function toLetters(num) {
       'use strict';
@@ -270,8 +272,9 @@ async function overlayGifs(emotes: AssetInfo[], outdir: string) {
     console.log(`Max widthAndHeight: ${maxWidthAndHeight}`);
 
     const args = [];
-    downloadedFiles.forEach((file) => {
-      if (has_animated) {
+    downloadedFiles.forEach((file,i) => {
+      const is_animated = !Number.isNaN(durations[i]);
+      if (is_animated) {
         args.push('-stream_loop');
         args.push('-1');
         args.push('-t');
@@ -294,14 +297,18 @@ async function overlayGifs(emotes: AssetInfo[], outdir: string) {
 
     args.push(filterstring);
 
-    args.push('-t');
-    args.push(`${maxDuration}`);
+    if( has_animated ) {
+      args.push('-t');
+      args.push(`${maxDuration}`);
+    }
 
     args.push('-y');
     args.push('-fs');
     args.push('25M');
 
-    const outputfile = path.join(outdir, 'output.gif');
+    const outputfileextension = has_animated ? 'gif' : 'png';
+    const outputfile = path.join(outdir, `output.${outputfileextension}`);
+    callback(outputfile);
     args.push(outputfile);
 
     console.log('Running command: ffmpeg ' + args.join(' '));
@@ -356,8 +363,10 @@ client.on('interactionCreate', async (interaction) => {
     const emotes: AssetInfo[] = em.matchMulti(query);
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);
+    let outputfile;
+    function callback( x : string ) { outputfile = x; }
     // Dont need try catch if it works 100% of the time YEP
-    const ffmpeg_process = await stackGifs(emotes, outdir);
+    const ffmpeg_process = await stackGifs(emotes, outdir, callback);
 
     ffmpeg_process.on(
       'close',
@@ -365,7 +374,7 @@ client.on('interactionCreate', async (interaction) => {
         //Here you can get the exit code of the script
         return async function (code) {
           if (code == 0) {
-            await interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
+            await interaction.editReply({ files: [outputfile] }).then((message) => {
               rm(outdir, { recursive: true });
             });
             return;
@@ -384,8 +393,10 @@ client.on('interactionCreate', async (interaction) => {
     const emotes: AssetInfo[] = em.matchMulti(query);
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);
+    let outputfile;
+    function callback( x : string ) { outputfile = x; }
     // Dont need try catch if it works 100% of the time YEP
-    const ffmpeg_process = await overlayGifs(emotes, outdir);
+    const ffmpeg_process = await overlayGifs(emotes, outdir, callback);
 
     ffmpeg_process.on(
       'close',
@@ -393,7 +404,7 @@ client.on('interactionCreate', async (interaction) => {
         //Here you can get the exit code of the script
         return async function (code) {
           if (code == 0) {
-            await interaction.editReply({ files: [path.join(outdir, 'output.gif')] }).then((message) => {
+            await interaction.editReply({ files: [outputfile] }).then((message) => {
               rm(outdir, { recursive: true });
             });
             return;
