@@ -13,6 +13,7 @@ import { chatgptHandler } from './command/openai.js';
 import { AssetInfo, EmoteMatcher } from './emoteMatcher.js';
 import { TwitchGlobalHandler } from './TwitchGlobalHandler.js';
 import * as schedule from 'node-schedule';
+import { emoteHandler } from './command/emote.js';
 
 dotenv.config();
 
@@ -332,36 +333,13 @@ client.on('interactionCreate', async (interaction) => {
 
   //interaction emote
   if (interaction.commandName === 'emote') {
-    try {
-      //name
-      await interaction.deferReply();
-      const optionsName = String(interaction.options.get('name').value);
-
-      //size
-      const optionsSize: string = interaction.options.get('size')?.value as string;
-      const size = optionsSize === undefined ? 2 : parseInt(optionsSize);
-
-      const ret = em.matchSingle(optionsName);
-      if (ret) {
-        await interaction.editReply(ret.url);
-        return;
-      } else {
-        //no emote found. reply
-        await interaction.editReply('jij');
-        return;
-      }
-    } catch (error) {
-      console.log(error.stack);
-      console.log(`Error at emote --> ${error}`);
-      await interaction.editReply('Failed to provide emote.');
-      return;
-    }
+    emoteHandler()(interaction, em);
   }
 
   if (interaction.commandName === 'combine') {
     //name
     await interaction.deferReply();
-    const query = String(interaction.options.get('emotes').value);
+    const query = String(interaction.options.get('emotes').value).split('\\s+');
     const emotes: AssetInfo[] = em.matchMulti(query);
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);
@@ -391,7 +369,7 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.commandName === 'zerowidth') {
     //name
     await interaction.deferReply();
-    const query = String(interaction.options.get('emotes').value);
+    const query = String(interaction.options.get('emotes').value).split('\\s+');
     const emotes: AssetInfo[] = em.matchMulti(query);
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);

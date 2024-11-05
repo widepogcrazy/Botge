@@ -1,7 +1,7 @@
 export interface AssetInfo {
   name: string;
   url: string;
-  //   zero_width?: boolean;
+  zero_width: boolean;
   //   w: number;
   //   h: number;
   //   duration?: number;
@@ -108,21 +108,24 @@ class SuffixTree {
 function sevenToAsset(emote: any): AssetInfo {
   return {
     name: emote.name,
-    url: 'https:' + emote.data.host.url + '/2x.' + (emote.data.animated ? 'gif' : 'png')
+    url: 'https:' + emote.data.host.url + '/2x.' + (emote.data.animated ? 'gif' : 'png'),
+    zero_width: !!(1 & emote.flags)
   };
 }
 
 function bttvToAsset(emote: any): AssetInfo {
   return {
     name: emote.code,
-    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/2x.' + (emote.animated ? 'gif' : 'png')
+    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/2x.' + (emote.animated ? 'gif' : 'png'),
+    zero_width: false
   };
 }
 
 function ffzToAsset(emote: any): AssetInfo {
   return {
     name: emote.name,
-    url: emote.urls['2']
+    url: emote.urls['2'],
+    zero_width: false
   };
 }
 
@@ -131,7 +134,8 @@ function twitchToAsset(emote: any): AssetInfo {
   const theme_mode = emote.theme_mode.length === 2 ? emote.theme_mode[1] : emote.theme_mode[0];
   return {
     name: emote.name,
-    url: `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/${format}/${theme_mode}/2.0`
+    url: `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/${format}/${theme_mode}/2.0`,
+    zero_width: false
   };
 }
 
@@ -175,17 +179,8 @@ export class EmoteMatcher {
     return this.root.query(query);
   }
 
-  matchMulti(queries: string): AssetInfo[] {
-    const ret: AssetInfo[] = new Array();
-    for (const query of queries.split(' ')) {
-      if (query === '') {
-        continue;
-      }
-      const match = this.root.query(query);
-      if (match != undefined) {
-        ret.push(match as AssetInfo);
-      }
-    }
-    return ret;
+  // returns undefined for unmatched
+  matchMulti(queries: string[]): (AssetInfo | undefined)[] {
+    return queries.map((q) => this.root.query(q));
   }
 }
