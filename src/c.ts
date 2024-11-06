@@ -47,6 +47,18 @@ const commands = [
     ]
   },
   {
+    name: 'shortestuniquesubstrings',
+    description: 'outputs the shortest unique substring(s) for the emote(s)',
+    options: [
+      {
+        type: 3,
+        name: 'emotes',
+        description: 'emote or emotes separated by space',
+        required: true
+      }
+    ]
+  },
+  {
     name: 'combine',
     description: 'combine a list of emotes into a single image',
     options: [

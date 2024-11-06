@@ -14,6 +14,7 @@ import { AssetInfo, EmoteMatcher } from './emoteMatcher.js';
 import { TwitchGlobalHandler } from './TwitchGlobalHandler.js';
 import * as schedule from 'node-schedule';
 import { emoteHandler } from './command/emote.js';
+import { getShortestUniqueSubstrings } from './command/uniquesubstring.js';
 
 dotenv.config();
 
@@ -334,6 +335,37 @@ client.on('interactionCreate', async (interaction) => {
   //interaction emote
   if (interaction.commandName === 'emote') {
     emoteHandler()(interaction, em);
+  }
+
+  if (interaction.commandName === 'shortestuniquesubstrings') {
+    await interaction.deferReply();
+
+    const text: string[] = String(interaction.options.get('emotes').value).split(/\s+/);
+    const get_shortest_unique_substrings: [string, string[] | undefined][] = text.map((t) =>
+      getShortestUniqueSubstrings(em, t)
+    );
+
+    let message: string = '';
+    for (const i in get_shortest_unique_substrings) {
+      const j = get_shortest_unique_substrings[i];
+
+      const original: string | undefined = j[0];
+      const shortest_unique_substrings: string[] | undefined = j[1];
+      if (!original) {
+        message += `Could not find emote '${text[i]}'.\n`;
+        continue;
+      }
+
+      if (shortest_unique_substrings) {
+        if (shortest_unique_substrings.length === 1) message += `${original}: ${shortest_unique_substrings[0]}\n`;
+        else message += `${original}: ${shortest_unique_substrings.join(', ')}\n`;
+      } else {
+        message += `${original}: -\n`;
+      }
+    }
+    message = message.trim();
+    await interaction.editReply(message);
+    return;
   }
 
   if (interaction.commandName === 'combine') {

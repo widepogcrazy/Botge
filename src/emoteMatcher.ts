@@ -100,8 +100,31 @@ class SuffixTree {
     return this.paths.get(nextChar)._query(normalizedSuffix.slice(1), original);
   }
 
+  _queryUnique(normalizedSuffix: string, original: string): boolean | undefined {
+    if (normalizedSuffix === '') {
+      // reached the end of the query string
+
+      if (this.data.assets.length === 1 && this.paths.size === 1) {
+        if (this.data.assets[0].name.toLowerCase() === original.toLowerCase()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const nextChar = normalizedSuffix.charAt(0);
+    if (!this.paths.has(nextChar)) {
+      return false;
+    }
+    return this.paths.get(nextChar)._queryUnique(normalizedSuffix.slice(1), original);
+  }
+
   query(suffix: string) {
     return this._query(suffix.toLowerCase(), suffix);
+  }
+
+  queryUnique(suffix: string, original: string) {
+    return this._queryUnique(suffix.toLowerCase(), original);
   }
 }
 
@@ -177,6 +200,10 @@ export class EmoteMatcher {
 
   matchSingle(query: string): AssetInfo | undefined {
     return this.root.query(query);
+  }
+
+  matchUnique(query: string[], original: string): boolean[] {
+    return query.map((q) => this.root.queryUnique(q, original));
   }
 
   // returns undefined for unmatched
