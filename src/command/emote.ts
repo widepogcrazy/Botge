@@ -218,7 +218,7 @@ export function emoteHandler() {
       const args: string[] = new Array();
 
       downloadedAssets.forEach((asset) => {
-        if (animated) {
+        if (animated && asset.duration > 0) {
           args.push('-stream_loop');
           args.push('-1');
           args.push('-t');
