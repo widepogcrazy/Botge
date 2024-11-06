@@ -104,7 +104,7 @@ class SuffixTree {
     if (normalizedSuffix === '') {
       // reached the end of the query string
 
-      if (this.data.assets.length === 1 && this.paths.size === 1) {
+      if (this.data.assets.length === 1 && (this.paths.size === 0 || this.paths.size === 1)) {
         if (this.data.assets[0].name.toLowerCase() === original.toLowerCase()) {
           return true;
         }
