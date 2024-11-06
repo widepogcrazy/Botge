@@ -184,7 +184,7 @@ function getGifWidthAndHeight(file): Promise<[number, number]> {
   });
 }
 
-async function stackGifs(emotes: AssetInfo[], outdir: string, callback : Function) {
+async function stackGifs(emotes: AssetInfo[], outdir: string, callback: Function) {
   try {
     // Download GIFs - having local files is faster when using ffmpeg
     const downloadedFiles = await downloadGifs(emotes, outdir);
@@ -245,7 +245,7 @@ async function stackGifs(emotes: AssetInfo[], outdir: string, callback : Functio
   }
 }
 
-async function overlayGifs(emotes: AssetInfo[], outdir: string, callback : Function) {
+async function overlayGifs(emotes: AssetInfo[], outdir: string, callback: Function) {
   try {
     function toLetters(num) {
       'use strict';
@@ -275,7 +275,7 @@ async function overlayGifs(emotes: AssetInfo[], outdir: string, callback : Funct
     console.log(`Max widthAndHeight: ${maxWidthAndHeight}`);
 
     const args = [];
-    downloadedFiles.forEach((file,i) => {
+    downloadedFiles.forEach((file, i) => {
       const is_animated = !Number.isNaN(durations[i]);
       if (is_animated) {
         args.push('-stream_loop');
@@ -300,7 +300,7 @@ async function overlayGifs(emotes: AssetInfo[], outdir: string, callback : Funct
 
     args.push(filterstring);
 
-    if( has_animated ) {
+    if (has_animated) {
       args.push('-t');
       args.push(`${maxDuration}`);
     }
@@ -344,7 +344,9 @@ client.on('interactionCreate', async (interaction) => {
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);
     let outputfile;
-    function callback( x : string ) { outputfile = x; }
+    function callback(x: string) {
+      outputfile = x;
+    }
     // Dont need try catch if it works 100% of the time YEP
     const ffmpeg_process = await stackGifs(emotes, outdir, callback);
 
@@ -374,7 +376,9 @@ client.on('interactionCreate', async (interaction) => {
     const outdir = path.join('temp_gifs', interaction.id);
     fs.ensureDirSync(outdir);
     let outputfile;
-    function callback( x : string ) { outputfile = x; }
+    function callback(x: string) {
+      outputfile = x;
+    }
     // Dont need try catch if it works 100% of the time YEP
     const ffmpeg_process = await overlayGifs(emotes, outdir, callback);
 

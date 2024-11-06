@@ -82,6 +82,7 @@ class OverlayElement implements HstackElement {
         segments.push(`,fps=30`);
       }
       segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
+      id++;
     }
 
     return segments.join('');
@@ -159,7 +160,6 @@ export function emoteHandler() {
     try {
       const defer = interaction.deferReply();
       const tokens: string[] = String(interaction.options.get('name').value).trim().split(/\s+/);
-      console.log(tokens);
       const assets = em.matchMulti(tokens);
 
       for (const asset of assets) {
@@ -176,7 +176,7 @@ export function emoteHandler() {
         return;
       }
 
-      const outdir = String(interaction.id);
+      const outdir = path.join('temp_gifs', String(interaction.id));
       fs.ensureDirSync(outdir);
 
       const downloadedAssets: DownloadedAsset[] = await Promise.all(
@@ -189,34 +189,27 @@ export function emoteHandler() {
       let boundary: number = 0;
       let i: number = 0;
       const elements: HstackElement[] = new Array();
-      console.log(downloadedAssets.length);
       for (; i < downloadedAssets.length; i++) {
         if (!assets[i].zero_width) {
           // new group
           if (i == boundary + 1) {
             // single element
-            console.log(boundary, i);
             elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
             boundary = i;
           } else if (i > boundary) {
             // at least 2
-            console.log(boundary, i);
             elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), 64));
             boundary = i;
           }
         }
       }
 
-      console.log(boundary, i);
-
       // don't forget last one
       if (i == boundary + 1) {
         // single element
-        console.log(boundary, i);
         elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
       } else if (i > boundary) {
         // at least 2
-        console.log(boundary, i);
         elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), 64));
       }
 
@@ -241,13 +234,13 @@ export function emoteHandler() {
       // hstack
       if (elements.length > 1) {
         filter.push(elements.map((e) => `[o${e.id}]`).join(''));
-        filter.push(`hstack=inputs=${elements.length}[o0];`);
+        filter.push(`hstack=inputs=${elements.length}`);
       } else {
-        // filter.push
+        filter.push(`[o0]scale`); // only to point the output stream
       }
 
       if (animated) {
-        filter.push('[o0]split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse');
+        filter.push(',split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse');
       }
       args.push(filter.join(''));
 
