@@ -2,6 +2,10 @@ export interface AssetInfo {
   name: string;
   url: string;
   zero_width: boolean;
+  animated: boolean
+  width : number | undefined
+  height : number | undefined
+  frame_count : number | undefined
   //   w: number;
   //   h: number;
   //   duration?: number;
@@ -129,18 +133,32 @@ class SuffixTree {
 }
 
 function sevenToAsset(emote: any): AssetInfo {
+  const data = emote.data;
+  const host = data.host;
+  const animated = data.animated;
+  const filename = `2x.${(animated ? 'gif' : 'png')}`;
+  const file = host.files.find((f: { name: string; })=>f.name === filename);
   return {
     name: emote.name,
-    url: 'https:' + emote.data.host.url + '/2x.' + (emote.data.animated ? 'gif' : 'png'),
-    zero_width: !!(1 & emote.flags)
+    url: `https:${host.url}/${filename}`,
+    zero_width: !!(1 & emote.flags),
+    animated : animated,
+    width : file.width,
+    height : file.height,
+    frame_count : file.frame_count
   };
 }
 
 function bttvToAsset(emote: any): AssetInfo {
+  const animated = emote.animated;
   return {
     name: emote.code,
-    url: 'https://cdn.betterttv.net/emote/' + emote.id + '/2x.' + (emote.animated ? 'gif' : 'png'),
-    zero_width: false
+    url: `https://cdn.betterttv.net/emote/${emote.id}/2x.${(animated ? 'gif' : 'png')}`,
+    zero_width: false,
+    animated: animated,
+    width: undefined,
+    height: undefined,
+    frame_count : undefined
   };
 }
 
@@ -148,17 +166,26 @@ function ffzToAsset(emote: any): AssetInfo {
   return {
     name: emote.name,
     url: emote.urls['2'],
-    zero_width: false
+    zero_width: false,
+    animated : false,
+    width: undefined,
+    height: undefined,
+    frame_count : undefined
   };
 }
 
 function twitchToAsset(emote: any): AssetInfo {
-  const format = emote.format.length === 2 ? emote.format[1] : emote.format[0];
+  const animated = emote.format.length === 2
+  const format = animated ? emote.format[1] : emote.format[0];
   const theme_mode = emote.theme_mode.length === 2 ? emote.theme_mode[1] : emote.theme_mode[0];
   return {
     name: emote.name,
     url: `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/${format}/${theme_mode}/2.0`,
-    zero_width: false
+    zero_width: false,
+    animated : animated,
+    width: undefined,
+    height: undefined,
+    frame_count : undefined
   };
 }
 

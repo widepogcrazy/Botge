@@ -12,11 +12,12 @@ interface DownloadedAsset {
   w: number;
   h: number;
   duration: number; // stills are -1
+  fps: number;
 }
 
 interface HstackElement {
   id: number;
-  filterString: (setFps: boolean) => Promise<string>;
+  filterString: (setFps: boolean, fps : string) => Promise<string>;
 }
 
 class SimpleElement implements HstackElement {
@@ -28,9 +29,9 @@ class SimpleElement implements HstackElement {
     this.asset = asset;
   }
 
-  async filterString(setFps: boolean): Promise<string> {
+  async filterString(setFps: boolean, fps : string): Promise<string> {
     if (setFps) {
-      return `[${this.id}:v]scale=-1:64,fps=30[o${this.id}];`;
+      return `[${this.id}:v]scale=-1:64,fps=${fps}[o${this.id}];`;
     }
     return `[${this.id}:v]scale=-1:64[o${this.id}];`;
   }
@@ -61,7 +62,7 @@ class OverlayElement implements HstackElement {
     return Math.max(...scaledWidth);
   }
 
-  async filterString(setFps: boolean): Promise<string> {
+  async filterString(setFps: boolean, fps: string): Promise<string> {
     this.w = await this._getMaxWidth(this.h);
 
     const segments: string[] = new Array();
@@ -70,7 +71,7 @@ class OverlayElement implements HstackElement {
     // first layer, pad the canvas
     segments.push(`[${this.id}]scale=-1:64`);
     if (setFps) {
-      segments.push(`,fps=30`);
+      segments.push(`,fps=${fps}`);
     }
     segments.push(`,pad=${this.w}:${this.h}:-1:-1:color=black@0.0[o${this.id}];`);
     id++;
@@ -79,7 +80,7 @@ class OverlayElement implements HstackElement {
     for (const _ in this.layers.slice(1)) {
       segments.push(`[${id}]scale=-1:64`);
       if (setFps) {
-        segments.push(`,fps=30`);
+        segments.push(`,fps=${fps}`);
       }
       segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
       id++;
@@ -142,15 +143,20 @@ async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promi
   const filename = path.join(outdir, `${i}_` + path.basename(asset.url));
   await writeFile(filename, buffer);
 
-  const duration = _getDuration(filename);
-  const [w, h] = await _getDimension(filename);
+  const duration = asset.animated? await _getDuration(filename) : -1;
+  let w : number, h : number;
+  if( asset.width && asset.height ) [w,h] = [asset.width, asset.height];
+  else [w,h] = await _getDimension(filename);
+  console.log([w,h])
+  let fps : number = (duration !== -1 && asset.frame_count) ? (asset.frame_count/duration) : -1;
 
   return {
     filename: filename,
     asset: asset,
     w: w,
     h: h,
-    duration: await duration
+    duration: duration,
+    fps: fps
   };
 }
 
@@ -184,6 +190,9 @@ export function emoteHandler() {
       );
 
       const maxDuration: number = Math.max(...downloadedAssets.map((layer) => layer.duration));
+      const validfpsAssests = downloadedAssets.filter(asset=>asset.fps !== -1);
+      const sumFps = validfpsAssests.map(asset=>asset.fps).reduce((a, b) => a + b,0);
+      const avgFps = (sumFps / validfpsAssests.length).toFixed(0) || String(0);
 
       // at least 2
       let boundary: number = 0;
@@ -229,7 +238,7 @@ export function emoteHandler() {
       });
       args.push('-filter_complex');
 
-      let filter: string[] = await Promise.all(elements.map((e) => e.filterString(animated)));
+      let filter: string[] = await Promise.all(elements.map((e) => e.filterString(animated, avgFps)));
 
       // hstack
       if (elements.length > 1) {
