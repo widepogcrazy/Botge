@@ -286,6 +286,7 @@ export function emoteHandler() {
 
       await defer;
     } catch (error) {
+      console.log(error);
     } finally {
       // rm(outdir, { recursive: true })
     }
