@@ -10,14 +10,14 @@ services:
       - DISCORD_TOKEN=
       
       # open ai
-      - OPENAI_API_KEYTWO=
+      #- OPENAI_API_KEY=
       
       # google
-      - CREDENTIALS=
+      #- CREDENTIALS=
 
       # twitch
-      - TWITCH_CLIENT_ID=
-      - TWITCH_SECRET=
+      #- TWITCH_CLIENT_ID=
+      #- TWITCH_SECRET=
     volumes:
       - ./temp_gifs:/app/temp_gifs
     restart: always

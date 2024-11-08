@@ -5,7 +5,6 @@ export interface AssetInfo {
   animated: boolean;
   width: number | undefined;
   height: number | undefined;
-  frame_count: number | undefined;
   //   w: number;
   //   h: number;
   //   duration?: number;
@@ -144,8 +143,7 @@ function sevenToAsset(emote: any): AssetInfo {
     zero_width: !!(1 & emote.flags),
     animated: animated,
     width: file.width,
-    height: file.height,
-    frame_count: file.frame_count
+    height: file.height
   };
 }
 
@@ -157,8 +155,7 @@ function bttvToAsset(emote: any): AssetInfo {
     zero_width: false,
     animated: animated,
     width: undefined,
-    height: undefined,
-    frame_count: undefined
+    height: undefined
   };
 }
 
@@ -169,8 +166,7 @@ function ffzToAsset(emote: any): AssetInfo {
     zero_width: false,
     animated: false,
     width: undefined,
-    height: undefined,
-    frame_count: undefined
+    height: undefined
   };
 }
 
@@ -184,8 +180,7 @@ function twitchToAsset(emote: any): AssetInfo {
     zero_width: false,
     animated: animated,
     width: undefined,
-    height: undefined,
-    frame_count: undefined
+    height: undefined
   };
 }
 
@@ -200,7 +195,6 @@ export class EmoteMatcher {
     for (const emote of sevenGlobal.emotes) {
       this.root.addAllSuffix(sevenToAsset(emote), 1);
     }
-
     for (const emote of bttvPersonal.channelEmotes) {
       this.root.addAllSuffix(bttvToAsset(emote), 2);
     }
@@ -229,8 +223,8 @@ export class EmoteMatcher {
     return this.root.query(query);
   }
 
-  matchUnique(query: string[], original: string): boolean[] {
-    return query.map((q) => this.root.queryUnique(q, original));
+  matchSingleUnique(query: string, original: string): boolean {
+    return this.root.queryUnique(query, original);
   }
 
   // returns undefined for unmatched

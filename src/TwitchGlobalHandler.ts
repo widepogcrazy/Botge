@@ -4,12 +4,12 @@ const api_endpoints = {
 };
 
 export class TwitchGlobalHandler {
-  private twitch_client_id;
-  private twitch_secret;
+  private twitch_client_id: string;
+  private twitch_secret: string;
 
-  private access_token;
-  private access_token_status;
-  private access_token_validation_status;
+  private access_token: string;
+  private access_token_status: number;
+  private access_token_validation_status: number;
 
   private static _instance: TwitchGlobalHandler;
 
@@ -18,7 +18,7 @@ export class TwitchGlobalHandler {
     this.twitch_secret = twitch_secret;
   }
 
-  static getInstance(twitch_client_id: string, twitch_secret: string) {
+  static getInstance(twitch_client_id: string, twitch_secret: string): TwitchGlobalHandler {
     if (this._instance) {
       return this._instance;
     }
@@ -30,35 +30,43 @@ export class TwitchGlobalHandler {
     return this.access_token_status === 200;
   }
   isAccessTokenValidated(): boolean {
-    return this.access_token_validation_status === 200;
+    return this.gotAccessToken() && this.access_token_validation_status === 200;
   }
 
   async getTwitchAccessToken() {
-    const twitchAccessToken = await fetch(api_endpoints.twitchAccessToken, {
+    const twitchAccessToken = fetch(api_endpoints.twitchAccessToken, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: `client_id=${this.twitch_client_id}&client_secret=${this.twitch_secret}&grant_type=client_credentials`
     });
-    this.access_token = (await twitchAccessToken.json()).access_token;
-    this.access_token_status = twitchAccessToken.status;
+    this.access_token = String((await (await twitchAccessToken).json()).access_token);
+    this.access_token_status = (await twitchAccessToken).status;
   }
 
   async validateTwitchAccessToken() {
     if (!this.gotAccessToken()) {
       return;
     }
-    const twitchAccessTokenValidation = await fetch(api_endpoints.twitchAccessTokenValidate, {
+    const twitchAccessTokenValidation = fetch(api_endpoints.twitchAccessTokenValidate, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${this.access_token}`
       }
     });
-    this.access_token_validation_status = twitchAccessTokenValidation.status;
+    this.access_token_validation_status = (await twitchAccessTokenValidation).status;
   }
 
-  getTwitchGlobalOptions(): any | undefined {
+  getTwitchGlobalOptions():
+    | {
+        method: string;
+        headers: {
+          Authorization: string;
+          'Client-Id': string;
+        };
+      }
+    | undefined {
     if (!this.gotAccessToken() || !this.isAccessTokenValidated()) {
       return undefined;
     }
