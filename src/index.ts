@@ -10,7 +10,15 @@ import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
 
 import { TwitchGlobalHandler } from './TwitchGlobalHandler.js';
-import { EmoteMatcher } from './emoteMatcher.js';
+import {
+  EmoteMatcher,
+  BTTVEmote,
+  SevenEmotes,
+  BTTVPersonalEmotes,
+  FFZPersonalEmotes,
+  FFZGlobalEmotes,
+  TwitchGlobalEmotes
+} from './emoteMatcher.js';
 import { emoteHandler } from './command/emote.js';
 import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstrings.js';
 import { chatgptHandler } from './command/openai.js';
@@ -69,7 +77,7 @@ function logIsAccessTokenValidated(): void {
   else console.log('Twitch Access Token is invalid.');
 }
 
-export async function newEmoteMatcher(): Promise<EmoteMatcher> {
+export async function newEmoteMatcher(): Promise<EmoteMatcher> | undefined {
   try {
     const twitchGlobalOptions = twitchglobalhandler?.getTwitchGlobalOptions();
 
@@ -81,16 +89,17 @@ export async function newEmoteMatcher(): Promise<EmoteMatcher> {
     const ffzGlobal = fetch(emote_endpoints.ffzGlobal);
     const twitchGlobal = twitchGlobalOptions ? fetch(emote_endpoints.twitchGlobal, twitchGlobalOptions) : undefined;
     return new EmoteMatcher(
-      await (await sevenPersonal).json(),
-      await (await sevenGlobal).json(),
-      await (await bttvPersonal).json(),
-      await (await bttvGlobal).json(),
-      await (await ffzPersonal).json(),
-      await (await ffzGlobal).json(),
-      await (await twitchGlobal)?.json()
+      (await (await sevenPersonal).json()) as SevenEmotes,
+      (await (await sevenGlobal).json()) as SevenEmotes,
+      (await (await bttvPersonal).json()) as BTTVPersonalEmotes,
+      (await (await bttvGlobal).json()) as BTTVEmote[],
+      (await (await ffzPersonal).json()) as FFZPersonalEmotes,
+      (await (await ffzGlobal).json()) as FFZGlobalEmotes,
+      (await (await twitchGlobal)?.json()) as TwitchGlobalEmotes
     );
   } catch (err) {
     console.log(err);
+    return undefined;
   }
 }
 
@@ -104,13 +113,15 @@ if (twitchglobalhandler) {
 }
 
 em = await newEmoteMatcher();
-console.log('Emote cache ready');
+if (em) console.log('Emote cache ready');
+else console.log('Emote cache not ready');
 
 // update ever 5 minutes
 schedule.scheduleJob('*/5 * * * *', async () => {
   console.log('Emote cache refreshing');
   em = await newEmoteMatcher();
-  console.log('Emote cache refreshed');
+  if (em) console.log('Emote cache refreshed');
+  else console.log('Emote cache not refreshed');
 });
 
 if (twitchglobalhandler) {
@@ -139,12 +150,12 @@ client.on('interactionCreate', async (interaction) => {
 
   //interaction emote
   if (interaction.commandName === 'emote') {
-    emoteHandler()(interaction, em);
+    if (em) emoteHandler()(interaction, em);
     return;
   }
 
   if (interaction.commandName === 'shortestuniquesubstrings') {
-    shortestuniquesubstringsHandler(em)(interaction);
+    if (em) shortestuniquesubstringsHandler(em)(interaction);
     return;
   }
 
