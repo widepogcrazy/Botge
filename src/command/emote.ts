@@ -17,7 +17,7 @@ interface DownloadedAsset {
 
 interface HstackElement {
   id: number;
-  filterString: (setFps: boolean, fps : string) => Promise<string>;
+  filterString: (setFps: boolean, fps: string) => Promise<string>;
 }
 
 class SimpleElement implements HstackElement {
@@ -29,7 +29,7 @@ class SimpleElement implements HstackElement {
     this.asset = asset;
   }
 
-  async filterString(setFps: boolean, fps : string): Promise<string> {
+  async filterString(setFps: boolean, fps: string): Promise<string> {
     if (setFps) {
       return `[${this.id}:v]scale=-1:64,fps=${fps}[o${this.id}];`;
     }
@@ -143,12 +143,11 @@ async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promi
   const filename = path.join(outdir, `${i}_` + path.basename(asset.url));
   await writeFile(filename, buffer);
 
-  const duration = asset.animated? await _getDuration(filename) : -1;
-  let w : number, h : number;
-  if( asset.width && asset.height ) [w,h] = [asset.width, asset.height];
-  else [w,h] = await _getDimension(filename);
-  console.log([w,h])
-  let fps : number = (duration !== -1 && asset.frame_count) ? (asset.frame_count/duration) : -1;
+  const duration = asset.animated ? await _getDuration(filename) : -1;
+  let w: number, h: number;
+  if (asset.width && asset.height) [w, h] = [asset.width, asset.height];
+  else [w, h] = await _getDimension(filename);
+  let fps: number = duration !== -1 && asset.frame_count ? asset.frame_count / duration : -1;
 
   return {
     filename: filename,
@@ -190,8 +189,8 @@ export function emoteHandler() {
       );
 
       const maxDuration: number = Math.max(...downloadedAssets.map((layer) => layer.duration));
-      const validfpsAssests = downloadedAssets.filter(asset=>asset.fps !== -1);
-      const sumFps = validfpsAssests.map(asset=>asset.fps).reduce((a, b) => a + b,0);
+      const validfpsAssests = downloadedAssets.filter((asset) => asset.fps !== -1);
+      const sumFps = validfpsAssests.map((asset) => asset.fps).reduce((a, b) => a + b, 0);
       const avgFps = (sumFps / validfpsAssests.length).toFixed(0) || String(0);
 
       // at least 2

@@ -2,10 +2,10 @@ export interface AssetInfo {
   name: string;
   url: string;
   zero_width: boolean;
-  animated: boolean
-  width : number | undefined
-  height : number | undefined
-  frame_count : number | undefined
+  animated: boolean;
+  width: number | undefined;
+  height: number | undefined;
+  frame_count: number | undefined;
   //   w: number;
   //   h: number;
   //   duration?: number;
@@ -41,8 +41,8 @@ class SuffixTree {
     return this.paths.get(char);
   }
 
-  _addAllSuffix(suffix: string, priority: number, asset: AssetInfo) {
-    const exact = suffix === '';
+  _addAllSuffix(suffix: string, priority: number, asset: AssetInfo, fromFullString: boolean) {
+    const exact = fromFullString && suffix === '';
 
     if (this.data.exact && exact) {
       if (priority < this.data.priority) {
@@ -63,9 +63,9 @@ class SuffixTree {
       this.data.assets = [asset];
     }
 
-    if (!exact) {
+    if (suffix !== '') {
       const tree = this._getOrAddTree(suffix.charAt(0));
-      tree._addAllSuffix(suffix.slice(1), priority, asset);
+      tree._addAllSuffix(suffix.slice(1), priority, asset, fromFullString);
       return;
     }
   }
@@ -73,7 +73,7 @@ class SuffixTree {
   addAllSuffix(asset: AssetInfo, priority: number) {
     const normalized = asset.name.toLowerCase();
     for (let i = 0; i < normalized.length; i++) {
-      this._addAllSuffix(normalized.slice(i), priority, asset);
+      this._addAllSuffix(normalized.slice(i), priority, asset, i == 0);
     }
   }
 
@@ -136,16 +136,16 @@ function sevenToAsset(emote: any): AssetInfo {
   const data = emote.data;
   const host = data.host;
   const animated = data.animated;
-  const filename = `2x.${(animated ? 'gif' : 'png')}`;
-  const file = host.files.find((f: { name: string; })=>f.name === filename);
+  const filename = `2x.${animated ? 'gif' : 'png'}`;
+  const file = host.files.find((f: { name: string }) => f.name === filename);
   return {
     name: emote.name,
     url: `https:${host.url}/${filename}`,
     zero_width: !!(1 & emote.flags),
-    animated : animated,
-    width : file.width,
-    height : file.height,
-    frame_count : file.frame_count
+    animated: animated,
+    width: file.width,
+    height: file.height,
+    frame_count: file.frame_count
   };
 }
 
@@ -153,12 +153,12 @@ function bttvToAsset(emote: any): AssetInfo {
   const animated = emote.animated;
   return {
     name: emote.code,
-    url: `https://cdn.betterttv.net/emote/${emote.id}/2x.${(animated ? 'gif' : 'png')}`,
+    url: `https://cdn.betterttv.net/emote/${emote.id}/2x.${animated ? 'gif' : 'png'}`,
     zero_width: false,
     animated: animated,
     width: undefined,
     height: undefined,
-    frame_count : undefined
+    frame_count: undefined
   };
 }
 
@@ -167,25 +167,25 @@ function ffzToAsset(emote: any): AssetInfo {
     name: emote.name,
     url: emote.urls['2'],
     zero_width: false,
-    animated : false,
+    animated: false,
     width: undefined,
     height: undefined,
-    frame_count : undefined
+    frame_count: undefined
   };
 }
 
 function twitchToAsset(emote: any): AssetInfo {
-  const animated = emote.format.length === 2
+  const animated = emote.format.length === 2;
   const format = animated ? emote.format[1] : emote.format[0];
   const theme_mode = emote.theme_mode.length === 2 ? emote.theme_mode[1] : emote.theme_mode[0];
   return {
     name: emote.name,
     url: `https://static-cdn.jtvnw.net/emoticons/v2/${emote.id}/${format}/${theme_mode}/2.0`,
     zero_width: false,
-    animated : animated,
+    animated: animated,
     width: undefined,
     height: undefined,
-    frame_count : undefined
+    frame_count: undefined
   };
 }
 
