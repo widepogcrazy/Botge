@@ -18,6 +18,11 @@ const commands = [
         name: 'name',
         description: 'the emote(s) name(s). works even if this input is a substring of the emotes original name.',
         required: true
+      },
+      {
+        type: 3,
+        name: 'size',
+        description: 'the emotes size( not required ). 1,2,3 or 4.'
       }
     ]
   },

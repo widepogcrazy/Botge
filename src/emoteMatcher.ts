@@ -4,6 +4,13 @@ const BTTVCDN = 'cdn.betterttv.net/emote';
 const TWITCHCDN = 'static-cdn.jtvnw.net/emoticons/v2';
 const FFZGLOBALSETSKEY = 3;
 
+export enum Platform {
+  Seven,
+  BTTV,
+  FFZ,
+  Twitch
+}
+
 export interface SevenEmote {
   name: string;
   flags: number;
@@ -73,6 +80,7 @@ export interface AssetInfo {
   animated: boolean;
   width: number | undefined;
   height: number | undefined;
+  platform: Platform;
 }
 
 class emoteNode {
@@ -208,7 +216,8 @@ function sevenToAsset(emote: SevenEmote): AssetInfo {
     zero_width: !!(1 & emote.flags),
     animated: animated,
     width: file.width,
-    height: file.height
+    height: file.height,
+    platform: Platform.Seven
   };
 }
 
@@ -221,7 +230,8 @@ function bttvToAsset(emote: BTTVEmote): AssetInfo {
     zero_width: false,
     animated: animated,
     width: undefined,
-    height: undefined
+    height: undefined,
+    platform: Platform.BTTV
   };
 }
 
@@ -232,7 +242,8 @@ function ffzToAsset(emote: FFZEmote): AssetInfo {
     zero_width: false,
     animated: false,
     width: undefined,
-    height: undefined
+    height: undefined,
+    platform: Platform.FFZ
   };
 }
 
@@ -242,11 +253,12 @@ function twitchToAsset(emote: TwitchEmote): AssetInfo {
   const theme_mode = emote.theme_mode.length === 2 ? emote.theme_mode[1] : emote.theme_mode[0];
   return {
     name: emote.name,
-    url: `${HTTPS}://${TWITCHCDN}/${emote.id}/${format}/${theme_mode}/2.0`,
+    url: `${HTTPS}://${TWITCHCDN}/${emote.id}/${format}/${theme_mode}/${EMOTESIZE}.0`,
     zero_width: false,
     animated: animated,
     width: undefined,
-    height: undefined
+    height: undefined,
+    platform: Platform.Twitch
   };
 }
 

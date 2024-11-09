@@ -30,27 +30,8 @@ dotenv.config();
 const DISCORD_TOKEN: string = process.env.DISCORD_TOKEN;
 const OPENAI_API_KEY: string | undefined = process.env.OPENAI_API_KEY;
 const CREDENTIALS: string | undefined = process.env.CREDENTIALS;
-const CREDENTIALSJSON = CREDENTIALS ? JSON.parse(CREDENTIALS) : undefined;
 const TWITCH_CLIENT_ID: string | undefined = process.env.TWITCH_CLIENT_ID;
 const TWITCH_SECRET: string | undefined = process.env.TWITCH_SECRET;
-
-//client
-const client: Client = new Client({ intents: [] });
-
-//openai
-const openai: OpenAI | undefined = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
-
-//translate
-const translate: v2.Translate | undefined = CREDENTIALSJSON
-  ? new v2.Translate({
-      credentials: CREDENTIALSJSON,
-      projectId: CREDENTIALSJSON.project_id
-    })
-  : undefined;
-
-//twitch
-const twitchglobalhandler: TwitchGlobalHandler | undefined =
-  TWITCH_CLIENT_ID && TWITCH_SECRET ? TwitchGlobalHandler.getInstance(TWITCH_CLIENT_ID, TWITCH_SECRET) : undefined;
 
 // emotes
 const emote_endpoints = {
@@ -63,21 +44,21 @@ const emote_endpoints = {
   twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
 };
 
-async function getAndValidateTwitchAccessToken(): Promise<void> {
+async function getAndValidateTwitchAccessToken(twitchglobalhandler: TwitchGlobalHandler): Promise<void> {
   await twitchglobalhandler.getTwitchAccessToken();
   await twitchglobalhandler.validateTwitchAccessToken();
 }
 
-function logGotAccessToken(): void {
+function logGotAccessToken(twitchglobalhandler: TwitchGlobalHandler): void {
   if (twitchglobalhandler.gotAccessToken()) console.log('Got Twitch Access Token.');
   else console.log('Failed to get Twitch Access Token.');
 }
-function logIsAccessTokenValidated(): void {
+function logIsAccessTokenValidated(twitchglobalhandler: TwitchGlobalHandler): void {
   if (twitchglobalhandler.isAccessTokenValidated()) console.log('Twitch Access Token is valid.');
   else console.log('Twitch Access Token is invalid.');
 }
 
-export async function newEmoteMatcher(): Promise<EmoteMatcher> | undefined {
+export async function newEmoteMatcher(twitchglobalhandler?: TwitchGlobalHandler): Promise<EmoteMatcher> | undefined {
   try {
     const twitchGlobalOptions = twitchglobalhandler?.getTwitchGlobalOptions();
 
@@ -103,36 +84,77 @@ export async function newEmoteMatcher(): Promise<EmoteMatcher> | undefined {
   }
 }
 
-//emoteMatcher
-let em: EmoteMatcher;
+//inits
+let client: Client;
+let openai: OpenAI | undefined;
+let translate: v2.Translate | undefined;
+let twitchglobalhandler: TwitchGlobalHandler | undefined;
+let em: EmoteMatcher | undefined;
 
-if (twitchglobalhandler) {
-  await getAndValidateTwitchAccessToken();
-  logGotAccessToken();
-  logIsAccessTokenValidated();
+try {
+  client = new Client({ intents: [] });
+} catch (error) {
+  console.log(`Error at initializing client: ${error}. Exiting with code 1.`);
+  process.exit(1);
+}
+try {
+  openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
+} catch (error) {
+  console.log(`Error at initializing openai: ${error}`);
+}
+try {
+  const CREDENTIALSJSON = CREDENTIALS ? JSON.parse(CREDENTIALS) : undefined;
+  translate = CREDENTIALSJSON
+    ? new v2.Translate({
+        credentials: CREDENTIALSJSON,
+        projectId: CREDENTIALSJSON.project_id
+      })
+    : undefined;
+} catch (error) {
+  console.log(`Error at initializing translate: ${error}`);
+}
+try {
+  twitchglobalhandler =
+    TWITCH_CLIENT_ID && TWITCH_SECRET ? TwitchGlobalHandler.getInstance(TWITCH_CLIENT_ID, TWITCH_SECRET) : undefined;
+} catch (error) {
+  console.log(`Error at initializing twitchglobalhandler: ${error}`);
 }
 
-em = await newEmoteMatcher();
-if (em) console.log('Emote cache ready');
-else console.log('Emote cache not ready');
+if (twitchglobalhandler) {
+  await getAndValidateTwitchAccessToken(twitchglobalhandler);
+  logGotAccessToken(twitchglobalhandler);
+  logIsAccessTokenValidated(twitchglobalhandler);
+}
+
+em = await newEmoteMatcher(twitchglobalhandler);
+if (em) {
+  console.log('Emote cache ready');
+} else {
+  console.log('Emote cache not ready. Exiting with code 1.');
+  process.exit(1);
+}
 
 // update ever 5 minutes
 schedule.scheduleJob('*/5 * * * *', async () => {
   console.log('Emote cache refreshing');
-  em = await newEmoteMatcher();
-  if (em) console.log('Emote cache refreshed');
-  else console.log('Emote cache not refreshed');
+  em = await newEmoteMatcher(twitchglobalhandler);
+  if (em) {
+    console.log('Emote cache ready');
+  } else {
+    console.log('Emote cache not ready. Exiting with code 1.');
+    process.exit(1);
+  }
 });
 
 if (twitchglobalhandler) {
   // update ever 60 minutes
   schedule.scheduleJob('*/60 * * * *', async () => {
     await twitchglobalhandler.validateTwitchAccessToken();
-    logIsAccessTokenValidated();
+    logIsAccessTokenValidated(twitchglobalhandler);
     if (!twitchglobalhandler.isAccessTokenValidated()) {
-      await getAndValidateTwitchAccessToken();
-      logGotAccessToken();
-      logIsAccessTokenValidated();
+      await getAndValidateTwitchAccessToken(twitchglobalhandler);
+      logGotAccessToken(twitchglobalhandler);
+      logIsAccessTokenValidated(twitchglobalhandler);
     }
   });
 }
@@ -178,4 +200,9 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-client.login(DISCORD_TOKEN);
+try {
+  client.login(DISCORD_TOKEN);
+} catch (error) {
+  console.log(`Error at logging in: ${error}. Exiting with code 1.`);
+  process.exit(1);
+}

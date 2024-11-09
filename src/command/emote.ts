@@ -6,7 +6,7 @@ import { writeFile, rm } from 'node:fs/promises';
 
 import { CommandInteraction } from 'discord.js';
 
-import { AssetInfo, EmoteMatcher } from '../emoteMatcher';
+import { AssetInfo, EmoteMatcher, Platform } from '../emoteMatcher.js';
 
 const DEFAULTDURATION = 0;
 const DEFAULTFPS = 25;
@@ -189,19 +189,38 @@ export function emoteHandler() {
     const defer = interaction.deferReply();
     try {
       const tokens: string[] = String(interaction.options.get('name').value).trim().split(/\s+/);
-      const assets: (AssetInfo | undefined)[] = em.matchMulti(tokens);
+      const matchmulti: (AssetInfo | undefined)[] = em.matchMulti(tokens);
+      const assets: AssetInfo[] = matchmulti.filter((asset) => asset !== undefined);
 
-      for (const asset of assets) {
-        if (asset === undefined) {
-          await defer;
-          await interaction.editReply('jij');
-          return;
-        }
+      if (assets.length === 0) {
+        await defer;
+        await interaction.editReply('jij');
+        return;
       }
 
-      if (assets.length == 1) {
+      if (assets.length === 1) {
+        const asset: AssetInfo = assets[0];
+        const platform: Platform = asset.platform;
+        const sizeString: string | undefined = String(interaction.options.get('size')?.value);
+        const size: number | undefined = sizeString ? Number(sizeString) : undefined;
+        let url: string = asset.url;
+
+        if (size) {
+          if (size >= 1 && size <= 4) {
+            if (platform === Platform.Seven) {
+              url = url.replace('/2x', `/${size}x`);
+            } else if (platform === Platform.BTTV) {
+              if (size < 4) url = url.replace('/2x', `/${size}x`);
+            } else if (platform === Platform.FFZ) {
+              if (size !== 3) url = url.slice(0, -1) + `${size}`;
+            } else if (platform === Platform.Twitch) {
+              if (size < 4) url = url.replace('/2.0', `/${size}.0`);
+            }
+          }
+        }
+
         await defer;
-        await interaction.editReply(assets[0].url);
+        await interaction.editReply(url);
         return;
       }
 
@@ -209,7 +228,7 @@ export function emoteHandler() {
       fs.ensureDirSync(outdir);
 
       const downloadedAssets: DownloadedAsset[] = await Promise.all(
-        assets.filter((asset) => asset !== undefined).map((asset, i) => downloadAsset(outdir, asset, i))
+        assets.map((asset, i) => downloadAsset(outdir, asset, i))
       );
 
       // at least 2
