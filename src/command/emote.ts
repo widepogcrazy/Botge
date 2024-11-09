@@ -71,7 +71,7 @@ class OverlayElement implements HstackElement {
     const scaledWidth: number[] = this.layers.map((layer) => {
       return (layer.w / layer.h) * scaleToHeight;
     });
-    let ret = Math.round(Math.max(...scaledWidth));
+    let ret = Math.round(Math.min(Math.max(...scaledWidth), 192));
     return ret % 2 == 0 ? ret : ret + 1; // rounds up to even number because of ffmpeg
   }
 
@@ -83,7 +83,7 @@ class OverlayElement implements HstackElement {
     let id: number = this.id;
     let layerid: number = 0;
     // first layer, pad the canvas
-    segments.push(`[${this.id}]scale=-1:64`);
+    segments.push(`[${this.id}]scale=192:64:force_original_aspect_ratio=decrease`);
     if (this.animated && this.layers[layerid].animated) {
       segments.push(`,fps=${DEFAULTFPS}`);
     }
