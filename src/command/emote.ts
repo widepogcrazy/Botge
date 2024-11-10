@@ -38,7 +38,7 @@ class SimpleElement implements HstackElement {
   }
 
   filterString(): string {
-    let filterstring = `[${this.id}:v]scale=-1:64`;
+    let filterstring = `[${this.id}:v]scale=192:64:force_original_aspect_ratio=decrease`;
     if (this.animated) filterstring += `,fps=${DEFAULTFPS}`;
     filterstring += `[o${this.id}];`;
     return filterstring;
