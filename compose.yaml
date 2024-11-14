@@ -20,4 +20,5 @@ services:
       #- TWITCH_SECRET=
     volumes:
       - ./temp_gifs:/app/temp_gifs
+      - ./local_emotes:/app/local_emotes
     restart: always

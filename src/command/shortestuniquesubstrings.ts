@@ -1,4 +1,4 @@
-import { AssetInfo, EmoteMatcher } from '../emoteMatcher';
+import { AssetInfo, EmoteMatcher } from '../emoteMatcher.js';
 import { CommandInteraction } from 'discord.js';
 
 function getShortestUniqueSubstrings(em: EmoteMatcher, text: string): [string | undefined, string[] | undefined] {

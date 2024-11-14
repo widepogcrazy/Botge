@@ -8,8 +8,10 @@ import { CommandInteraction } from 'discord.js';
 
 import { AssetInfo, EmoteMatcher, Platform } from '../emoteMatcher.js';
 
-const DEFAULTDURATION = 0;
-const DEFAULTFPS = 25;
+const DEFAULTDURATION: number = 0;
+const DEFAULTFPS: number = 25;
+const MAXWIDTH: number = 192;
+const MAXHEIGHT: number = 64;
 
 interface DownloadedAsset {
   filename: string;
@@ -38,8 +40,8 @@ class SimpleElement implements HstackElement {
   }
 
   filterString(): string {
-    let filterstring = `[${this.id}:v]scale=192:64:force_original_aspect_ratio=decrease`;
-    if (this.animated) filterstring += `,fps=${DEFAULTFPS},pad=h=64:x=-1:y=-1:color=black@0.0`;
+    let filterstring = `[${this.id}:v]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`;
+    if (this.animated) filterstring += `,fps=${DEFAULTFPS},pad=h=${MAXHEIGHT}:x=-1:y=-1:color=black@0.0`;
     filterstring += `[o${this.id}];`;
     return filterstring;
   }
@@ -71,7 +73,7 @@ class OverlayElement implements HstackElement {
     const scaledWidth: number[] = this.layers.map((layer) => {
       return (layer.w / layer.h) * scaleToHeight;
     });
-    let ret = Math.round(Math.min(Math.max(...scaledWidth), 192));
+    const ret = Math.round(Math.min(Math.max(...scaledWidth), MAXWIDTH));
     return ret % 2 == 0 ? ret : ret + 1; // rounds up to even number because of ffmpeg
   }
 
@@ -83,7 +85,7 @@ class OverlayElement implements HstackElement {
     let id: number = this.id;
     let layerid: number = 0;
     // first layer, pad the canvas
-    segments.push(`[${this.id}]scale=192:64:force_original_aspect_ratio=decrease`);
+    segments.push(`[${this.id}]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`);
     if (this.animated && this.layers[layerid].animated) {
       segments.push(`,fps=${DEFAULTFPS}`);
     }
@@ -93,7 +95,7 @@ class OverlayElement implements HstackElement {
 
     // other layers
     this.layers.slice(1).forEach(() => {
-      segments.push(`[${id}]scale=-1:64`);
+      segments.push(`[${id}]scale=-1:${MAXHEIGHT}`);
       if (this.animated && this.layers[layerid].animated) {
         segments.push(`,fps=${DEFAULTFPS}`);
       }
@@ -184,8 +186,8 @@ async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promi
   };
 }
 
-export function emoteHandler() {
-  return async (interaction: CommandInteraction, em: EmoteMatcher) => {
+export function emoteHandler(em: EmoteMatcher) {
+  return async (interaction: CommandInteraction) => {
     const defer = interaction.deferReply();
     try {
       const tokens: string[] = String(interaction.options.get('name').value).trim().split(/\s+/);
@@ -244,7 +246,7 @@ export function emoteHandler() {
             boundary = i;
           } else if (i > boundary) {
             // at least 2
-            elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), 64));
+            elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), MAXHEIGHT));
             boundary = i;
           }
         }
@@ -256,7 +258,7 @@ export function emoteHandler() {
         elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
       } else if (i > boundary) {
         // at least 2
-        elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), 64));
+        elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), MAXHEIGHT));
       }
 
       const maxDuration: number = Math.max(...downloadedAssets.map((layer) => layer.duration));

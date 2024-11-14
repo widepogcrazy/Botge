@@ -11,7 +11,7 @@ export enum Platform {
   Twitch
 }
 
-export interface SevenEmote {
+export interface SevenEmoteInSet {
   name: string;
   flags: number;
   data: {
@@ -25,6 +25,20 @@ export interface SevenEmote {
         format: string;
       }[];
     };
+  };
+}
+export interface SevenEmoteNotInSet {
+  name: string;
+  flags: number;
+  animated: boolean;
+  host: {
+    url: string;
+    files: {
+      name: string;
+      width: number;
+      height: number;
+      format: string;
+    }[];
   };
 }
 export interface BTTVEmote {
@@ -46,7 +60,7 @@ export interface TwitchEmote {
 }
 
 export interface SevenEmotes {
-  emotes: SevenEmote[];
+  emotes: SevenEmoteInSet[];
 }
 export interface BTTVPersonalEmotes {
   channelEmotes: BTTVEmote[];
@@ -176,8 +190,9 @@ class SuffixTree {
     return this.paths.get(nextChar)._query(normalizedSuffix.slice(1), original);
   }
 
-  _queryUnique(normalizedSuffix: string, original: string): boolean | undefined {
+  _queryUnique(normalizedSuffix: string, original: string, originalQuery: string): boolean | undefined {
     if (normalizedSuffix === '') {
+      if (originalQuery === 'e2') console.log(this.data.assets, this.paths);
       // reached the end of the query string
 
       if (this.data.assets.length === 1 && (this.paths.size === 0 || this.paths.size === 1)) {
@@ -192,7 +207,7 @@ class SuffixTree {
     if (!this.paths.has(nextChar)) {
       return false;
     }
-    return this.paths.get(nextChar)._queryUnique(normalizedSuffix.slice(1), original);
+    return this.paths.get(nextChar)._queryUnique(normalizedSuffix.slice(1), original, originalQuery);
   }
 
   query(suffix: string) {
@@ -200,14 +215,30 @@ class SuffixTree {
   }
 
   queryUnique(suffix: string, original: string) {
-    return this._queryUnique(suffix.toLowerCase(), original);
+    return this._queryUnique(suffix.toLowerCase(), original, suffix.toLowerCase());
   }
 }
 
-function sevenToAsset(emote: SevenEmote): AssetInfo {
+function sevenInSetToAsset(emote: SevenEmoteInSet): AssetInfo {
   const data = emote.data;
   const host = data.host;
   const animated = data.animated;
+  const filename = `${EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
+  const file = host.files.find((f) => f.name === filename);
+  return {
+    name: emote.name,
+    url: `${HTTPS}:${host.url}/${filename}`,
+    zero_width: !!(1 & emote.flags),
+    animated: animated,
+    width: file.width,
+    height: file.height,
+    platform: Platform.Seven
+  };
+}
+
+function sevenNotInSetToAsset(emote: SevenEmoteNotInSet): AssetInfo {
+  const host = emote.host;
+  const animated = emote.animated;
   const filename = `${EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   const file = host.files.find((f) => f.name === filename);
   return {
@@ -271,34 +302,40 @@ export class EmoteMatcher {
     bttvGlobal: BTTVEmote[],
     ffzPersonal: FFZPersonalEmotes,
     ffzGlobal: FFZGlobalEmotes,
-    twitchGlobal?: TwitchGlobalEmotes
+    twitchGlobal: TwitchGlobalEmotes | undefined,
+    sevenNotInSet: SevenEmoteNotInSet[] | undefined
   ) {
     this.root = new SuffixTree();
     // console.log(sevenPersonal)
     for (const emote of sevenPersonal.emotes) {
-      this.root.addAllSuffix(sevenToAsset(emote as SevenEmote), 0);
+      this.root.addAllSuffix(sevenInSetToAsset(emote), 0);
     }
     for (const emote of sevenGlobal.emotes) {
-      this.root.addAllSuffix(sevenToAsset(emote as SevenEmote), 1);
+      this.root.addAllSuffix(sevenInSetToAsset(emote), 1);
     }
     for (const emote of bttvPersonal.channelEmotes) {
-      this.root.addAllSuffix(bttvToAsset(emote as BTTVEmote), 2);
+      this.root.addAllSuffix(bttvToAsset(emote), 2);
     }
     for (const emote of bttvPersonal.sharedEmotes) {
-      this.root.addAllSuffix(bttvToAsset(emote as BTTVEmote), 3);
+      this.root.addAllSuffix(bttvToAsset(emote), 3);
     }
     for (const emote of bttvGlobal) {
-      this.root.addAllSuffix(bttvToAsset(emote as BTTVEmote), 4);
+      this.root.addAllSuffix(bttvToAsset(emote), 4);
     }
     for (const emote of ffzPersonal.sets[ffzPersonal.room.set].emoticons) {
-      this.root.addAllSuffix(ffzToAsset(emote as FFZEmote), 5);
+      this.root.addAllSuffix(ffzToAsset(emote), 5);
     }
     for (const emote of ffzGlobal.sets[`${FFZGLOBALSETSKEY}`].emoticons) {
-      this.root.addAllSuffix(ffzToAsset(emote as FFZEmote), 6);
+      this.root.addAllSuffix(ffzToAsset(emote), 6);
     }
     if (twitchGlobal) {
       for (const emote of twitchGlobal.data) {
-        this.root.addAllSuffix(twitchToAsset(emote as TwitchEmote), 7);
+        this.root.addAllSuffix(twitchToAsset(emote), 7);
+      }
+    }
+    if (sevenNotInSet) {
+      for (const emote of sevenNotInSet) {
+        this.root.addAllSuffix(sevenNotInSetToAsset(emote), 8);
       }
     }
   }

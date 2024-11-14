@@ -2,7 +2,6 @@ import { OpenAI } from 'openai';
 import { CommandInteraction } from 'discord.js';
 
 const MAXDISCORDMESSAGELENGTH = 2000;
-
 export function chatgptHandler(openai: OpenAI) {
   return async (interaction: CommandInteraction) => {
     const defer = interaction.deferReply();

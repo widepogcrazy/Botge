@@ -27,6 +27,18 @@ const commands = [
     ]
   },
   {
+    name: 'addemote',
+    description: 'adds an emote.',
+    options: [
+      {
+        type: 3,
+        name: 'text',
+        description: 'the 7tv link to the emote.',
+        required: true
+      }
+    ]
+  },
+  {
     name: 'chatgpt',
     description: 'sends text to chatgpt and chatgpt answers.',
     options: [
