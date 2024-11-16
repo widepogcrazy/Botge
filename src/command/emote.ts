@@ -226,7 +226,7 @@ export function emoteHandler(em: EmoteMatcher) {
         return;
       }
 
-      const outdir = path.join('temp_gifs', String(interaction.id));
+      const outdir = path.join('tmp', String(interaction.id));
       fs.ensureDirSync(outdir);
 
       const downloadedAssets: DownloadedAsset[] = await Promise.all(

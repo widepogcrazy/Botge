@@ -26,6 +26,7 @@ COPY --from=build /app/dist ./dist
 
 USER node
 
-VOLUME ["/app/temp_gifs"]
+VOLUME ["/app/tmp"]
+VOLUME ["/app/data"]
 
 CMD ["node", "dist/index.js"]

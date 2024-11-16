@@ -48,7 +48,7 @@ const emote_endpoints = {
 };
 
 const file_endpoints = {
-  sevenNotInSetEmotes: 'local_emotes/sevenNotInSetEmotes.json'
+  sevenNotInSetEmotes: 'data/sevenNotInSetEmotes.json'
 };
 
 const FAILUREEXITCODE: number = 1;
