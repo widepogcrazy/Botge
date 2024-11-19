@@ -1,7 +1,7 @@
-import { CommandInteraction } from 'discord.js';
+import type { CommandInteraction } from 'discord.js';
 
 export function helpHandler() {
-  return async (interaction: CommandInteraction) => {
+  return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       await defer;
@@ -10,7 +10,8 @@ export function helpHandler() {
       );
       return;
     } catch (error) {
-      console.log(`Error at help --> ${error}`);
+      if (error instanceof Error) console.log(`Error at help --> ${error}`);
+
       await defer;
       await interaction.editReply('Failed to help.');
       return;

@@ -6,6 +6,7 @@
     "moduleResolution": "bundler",
     "sourceMap": true,
     "outDir": "dist",
+    "strict": true
   },
   "lib": [
     "es2015"

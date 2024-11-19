@@ -1,111 +1,99 @@
-import { exec, spawn } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs-extra';
+import { exec, spawn, type ExecException } from 'child_process';
+import { join, basename } from 'path';
+import { ensureDirSync } from 'fs-extra';
 import fetch from 'node-fetch';
 import { writeFile, rm } from 'node:fs/promises';
 
-import { CommandInteraction } from 'discord.js';
+import type { CommandInteraction } from 'discord.js';
 
-import { AssetInfo, EmoteMatcher, Platform } from '../emoteMatcher.js';
+import { Platform, type AssetInfo, type IEmoteMatcher } from '../emoteMatcher.js';
 
-const DEFAULTDURATION: number = 0;
-const DEFAULTFPS: number = 25;
-const MAXWIDTH: number = 192;
-const MAXHEIGHT: number = 64;
+const DEFAULTDURATION = 0;
+const DEFAULTFPS = 25;
+const MAXWIDTH = 192;
+const MAXHEIGHT = 64;
 
 interface DownloadedAsset {
-  filename: string;
-  asset: AssetInfo;
-  w: number;
-  h: number;
-  duration: number; // stills are DEFAULTDURATION
-  animated: boolean;
+  readonly filename: string;
+  readonly asset: AssetInfo;
+  readonly w: number | undefined;
+  readonly h: number | undefined;
+  readonly duration: number; // stills are DEFAULTDURATION
+  readonly animated: boolean;
 }
 
 interface HstackElement {
-  id: number;
-  animated: boolean;
-  filterString: () => string;
+  readonly id: number;
+  readonly animated: boolean;
+  readonly filterString: () => string;
 }
 
 class SimpleElement implements HstackElement {
-  id: number;
-  asset: DownloadedAsset;
-  animated: boolean;
+  public readonly id: number;
+  public readonly asset: DownloadedAsset;
+  public readonly animated: boolean;
 
-  constructor(id: number, asset: DownloadedAsset) {
+  public constructor(id: number, asset: DownloadedAsset) {
     this.id = id;
     this.asset = asset;
     this.animated = this.asset.animated;
   }
 
-  filterString(): string {
-    let filterstring = `[${this.id}:v]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`;
-    if (this.animated) filterstring += `,fps=${DEFAULTFPS},pad=h=${MAXHEIGHT}:x=-1:y=-1:color=black@0.0`;
-    filterstring += `[o${this.id}];`;
-    return filterstring;
+  public filterString(): string {
+    let filterString = `[${this.id}:v]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`;
+    if (this.animated) filterString += `,fps=${DEFAULTFPS},pad=h=${MAXHEIGHT}:x=-1:y=-1:color=black@0.0`;
+    filterString += `[o${this.id}];`;
+    return filterString;
   }
 }
 
-/*
-interface Layer {
-  id: number;
-  asset: AssetInfo[];
-}
-*/
-
 class OverlayElement implements HstackElement {
-  id: number;
-  layers: DownloadedAsset[];
-  w: number;
-  h: number;
+  public readonly id: number;
+  public readonly layers: readonly DownloadedAsset[];
+  public readonly w: number | undefined;
+  public readonly h: number;
   //durationSeconds: number; // NaN => not animated
-  animated: boolean;
+  public readonly animated: boolean;
 
-  constructor(id: number, layers: DownloadedAsset[], height: number) {
+  public constructor(id: number, layers: readonly DownloadedAsset[], height: number) {
     this.id = id;
     this.layers = layers;
     this.h = height;
-    this.animated = this.layers.some((layer) => layer.animated);
-  }
-
-  _getMaxWidth(scaleToHeight: number): number {
-    const scaledWidth: number[] = this.layers.map((layer) => {
-      return (layer.w / layer.h) * scaleToHeight;
-    });
-    const ret = Math.round(Math.min(Math.max(...scaledWidth), MAXWIDTH));
-    return ret % 2 == 0 ? ret : ret + 1; // rounds up to even number because of ffmpeg
-  }
-
-  filterString(): string {
     this.w = this._getMaxWidth(this.h);
+    this.animated = this.layers.some((layer: DownloadedAsset) => layer.animated);
+  }
 
+  public filterString(): string {
     const segments: string[] = [];
 
     let id: number = this.id;
-    let layerid: number = 0;
+    let layerId = 0;
     // first layer, pad the canvas
     segments.push(`[${this.id}]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`);
-    if (this.animated && this.layers[layerid].animated) {
-      segments.push(`,fps=${DEFAULTFPS}`);
-    }
+    if (this.animated && this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
     segments.push(`,pad=${this.w}:${this.h}:-1:-1:color=black@0.0[o${this.id}];`);
     id++;
-    layerid++;
+    layerId++;
 
     // other layers
     this.layers.slice(1).forEach(() => {
       segments.push(`[${id}]scale=-1:${MAXHEIGHT}`);
-      if (this.animated && this.layers[layerid].animated) {
-        segments.push(`,fps=${DEFAULTFPS}`);
-      }
+      if (this.animated && this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
       segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
       id++;
-      layerid++;
+      layerId++;
     });
 
     return segments.join('');
     //// SURELY IT WORKS
+  }
+
+  private _getMaxWidth(scaleToHeight: number): number {
+    const scaledWidth: (number | undefined)[] = this.layers.map((layer: DownloadedAsset) => {
+      return layer.w !== undefined && layer.h !== undefined ? (layer.w / layer.h) * scaleToHeight : undefined;
+    });
+    const ret: number = Math.round(Math.min(Math.max(...scaledWidth.filter((sW) => sW !== undefined)), MAXWIDTH));
+    return ret % 2 === 0 ? ret : ret + 1; // rounds up to even number because of ffmpeg
   }
 }
 
@@ -113,9 +101,9 @@ async function _getDimension(filename: string): Promise<[number, number]> {
   return new Promise((resolve, reject) => {
     exec(
       `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 ${filename}`,
-      (error, stdout, stderr) => {
+      (error: Readonly<ExecException | null>, stdout) => {
         if (error) {
-          reject(`Error getting widthAndHeight: ${stderr}`);
+          reject(error);
           return;
         }
         const widthAndHeight = stdout.trim();
@@ -137,9 +125,9 @@ async function _getDuration(filename: string): Promise<number> {
   return new Promise((resolve, reject) => {
     exec(
       `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${filename}"`,
-      (error, stdout, stderr) => {
+      (error: Readonly<ExecException | null>, stdout) => {
         if (error) {
-          reject(`Error getting duration: ${stderr}`);
+          reject(error);
           return;
         }
         const duration = stdout.trim();
@@ -156,14 +144,14 @@ async function _getDuration(filename: string): Promise<number> {
 
 async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promise<DownloadedAsset> {
   const response = await fetch(asset.url);
-  const buffer = await response.buffer();
-  const animated = asset.animated;
-  const hasWidthAndHeight = asset.width && asset.height;
-  const filename = path.join(outdir, `${i}_` + path.basename(asset.url));
-  await writeFile(filename, buffer);
+  const buffer = await response.arrayBuffer();
+  const { animated } = asset;
+  const hasWidthAndHeight = asset.width !== undefined && asset.height !== undefined;
+  const filename = join(outdir, `${i.toString()}_` + basename(asset.url));
+  await writeFile(filename, Buffer.from(buffer));
 
-  let duration: typeof DEFAULTDURATION | number | Promise<number> = DEFAULTDURATION;
-  let widthAndHeight: [number | undefined, number | undefined] | Promise<[number, number]> = [
+  let duration: Promise<number> | number = DEFAULTDURATION;
+  let widthAndHeight: Promise<[number, number]> | [number | undefined, number | undefined] = [
     asset.width,
     asset.height
   ];
@@ -186,13 +174,13 @@ async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promi
   };
 }
 
-export function emoteHandler(em: EmoteMatcher) {
-  return async (interaction: CommandInteraction) => {
+export function emoteHandler(em: IEmoteMatcher) {
+  return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const tokens: string[] = String(interaction.options.get('name').value).trim().split(/\s+/);
-      const matchmulti: (AssetInfo | undefined)[] = em.matchMulti(tokens);
-      const assets: AssetInfo[] = matchmulti.filter((asset) => asset !== undefined);
+      const tokens: string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
+      const matchMulti_: readonly (AssetInfo | undefined)[] = em.matchMulti(tokens);
+      const assets: AssetInfo[] = matchMulti_.filter((asset: AssetInfo | undefined) => asset !== undefined);
 
       if (assets.length === 0) {
         await defer;
@@ -207,16 +195,22 @@ export function emoteHandler(em: EmoteMatcher) {
         const size: number | undefined = sizeString ? Number(sizeString) : undefined;
         let url: string = asset.url;
 
-        if (size) {
+        if (size !== undefined) {
           if (size >= 1 && size <= 4) {
-            if (platform === Platform.Seven) {
+            if (platform === Platform.seven) {
               url = url.replace('/2x', `/${size}x`);
-            } else if (platform === Platform.BTTV) {
-              if (size < 4) url = url.replace('/2x', `/${size}x`);
-            } else if (platform === Platform.FFZ) {
-              if (size !== 3) url = url.slice(0, -1) + `${size}`;
-            } else if (platform === Platform.Twitch) {
-              if (size < 4) url = url.replace('/2.0', `/${size}.0`);
+            } else if (platform === Platform.bttv) {
+              if (size < 4) {
+                url = url.replace('/2x', `/${size}x`);
+              }
+            } else if (platform === Platform.ffz) {
+              if (size !== 3) {
+                url = url.slice(0, -1) + `${size}`;
+              }
+            } else {
+              if (size < 4) {
+                url = url.replace('/2.0', `/${size}.0`);
+              }
             }
           }
         }
@@ -226,21 +220,21 @@ export function emoteHandler(em: EmoteMatcher) {
         return;
       }
 
-      const outdir = path.join('tmp', String(interaction.id));
-      fs.ensureDirSync(outdir);
+      const outdir = join('tmp', String(interaction.id));
+      ensureDirSync(outdir);
 
       const downloadedAssets: DownloadedAsset[] = await Promise.all(
-        assets.map((asset, i) => downloadAsset(outdir, asset, i))
+        assets.map(async (asset: AssetInfo, i) => downloadAsset(outdir, asset, i))
       );
 
       // at least 2
-      let boundary: number = 0;
-      let i: number = 0;
+      let boundary = 0;
+      let i = 0;
       const elements: HstackElement[] = [];
       for (; i < downloadedAssets.length; i++) {
-        if (!assets[i].zero_width) {
+        if (!assets[i].zeroWidth) {
           // new group
-          if (i == boundary + 1) {
+          if (i === boundary + 1) {
             // single element
             elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
             boundary = i;
@@ -253,7 +247,7 @@ export function emoteHandler(em: EmoteMatcher) {
       }
 
       // don't forget last one
-      if (i == boundary + 1) {
+      if (i === boundary + 1) {
         // single element
         elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
       } else if (i > boundary) {
@@ -261,12 +255,12 @@ export function emoteHandler(em: EmoteMatcher) {
         elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), MAXHEIGHT));
       }
 
-      const maxDuration: number = Math.max(...downloadedAssets.map((layer) => layer.duration));
-      const animated: boolean = maxDuration != DEFAULTDURATION;
+      const maxDuration: number = Math.max(...downloadedAssets.map((layer: DownloadedAsset) => layer.duration));
+      const animated: boolean = maxDuration !== DEFAULTDURATION;
 
       const args: string[] = [];
 
-      downloadedAssets.forEach((asset) => {
+      downloadedAssets.forEach((asset: DownloadedAsset) => {
         if (animated && asset.animated) {
           args.push('-stream_loop');
           args.push('-1');
@@ -274,15 +268,15 @@ export function emoteHandler(em: EmoteMatcher) {
           args.push(`${maxDuration}`);
         }
         args.push('-i');
-        args.push(`${asset.filename}`);
+        args.push(asset.filename);
       });
 
       args.push('-filter_complex');
-      const filter: string[] = elements.map((e) => e.filterString());
+      const filter: string[] = elements.map((e: Readonly<HstackElement>) => e.filterString());
 
       // hstack
       if (elements.length > 1) {
-        filter.push(elements.map((e) => `[o${e.id}]`).join(''));
+        filter.push(elements.map((e: Readonly<HstackElement>) => `[o${e.id}]`).join(''));
         filter.push(`hstack=inputs=${elements.length}`);
       } else {
         filter.push(`[o0]scale`); // only to point the output stream
@@ -297,7 +291,7 @@ export function emoteHandler(em: EmoteMatcher) {
       args.push('-fs');
       args.push('25M');
 
-      const outfile = path.join(outdir, animated ? 'output.gif' : 'output.png');
+      const outfile = join(outdir, animated ? 'output.gif' : 'output.png');
       args.push(outfile);
 
       const ffmpeg = spawn('ffmpeg', args);
@@ -306,28 +300,29 @@ export function emoteHandler(em: EmoteMatcher) {
 
       ffmpeg.on(
         'close',
-        (function (interaction, defer) {
+        (function () {
           //Here you can get the exit code of the script
-          return async function (code) {
-            if (code == 0) {
+          return async function (code: number): Promise<void> {
+            if (code === 0) {
               await defer;
               await interaction.editReply({ files: [outfile] }).then(() => {
-                rm(outdir, { recursive: true });
+                void rm(outdir, { recursive: true });
               });
               return;
             }
             await defer;
             await interaction.editReply({ content: 'gif creation failed' }).then(() => {
-              rm(outdir, { recursive: true });
+              void rm(outdir, { recursive: true });
             });
             return;
           };
-        })(interaction, defer) // closure to keep |interaction|
+        })() // closure to keep |interaction|
       );
 
       await defer;
     } catch (error) {
       console.log(error);
+
       await defer;
       return;
     }

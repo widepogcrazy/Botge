@@ -1,82 +1,110 @@
-const api_endpoints = {
+const API_ENDPOINTS = {
   twitchAccessToken: 'https://id.twitch.tv/oauth2/token',
   twitchAccessTokenValidate: 'https://id.twitch.tv/oauth2/validate'
 };
 
-export class TwitchGlobalHandler {
-  private twitch_client_id: string;
-  private twitch_secret: string;
+interface ClientCredentialsGrantFlow {
+  readonly access_token: string;
+  readonly expires_in: number;
+  readonly token_type: string;
+}
 
-  private access_token: string;
-  private access_token_status: number;
-  private access_token_validation_status: number;
+export interface ITwitchGlobalHandler {
+  readonly gotAccessToken: () => boolean;
+  readonly isAccessTokenValidated: () => boolean;
+  readonly getTwitchAccessToken: () => Promise<void>;
+  readonly validateTwitchAccessToken: () => Promise<void>;
+  readonly getTwitchGlobalOptions: () =>
+    | {
+        readonly method: string;
+        readonly headers: {
+          readonly Authorization: string;
+          readonly 'Client-Id': string;
+        };
+      }
+    | undefined;
+}
 
-  private static _instance: TwitchGlobalHandler;
+export class TwitchGlobalHandler implements ITwitchGlobalHandler {
+  private static _instance: TwitchGlobalHandler | undefined = undefined;
 
-  private constructor(twitch_client_id: string, twitch_secret: string) {
-    this.twitch_client_id = twitch_client_id;
-    this.twitch_secret = twitch_secret;
+  private readonly _twitchClientId: string;
+  private readonly _twitchSecret: string;
+
+  private _accessToken: string | undefined = undefined;
+  private _accessTokenStatus: number | undefined = undefined;
+  private _accessTokenValidationStatus: number | undefined = undefined;
+
+  private constructor(twitchClientId: string, twitchSecret: string) {
+    this._twitchClientId = twitchClientId;
+    this._twitchSecret = twitchSecret;
   }
 
-  static getInstance(twitch_client_id: string, twitch_secret: string): TwitchGlobalHandler {
+  public static getInstance(twitchClientId: string, twitchSecret: string): TwitchGlobalHandler {
     if (this._instance) {
       return this._instance;
     }
-    this._instance = new TwitchGlobalHandler(twitch_client_id, twitch_secret);
+
+    this._instance = new TwitchGlobalHandler(twitchClientId, twitchSecret);
     return this._instance;
   }
 
-  gotAccessToken(): boolean {
-    return this.access_token_status === 200;
+  public gotAccessToken(): boolean {
+    return this._accessTokenStatus === 200;
   }
-  isAccessTokenValidated(): boolean {
-    return this.gotAccessToken() && this.access_token_validation_status === 200;
+  public isAccessTokenValidated(): boolean {
+    return this.gotAccessToken() && this._accessTokenValidationStatus === 200;
   }
 
-  async getTwitchAccessToken() {
-    const twitchAccessToken = fetch(api_endpoints.twitchAccessToken, {
+  public async getTwitchAccessToken(): Promise<void> {
+    const twitchAccessToken = await fetch(API_ENDPOINTS.twitchAccessToken, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: `client_id=${this.twitch_client_id}&client_secret=${this.twitch_secret}&grant_type=client_credentials`
+      body: `client_id=${this._twitchClientId}&client_secret=${this._twitchSecret}&grant_type=client_credentials`
     });
-    this.access_token = String((await (await twitchAccessToken).json()).access_token);
-    this.access_token_status = (await twitchAccessToken).status;
+
+    this._accessToken = ((await twitchAccessToken.json()) as ClientCredentialsGrantFlow).access_token;
+    this._accessTokenStatus = twitchAccessToken.status;
   }
 
-  async validateTwitchAccessToken() {
+  public async validateTwitchAccessToken(): Promise<void> {
     if (!this.gotAccessToken()) {
       return;
     }
-    const twitchAccessTokenValidation = fetch(api_endpoints.twitchAccessTokenValidate, {
+
+    const twitchAccessTokenValidation = await fetch(API_ENDPOINTS.twitchAccessTokenValidate, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${this.access_token}`
+        Authorization: `Bearer ${this._accessToken}`
       }
     });
-    this.access_token_validation_status = (await twitchAccessTokenValidation).status;
+
+    this._accessTokenValidationStatus = twitchAccessTokenValidation.status;
   }
 
-  getTwitchGlobalOptions():
+  public getTwitchGlobalOptions():
     | {
-        method: string;
-        headers: {
-          Authorization: string;
-          'Client-Id': string;
+        readonly method: string;
+        readonly headers: {
+          readonly Authorization: string;
+          readonly 'Client-Id': string;
         };
       }
     | undefined {
     if (!this.gotAccessToken() || !this.isAccessTokenValidated()) {
       return undefined;
     }
+
     const optionsTwitchGlobal = {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${this.access_token}`,
-        'Client-Id': this.twitch_client_id
+        Authorization: `Bearer ${this._accessToken}`,
+        'Client-Id': this._twitchClientId
       }
     };
+
     return optionsTwitchGlobal;
   }
 }

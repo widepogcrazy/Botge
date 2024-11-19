@@ -5,8 +5,8 @@ import { REST, Routes } from 'discord.js';
 
 dotenv.config();
 
-const APP_ID: string = process.env.APP_ID;
-const DISCORD_TOKEN: string = process.env.DISCORD_TOKEN;
+const APP_ID: string | undefined = process.env.APP_ID;
+const DISCORD_TOKEN: string | undefined = process.env.DISCORD_TOKEN;
 
 const commands = [
   {
@@ -80,14 +80,17 @@ const commands = [
   }
 ];
 
-const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
-
 try {
   console.log('Commands starting.');
 
-  await rest.put(Routes.applicationCommands(APP_ID), { body: commands });
+  if (DISCORD_TOKEN !== undefined && APP_ID !== undefined) {
+    const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+    await rest.put(Routes.applicationCommands(APP_ID), { body: commands });
 
-  console.log('Commands done.');
+    console.log('Commands done.');
+  } else {
+    console.log('Commands failed.');
+  }
 } catch (error) {
   console.error(error);
 }
