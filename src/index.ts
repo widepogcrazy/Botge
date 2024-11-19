@@ -11,7 +11,7 @@ import { Client } from 'discord.js';
 import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
 
-import { TwitchGlobalHandler, type ITwitchGlobalHandler } from './TwitchGlobalHandler.js';
+import { createTwitchApi, TwitchGlobalHandler } from './api/twitch.js';
 import {
   type SevenEmoteNotInSet,
   type BTTVEmote,
@@ -70,24 +70,8 @@ const FILE_ENDPOINTS = {
 
 const FAILUREEXITCODE = 1;
 
-async function getAndValidateTwitchAccessToken(twitchglobalhandler: ITwitchGlobalHandler): Promise<void> {
-  await twitchglobalhandler.getTwitchAccessToken();
-  await twitchglobalhandler.validateTwitchAccessToken();
-}
-
-function logGotAccessToken(twitchglobalhandler: ITwitchGlobalHandler): void {
-  if (twitchglobalhandler.gotAccessToken()) console.log('Got Twitch Access Token.');
-  else console.log('Failed to get Twitch Access Token.');
-}
-function logIsAccessTokenValidated(twitchglobalhandler: ITwitchGlobalHandler): void {
-  if (twitchglobalhandler.isAccessTokenValidated()) console.log('Twitch Access Token is valid.');
-  else console.log('Twitch Access Token is invalid.');
-
-  return;
-}
-
 async function newEmoteMatcher(
-  twitchglobalhandler: ITwitchGlobalHandler | undefined,
+  twitchglobalhandler: TwitchGlobalHandler | undefined,
   sevenEmotesNotInSet: readonly string[] | undefined
 ): Promise<EmoteMatcher | undefined> {
   try {
@@ -179,17 +163,10 @@ try {
 try {
   twitchGlobalHandler =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
-      ? TwitchGlobalHandler.getInstance(TWITCH_CLIENT_ID, TWITCH_SECRET)
+      ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
 } catch (error) {
   if (error instanceof Error) console.log(`Error at initializing twitchGlobalHandler: ${error}.`);
-}
-
-//inits
-if (twitchGlobalHandler) {
-  await getAndValidateTwitchAccessToken(twitchGlobalHandler);
-  logGotAccessToken(twitchGlobalHandler);
-  logIsAccessTokenValidated(twitchGlobalHandler);
 }
 
 sevenEmotesNotInSet = await readEmotes(FILE_ENDPOINTS.sevenNotInSetEmotes);
@@ -206,19 +183,6 @@ scheduleJob('*/5 * * * *', async () => {
   logIsEmoteMatcherValid(em);
   if (!isEmoteMatcherValid(em)) logExitAndExit(FAILUREEXITCODE);
 });
-
-if (twitchGlobalHandler) {
-  // update ever 60 minutes
-  scheduleJob('*/60 * * * *', async () => {
-    await twitchGlobalHandler.validateTwitchAccessToken();
-    logIsAccessTokenValidated(twitchGlobalHandler);
-    if (!twitchGlobalHandler.isAccessTokenValidated()) {
-      await getAndValidateTwitchAccessToken(twitchGlobalHandler);
-      logGotAccessToken(twitchGlobalHandler);
-      logIsAccessTokenValidated(twitchGlobalHandler);
-    }
-  });
-}
 
 //on ready
 client?.on('ready', function onReady() {
