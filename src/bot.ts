@@ -24,19 +24,19 @@ import { helpHandler } from './command/help.js';
 import { addEmoteHandlerSevenNotInSet } from './command/addemote.js';
 import { FileEmoteDb } from './api/filedb.js';
 
-// emotes
-const EMOTE_ENDPOINTS = {
-  sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
-  sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
-  sevenEmotesNotInSet: 'https://7tv.io/v3/emotes',
-  bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
-  bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
-  ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
-  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global',
-  twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
-};
+export interface EmoteEndpoints {
+  sevenPersonal: string;
+  sevenGlobal: string;
+  sevenEmotesNotInSet: string;
+  bttvPersonal: string;
+  bttvGlobal: string;
+  ffzPersonal: string;
+  ffzGlobal: string;
+  twitchGlobal: string;
+}
 
 async function newEmoteMatcher(
+  endpoints: EmoteEndpoints,
   twitchglobalhandler: TwitchGlobalHandler | undefined,
   db: FileEmoteDb
 ): Promise<EmoteMatcher> {
@@ -45,15 +45,13 @@ async function newEmoteMatcher(
   const fetchAndJson = async (emoteEndpoint: string, options?: RequestInit): Promise<unknown> => {
     return options ? await (await fetch(emoteEndpoint, options)).json() : await (await fetch(emoteEndpoint)).json();
   };
-  const sevenPersonal = fetchAndJson(EMOTE_ENDPOINTS.sevenPersonal);
-  const sevenGlobal = fetchAndJson(EMOTE_ENDPOINTS.sevenGlobal);
-  const bttvPersonal = fetchAndJson(EMOTE_ENDPOINTS.bttvPersonal);
-  const bttvGlobal = fetchAndJson(EMOTE_ENDPOINTS.bttvGlobal);
-  const ffzPersonal = fetchAndJson(EMOTE_ENDPOINTS.ffzPersonal);
-  const ffzGlobal = fetchAndJson(EMOTE_ENDPOINTS.ffzGlobal);
-  const twitchGlobal = twitchGlobalOptions
-    ? fetchAndJson(EMOTE_ENDPOINTS.twitchGlobal, twitchGlobalOptions)
-    : undefined;
+  const sevenPersonal = fetchAndJson(endpoints.sevenPersonal);
+  const sevenGlobal = fetchAndJson(endpoints.sevenGlobal);
+  const bttvPersonal = fetchAndJson(endpoints.bttvPersonal);
+  const bttvGlobal = fetchAndJson(endpoints.bttvGlobal);
+  const ffzPersonal = fetchAndJson(endpoints.ffzPersonal);
+  const ffzGlobal = fetchAndJson(endpoints.ffzGlobal);
+  const twitchGlobal = twitchGlobalOptions ? fetchAndJson(endpoints.twitchGlobal, twitchGlobalOptions) : undefined;
   const sevenEmotesNotInSet_ = db.getAll().map(async (sevenEmoteNotInSet) => fetchAndJson(sevenEmoteNotInSet));
 
   return new EmoteMatcher(
@@ -69,6 +67,7 @@ async function newEmoteMatcher(
 }
 
 export class Bot {
+  private emoteEndpoints: EmoteEndpoints;
   public discord: Client;
   public openai: OpenAI | undefined;
   public translate: v2.Translate | undefined;
@@ -78,6 +77,7 @@ export class Bot {
   public em: EmoteMatcher;
 
   constructor(
+    emoteEndpoints: EmoteEndpoints,
     discord: Client,
     openai: OpenAI | undefined,
     translate: v2.Translate | undefined,
@@ -85,6 +85,7 @@ export class Bot {
     db: FileEmoteDb,
     em: EmoteMatcher
   ) {
+    this.emoteEndpoints = emoteEndpoints;
     this.discord = discord;
     this.openai = openai;
     this.translate = translate;
@@ -95,7 +96,7 @@ export class Bot {
 
   async refreshEmotes() {
     try {
-      this.em = await newEmoteMatcher(this.twitch, this.db);
+      this.em = await newEmoteMatcher(this.emoteEndpoints, this.twitch, this.db);
     } catch (err) {
       console.log('refreshEmotes() failed, emotes might be stale: ' + err);
     }
@@ -124,7 +125,7 @@ export class Bot {
       if (interaction.commandName === 'addemote') {
         const addEmoteHandlerSevenNotInSet_ = await addEmoteHandlerSevenNotInSet(
           self,
-          EMOTE_ENDPOINTS.sevenEmotesNotInSet
+          self.emoteEndpoints.sevenEmotesNotInSet
         )(interaction);
         return;
       }
@@ -161,11 +162,20 @@ export class Bot {
 }
 
 export async function CreateBot(
+  emoteEndpoints: EmoteEndpoints,
   discord: Client,
   openai: OpenAI | undefined,
   translate: v2.Translate | undefined,
   twitch: TwitchGlobalHandler | undefined,
   db: FileEmoteDb
 ) {
-  return new Bot(discord, openai, translate, twitch, db, await newEmoteMatcher(twitch, db));
+  return new Bot(
+    emoteEndpoints,
+    discord,
+    openai,
+    translate,
+    twitch,
+    db,
+    await newEmoteMatcher(emoteEndpoints, twitch, db)
+  );
 }

@@ -9,8 +9,8 @@ import OpenAI from 'openai';
 import { v2 } from '@google-cloud/translate';
 import { createTwitchApi, TwitchGlobalHandler } from './api/twitch.js';
 import { createFileEmoteDbConnection, FileEmoteDb } from './api/filedb.js';
-import { Bot, CreateBot } from './bot.js';
-import type { JWTInput } from 'google-auth-library'
+import { Bot, CreateBot, EmoteEndpoints } from './bot.js';
+import type { JWTInput } from 'google-auth-library';
 
 //dotenv
 dotenv.config();
@@ -24,6 +24,18 @@ const FILE_ENDPOINTS = {
   sevenNotInSetEmotes: 'data/sevenNotInSetEmotes.json'
 };
 
+// emotes
+const EMOTE_ENDPOINTS: EmoteEndpoints = {
+  sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
+  sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
+  sevenEmotesNotInSet: 'https://7tv.io/v3/emotes',
+  bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
+  bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
+  ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
+  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global',
+  twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
+};
+
 let bot: Bot = await (async function (): Promise<Bot> {
   //declarations
   let discord: Client = new Client({ intents: [] });
@@ -31,7 +43,7 @@ let bot: Bot = await (async function (): Promise<Bot> {
   let openai: OpenAI | undefined = OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
 
   let translate: v2.Translate | undefined = await (async function (): Promise<v2.Translate | undefined> {
-    const jsonCredentials = CREDENTIALS !== undefined ? ((await JSON.parse(CREDENTIALS)) as JWTInput ) : undefined;
+    const jsonCredentials = CREDENTIALS !== undefined ? ((await JSON.parse(CREDENTIALS)) as JWTInput) : undefined;
     return jsonCredentials
       ? new v2.Translate({
           credentials: jsonCredentials,
@@ -47,7 +59,7 @@ let bot: Bot = await (async function (): Promise<Bot> {
 
   let db: FileEmoteDb = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
 
-  return await CreateBot(discord, openai, translate, twitch, db);
+  return await CreateBot(EMOTE_ENDPOINTS, discord, openai, translate, twitch, db);
 })();
 
 // update every 5 minutes
