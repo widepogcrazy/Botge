@@ -4,55 +4,20 @@ import { writeFile, readFile } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 import type { IEmoteMatcher, SevenEmoteNotInSet } from '../emoteMatcher.js';
+import type { FileEmoteDb } from '../api/filedb.js';
+import type { EmoteMatcher } from '../emoteMatcher.js';
+
+interface RequiredState {
+  db: FileEmoteDb;
+  em: EmoteMatcher;
+  refreshEmotes(): Promise<void>;
+}
 
 const SPLITTER = '/';
-const REPLACER = null;
-const INDENTATION = 2;
 
-const regExpSevenEmoteNotInSet = new RegExp('/^https://7tv.app/emotes/[A-Z0-9]{26}$/');
+const regExpSevenEmoteNotInSet = new RegExp(/^https:\/\/7tv\.app\/emotes\/[A-Z0-9]{26}$/);
 
-export async function readEmotes(filepath: string): Promise<string[] | undefined> {
-  try {
-    const exists = existsSync(filepath);
-    if (!exists) return undefined;
-
-    const emotes = (await JSON.parse((await readFile(filepath)).toString())) as string[];
-
-    return emotes;
-  } catch (error) {
-    if (error instanceof Error) console.log(`Error at readEmoteHandler --> ${error}`);
-    return undefined;
-  }
-}
-
-function addEmote(filepath: string, emote: string) {
-  return async (): Promise<boolean> => {
-    try {
-      const exists: boolean = existsSync(filepath);
-      if (!exists) ensureFileSync(filepath);
-
-      const defaultEmotes: [] = [];
-      let emotes: string[] = defaultEmotes;
-      if (exists) {
-        emotes = (await readEmotes(filepath)) ?? defaultEmotes;
-        if (emotes.includes(emote)) {
-          return false;
-        }
-      }
-
-      emotes.push(emote);
-      const emotesJSON: string = JSON.stringify(emotes, REPLACER, INDENTATION);
-      await writeFile(filepath, emotesJSON);
-
-      return true;
-    } catch (error) {
-      if (error instanceof Error) console.log(`Error at addemotehandler --> ${error}`);
-      return false;
-    }
-  };
-}
-
-export function addEmoteHandlerSevenNotInSet(em: IEmoteMatcher, emoteEndpoint: string, fileEndpoint: string) {
+export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: string) {
   return async function addEmoteHandlerSevenNotInSetInnerFunction(interaction: CommandInteraction): Promise<boolean> {
     const defer = interaction.deferReply();
     try {
@@ -65,6 +30,7 @@ export function addEmoteHandlerSevenNotInSet(em: IEmoteMatcher, emoteEndpoint: s
         return false;
       }
 
+      // TODO: USE REGEX CAPTURE
       const sevenEmoteNotInSetId = textSplit.at(-1);
       const sevenEmoteNotInSetURL = `${emoteEndpoint}${SPLITTER}${sevenEmoteNotInSetId}`;
 
@@ -72,24 +38,24 @@ export function addEmoteHandlerSevenNotInSet(em: IEmoteMatcher, emoteEndpoint: s
         await fetch(sevenEmoteNotInSetURL)
       ).json()) as SevenEmoteNotInSet;
 
-      if (em.matchSingle(sevenEmoteNotInSet.name)) {
+      if (s.em.matchSingle(sevenEmoteNotInSet.name)) {
         await defer;
         await interaction.editReply('theres already an emote with the same name');
         return false;
       }
 
-      const addEmote_: boolean = await addEmote(fileEndpoint, sevenEmoteNotInSetURL)();
+      await s.db.add(sevenEmoteNotInSetURL);
 
       await defer;
-      if (addEmote_) {
-        await interaction.editReply(`added emote ${sevenEmoteNotInSet.name}`);
-        return true;
-      }
-
-      await interaction.editReply('failed to add emote');
-      return false;
+      await interaction.editReply(`added emote ${sevenEmoteNotInSet.name}`);
+      s.refreshEmotes();
+      return true;
     } catch (error) {
-      if (error instanceof Error) console.log(`Error at ${addEmoteHandlerSevenNotInSet.name} --> ${error}`);
+      if (error instanceof Error) {
+        console.log(`Error at ${addEmoteHandlerSevenNotInSet.name} --> ${error}`);
+      } else {
+        console.log(error);
+      }
 
       await defer;
       await interaction.editReply('failed to add emote');

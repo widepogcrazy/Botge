@@ -28,7 +28,8 @@ import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstri
 import { chatgptHandler } from './command/openai.js';
 import translateHandler from './command/translate.js';
 import { helpHandler } from './command/help.js';
-import { readEmotes, addEmoteHandlerSevenNotInSet } from './command/addemote.js';
+import { addEmoteHandlerSevenNotInSet } from './command/addemote.js';
+import { createFileEmoteDbConnection, FileEmoteDb } from './api/filedb.js';
 
 interface Credentials {
   readonly type: string;
@@ -72,41 +73,34 @@ const FAILUREEXITCODE = 1;
 
 async function newEmoteMatcher(
   twitchglobalhandler: TwitchGlobalHandler | undefined,
-  sevenEmotesNotInSet: readonly string[] | undefined
-): Promise<EmoteMatcher | undefined> {
-  try {
-    const twitchGlobalOptions = twitchglobalhandler?.getTwitchGlobalOptions();
+  db: FileEmoteDb
+): Promise<EmoteMatcher> {
+  const twitchGlobalOptions = twitchglobalhandler?.getTwitchGlobalOptions();
 
-    const fetchAndJson = async (emoteEndpoint: string, options?: RequestInit): Promise<unknown> => {
-      return options ? await (await fetch(emoteEndpoint, options)).json() : await (await fetch(emoteEndpoint)).json();
-    };
-    const sevenPersonal = fetchAndJson(EMOTE_ENDPOINTS.sevenPersonal);
-    const sevenGlobal = fetchAndJson(EMOTE_ENDPOINTS.sevenGlobal);
-    const bttvPersonal = fetchAndJson(EMOTE_ENDPOINTS.bttvPersonal);
-    const bttvGlobal = fetchAndJson(EMOTE_ENDPOINTS.bttvGlobal);
-    const ffzPersonal = fetchAndJson(EMOTE_ENDPOINTS.ffzPersonal);
-    const ffzGlobal = fetchAndJson(EMOTE_ENDPOINTS.ffzGlobal);
-    const twitchGlobal = twitchGlobalOptions
-      ? fetchAndJson(EMOTE_ENDPOINTS.twitchGlobal, twitchGlobalOptions)
-      : undefined;
-    const sevenEmotesNotInSet_ = sevenEmotesNotInSet?.map(async (sevenEmoteNotInSet) =>
-      fetchAndJson(sevenEmoteNotInSet)
-    );
+  const fetchAndJson = async (emoteEndpoint: string, options?: RequestInit): Promise<unknown> => {
+    return options ? await (await fetch(emoteEndpoint, options)).json() : await (await fetch(emoteEndpoint)).json();
+  };
+  const sevenPersonal = fetchAndJson(EMOTE_ENDPOINTS.sevenPersonal);
+  const sevenGlobal = fetchAndJson(EMOTE_ENDPOINTS.sevenGlobal);
+  const bttvPersonal = fetchAndJson(EMOTE_ENDPOINTS.bttvPersonal);
+  const bttvGlobal = fetchAndJson(EMOTE_ENDPOINTS.bttvGlobal);
+  const ffzPersonal = fetchAndJson(EMOTE_ENDPOINTS.ffzPersonal);
+  const ffzGlobal = fetchAndJson(EMOTE_ENDPOINTS.ffzGlobal);
+  const twitchGlobal = twitchGlobalOptions
+    ? fetchAndJson(EMOTE_ENDPOINTS.twitchGlobal, twitchGlobalOptions)
+    : undefined;
+  const sevenEmotesNotInSet_ = db.getAll().map(async (sevenEmoteNotInSet) => fetchAndJson(sevenEmoteNotInSet));
 
-    return new EmoteMatcher(
-      (await sevenPersonal) as SevenEmotes,
-      (await sevenGlobal) as SevenEmotes,
-      (await bttvPersonal) as BTTVPersonalEmotes,
-      (await bttvGlobal) as BTTVEmote[],
-      (await ffzPersonal) as FFZPersonalEmotes,
-      (await ffzGlobal) as FFZGlobalEmotes,
-      twitchGlobal ? ((await twitchGlobal) as TwitchGlobalEmotes) : undefined,
-      sevenEmotesNotInSet_ ? ((await Promise.all(sevenEmotesNotInSet_)) as SevenEmoteNotInSet[]) : undefined
-    );
-  } catch (err) {
-    console.log(err);
-    return undefined;
-  }
+  return new EmoteMatcher(
+    (await sevenPersonal) as SevenEmotes,
+    (await sevenGlobal) as SevenEmotes,
+    (await bttvPersonal) as BTTVPersonalEmotes,
+    (await bttvGlobal) as BTTVEmote[],
+    (await ffzPersonal) as FFZPersonalEmotes,
+    (await ffzGlobal) as FFZGlobalEmotes,
+    twitchGlobal ? ((await twitchGlobal) as TwitchGlobalEmotes) : undefined,
+    sevenEmotesNotInSet_ ? ((await Promise.all(sevenEmotesNotInSet_)) as SevenEmoteNotInSet[]) : undefined
+  );
 }
 
 function logExitAndExit(exitcode: number): void {
@@ -126,141 +120,134 @@ function logIsEmoteMatcherValid(em: IEmoteMatcher | undefined): void {
   return;
 }
 
-//declarations
-let client: Client | undefined = undefined;
-let openai: OpenAI | undefined = undefined;
-let translate: v2.Translate | undefined = undefined;
-let twitchGlobalHandler: TwitchGlobalHandler | undefined = undefined;
-let em: EmoteMatcher | undefined = undefined;
-let sevenEmotesNotInSet: readonly string[] | undefined = undefined;
+class Bot {
+  public discord: Client;
+  public openai: OpenAI | undefined;
+  public translate: v2.Translate | undefined;
+  public twitch: TwitchGlobalHandler | undefined;
+  public sevenEmotesNotInSet: readonly string[] | undefined;
+  public db: FileEmoteDb;
+  public em: EmoteMatcher;
 
-//try inits
-try {
-  client = new Client({ intents: [] });
-} catch (error) {
-  if (error instanceof Error) console.log(`Error at initializing client: ${error}.`);
-  logExitAndExit(FAILUREEXITCODE);
+  constructor(
+    discord: Client,
+    openai: OpenAI | undefined,
+    translate: v2.Translate | undefined,
+    twitch: TwitchGlobalHandler | undefined,
+    db: FileEmoteDb,
+    em: EmoteMatcher
+  ) {
+    this.discord = discord;
+    this.openai = openai;
+    this.translate = translate;
+    this.twitch = twitch;
+    this.db = db;
+    this.em = em;
+  }
+
+  async refreshEmotes() {
+    try {
+      this.em = await newEmoteMatcher(this.twitch, this.db);
+    } catch (err) {
+      console.log('refreshEmotes() failed, emotes might be stale: ' + err);
+    }
+  }
+
+  registerHandlers() {
+    const self = this; // silence typescript warning
+
+    this.discord.on('ready', function onReady() {
+      console.log(`Logged in as ${self.discord.user?.tag ?? ''}!`);
+      return;
+    });
+
+    //interaction
+    this.discord.on('interactionCreate', async function onInteractionCreate(this: Bot, interaction) {
+      //interaction not
+      if (!interaction.isChatInputCommand()) return;
+
+      //interaction emote
+      if (interaction.commandName === 'emote') {
+        if (self.em) void emoteHandler(self.em)(interaction);
+        else void interaction.reply('Emote command is currently not available.');
+        return;
+      }
+
+      if (interaction.commandName === 'addemote') {
+        const addEmoteHandlerSevenNotInSet_ = await addEmoteHandlerSevenNotInSet(
+          self,
+          EMOTE_ENDPOINTS.sevenEmotesNotInSet
+        )(interaction);
+        return;
+      }
+
+      if (interaction.commandName === 'shortestuniquesubstrings') {
+        if (self.em) void shortestuniquesubstringsHandler(self.em)(interaction);
+        else void interaction.reply('shortestuniquesubstrings command is currently not available.');
+
+        return;
+      }
+
+      if (interaction.commandName === 'chatgpt') {
+        if (self.openai) void chatgptHandler(self.openai)(interaction);
+        else void interaction.reply('chatgpt command is currently not available.');
+
+        return;
+      }
+
+      if (interaction.commandName === 'translate') {
+        if (self.translate) void translateHandler(self.translate)(interaction);
+        else void interaction.reply('translate command is currently not available.');
+
+        return;
+      }
+
+      if (interaction.commandName === 'help') {
+        void helpHandler()(interaction);
+
+        return;
+      }
+    });
+  }
+
+  async start() {
+    this.discord.login(DISCORD_TOKEN);
+  }
 }
 
-try {
-  openai = OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
-} catch (error) {
-  if (error instanceof Error) console.log(`Error at initializing openai: ${error}`);
-}
+let bot: Bot = await (async function (): Promise<Bot> {
+  //declarations
+  let discord: Client = new Client({ intents: [] });
 
-try {
-  const CREDENTIALSJSON = CREDENTIALS !== undefined ? ((await JSON.parse(CREDENTIALS)) as Credentials) : undefined;
-  translate = CREDENTIALSJSON
-    ? new v2.Translate({
-        credentials: CREDENTIALSJSON,
-        projectId: CREDENTIALSJSON.project_id
-      })
-    : undefined;
-} catch (error) {
-  if (error instanceof Error) console.log(`Error at initializing translate: ${error}`);
-}
+  let openai: OpenAI | undefined = OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
 
-try {
-  twitchGlobalHandler =
+  let translate: v2.Translate | undefined = await (async function (): Promise<v2.Translate | undefined> {
+    const jsonCredentials = CREDENTIALS !== undefined ? ((await JSON.parse(CREDENTIALS)) as Credentials) : undefined;
+    return jsonCredentials
+      ? new v2.Translate({
+          credentials: jsonCredentials,
+          projectId: jsonCredentials.project_id
+        })
+      : undefined;
+  })();
+
+  let twitch: TwitchGlobalHandler | undefined =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
       ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
-} catch (error) {
-  if (error instanceof Error) console.log(`Error at initializing twitchGlobalHandler: ${error}.`);
-}
 
-sevenEmotesNotInSet = await readEmotes(FILE_ENDPOINTS.sevenNotInSetEmotes);
+  let db: FileEmoteDb = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
 
-em = await newEmoteMatcher(twitchGlobalHandler, sevenEmotesNotInSet);
-logIsEmoteMatcherValid(em);
-if (!isEmoteMatcherValid(em)) logExitAndExit(FAILUREEXITCODE);
+  let em: EmoteMatcher = await newEmoteMatcher(twitch, db);
 
-//schedules
-// update ever 5 minutes
+  return new Bot(discord, openai, translate, twitch, db, em);
+})();
+
+// update every 5 minutes
 scheduleJob('*/5 * * * *', async () => {
   console.log('Emote cache refreshing');
-  em = await newEmoteMatcher(twitchGlobalHandler, sevenEmotesNotInSet);
-  logIsEmoteMatcherValid(em);
-  if (!isEmoteMatcherValid(em)) logExitAndExit(FAILUREEXITCODE);
+  await bot.refreshEmotes();
 });
 
-//on ready
-client?.on('ready', function onReady() {
-  console.log(`Logged in as ${client.user?.tag ?? ''}!`);
-  return;
-});
-
-//interaction
-client?.on('interactionCreate', async function onInteractionCreate(interaction) {
-  //interaction not
-  if (!interaction.isChatInputCommand()) return;
-
-  //interaction emote
-  if (interaction.commandName === 'emote') {
-    if (em) void emoteHandler(em)(interaction);
-    else void interaction.reply('Emote command is currently not available.');
-    return;
-  }
-
-  if (interaction.commandName === 'addemote') {
-    if (em) {
-      const addEmoteHandlerSevenNotInSet_ = await addEmoteHandlerSevenNotInSet(
-        em,
-        EMOTE_ENDPOINTS.sevenEmotesNotInSet,
-        FILE_ENDPOINTS.sevenNotInSetEmotes
-      )(interaction);
-
-      if (addEmoteHandlerSevenNotInSet_) {
-        sevenEmotesNotInSet = await readEmotes(FILE_ENDPOINTS.sevenNotInSetEmotes);
-        em = await newEmoteMatcher(twitchGlobalHandler, sevenEmotesNotInSet);
-        logIsEmoteMatcherValid(em);
-        if (!isEmoteMatcherValid(em)) {
-          logExitAndExit(FAILUREEXITCODE);
-        }
-      }
-    } else {
-      void interaction.reply('addemote command is currently not available.');
-    }
-
-    return;
-  }
-
-  if (interaction.commandName === 'shortestuniquesubstrings') {
-    if (em) void shortestuniquesubstringsHandler(em)(interaction);
-    else void interaction.reply('shortestuniquesubstrings command is currently not available.');
-
-    return;
-  }
-
-  if (interaction.commandName === 'chatgpt') {
-    if (openai) void chatgptHandler(openai)(interaction);
-    else void interaction.reply('chatgpt command is currently not available.');
-
-    return;
-  }
-
-  if (interaction.commandName === 'translate') {
-    if (translate) void translateHandler(translate)(interaction);
-    else void interaction.reply('translate command is currently not available.');
-
-    return;
-  }
-
-  if (interaction.commandName === 'help') {
-    void helpHandler()(interaction);
-
-    return;
-  }
-});
-
-try {
-  if (DISCORD_TOKEN !== undefined) {
-    await client?.login(DISCORD_TOKEN);
-  } else {
-    console.log('Empty DISCORD_TOKEN.');
-    logExitAndExit(FAILUREEXITCODE);
-  }
-} catch (error) {
-  if (error instanceof Error) console.log(`Error at logging in: ${error}.`);
-  logExitAndExit(FAILUREEXITCODE);
-}
+bot.registerHandlers();
+await bot.start();
