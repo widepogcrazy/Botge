@@ -1,13 +1,14 @@
-import type { OpenAI } from 'openai';
 import type { CommandInteraction } from 'discord.js';
+
+import type { ReadonlyOpenAI } from '../types.js';
 
 const MAXDISCORDMESSAGELENGTH = 2000;
 
-export function chatgptHandler(openai: OpenAI) {
+export function chatgptHandler(openai: ReadonlyOpenAI) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const text: string = interaction.options.get('text')?.value as string;
+      const text = String(interaction.options.get('text')?.value);
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -26,7 +27,8 @@ export function chatgptHandler(openai: OpenAI) {
       await interaction.editReply(replyText);
       return;
     } catch (error) {
-      if (error instanceof Error) console.log(`Error at chatgpt --> ${error}`);
+      console.log(`Error at chatgpt --> ${error instanceof Error ? error : 'error'}`);
+
       await defer;
       await interaction.editReply('failed to chatpgt.');
       return;

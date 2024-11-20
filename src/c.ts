@@ -91,6 +91,6 @@ try {
   } else {
     console.log('Commands failed.');
   }
-} catch (error) {
-  console.error(error);
+} catch (error: unknown) {
+  console.error(`Error at updating commands: ${error instanceof Error ? error : 'error'}`);
 }

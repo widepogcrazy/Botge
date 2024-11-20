@@ -1,3 +1,20 @@
+import type {
+  SevenEmoteFile,
+  SevenEmoteInSet,
+  SevenEmoteNotInSet,
+  BTTVEmote,
+  FFZEmote,
+  TwitchEmote,
+  SevenEmotes,
+  BTTVPersonalEmotes,
+  FFZPersonalEmotes,
+  FFZGlobalEmotes,
+  TwitchGlobalEmotes,
+  AssetInfo,
+  ReadonlySuffixTree,
+  ReadOnlyEmoteMatcher
+} from './types.js';
+
 const EMOTESIZE = 2;
 const HTTPS = 'https';
 const BTTVCDN = 'cdn.betterttv.net/emote';
@@ -9,93 +26,6 @@ export enum Platform {
   bttv = 1,
   ffz = 2,
   twitch = 3
-}
-
-interface SevenEmoteFile {
-  readonly name: string;
-  readonly width: number;
-  readonly height: number;
-  readonly format: string;
-}
-
-export interface SevenEmoteInSet {
-  readonly name: string;
-  readonly flags: number;
-  readonly data: {
-    readonly animated: boolean;
-    readonly host: {
-      readonly url: string;
-      readonly files: readonly SevenEmoteFile[];
-    };
-  };
-}
-export interface SevenEmoteNotInSet {
-  readonly name: string;
-  readonly flags: number;
-  readonly animated: boolean;
-  readonly host: {
-    readonly url: string;
-    readonly files: readonly SevenEmoteFile[];
-  };
-}
-export interface BTTVEmote {
-  readonly id: string;
-  readonly code: string;
-  readonly animated: boolean;
-}
-export interface FFZEmote {
-  readonly name: string;
-  readonly urls: Readonly<Record<string, string>>;
-}
-export interface TwitchEmote {
-  readonly name: string;
-  readonly id: string;
-  readonly format: readonly string[];
-  readonly theme_mode: readonly string[];
-}
-
-export interface SevenEmotes {
-  readonly emotes: readonly SevenEmoteInSet[];
-}
-export interface BTTVPersonalEmotes {
-  readonly channelEmotes: readonly BTTVEmote[];
-  readonly sharedEmotes: readonly BTTVEmote[];
-}
-export interface FFZPersonalEmotes {
-  readonly room: {
-    readonly set: number;
-  };
-  readonly sets: Readonly<
-    Record<
-      string,
-      {
-        readonly emoticons: readonly FFZEmote[];
-      }
-    >
-  >;
-}
-export interface FFZGlobalEmotes {
-  readonly sets: Readonly<
-    Record<
-      string,
-      {
-        readonly emoticons: readonly FFZEmote[];
-      }
-    >
-  >;
-}
-export interface TwitchGlobalEmotes {
-  readonly data: readonly TwitchEmote[];
-}
-
-export interface AssetInfo {
-  readonly name: string;
-  readonly url: string;
-  readonly zeroWidth: boolean;
-  readonly animated: boolean;
-  readonly width: number | undefined;
-  readonly height: number | undefined;
-  readonly platform: Platform;
 }
 
 class EmoteNode {
@@ -112,7 +42,7 @@ class EmoteNode {
   }
 }
 
-class SuffixTree {
+class SuffixTree implements ReadonlySuffixTree {
   private readonly _paths: Map<string, SuffixTree>;
   private readonly _data: EmoteNode;
 
@@ -223,7 +153,7 @@ function sevenInSetToAsset(emote: SevenEmoteInSet): AssetInfo {
   const { data } = emote;
   const { host, animated } = data;
   const filename = `${EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
-  const file = host.files.find((f) => f.name === filename);
+  const file = host.files.find((f: SevenEmoteFile) => f.name === filename);
   return {
     name: emote.name,
     url: `${HTTPS}:${host.url}/${filename}`,
@@ -238,7 +168,7 @@ function sevenInSetToAsset(emote: SevenEmoteInSet): AssetInfo {
 function sevenNotInSetToAsset(emote: SevenEmoteNotInSet): AssetInfo {
   const { host, animated } = emote;
   const filename = `${EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
-  const file = host.files.find((f) => f.name === filename);
+  const file = host.files.find((f: SevenEmoteFile) => f.name === filename);
   return {
     name: emote.name,
     url: `${HTTPS}:${host.url}/${filename}`,
@@ -291,13 +221,7 @@ function twitchToAsset(emote: TwitchEmote): AssetInfo {
   };
 }
 
-export interface IEmoteMatcher {
-  readonly matchSingle: (query: string) => AssetInfo | undefined;
-  readonly matchSingleUnique: (query: string, original: string) => boolean | undefined;
-  readonly matchMulti: (queries: readonly string[]) => readonly (AssetInfo | undefined)[];
-}
-
-export class EmoteMatcher implements IEmoteMatcher {
+export class EmoteMatcher implements ReadOnlyEmoteMatcher {
   private readonly root: SuffixTree;
   public constructor(
     sevenPersonal: SevenEmotes,

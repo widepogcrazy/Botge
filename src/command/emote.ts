@@ -6,27 +6,14 @@ import { writeFile, rm } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 
-import { Platform, type AssetInfo, type IEmoteMatcher } from '../emoteMatcher.js';
+import type { AssetInfo, ReadOnlyEmoteMatcher, DownloadedAsset, HstackElement } from '../types.js';
+
+import { Platform } from '../emoteMatcher.js';
 
 const DEFAULTDURATION = 0;
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
 const MAXHEIGHT = 64;
-
-interface DownloadedAsset {
-  readonly filename: string;
-  readonly asset: AssetInfo;
-  readonly w: number | undefined;
-  readonly h: number | undefined;
-  readonly duration: number; // stills are DEFAULTDURATION
-  readonly animated: boolean;
-}
-
-interface HstackElement {
-  readonly id: number;
-  readonly animated: boolean;
-  readonly filterString: () => string;
-}
 
 class SimpleElement implements HstackElement {
   public readonly id: number;
@@ -89,7 +76,7 @@ class OverlayElement implements HstackElement {
   }
 
   private _getMaxWidth(scaleToHeight: number): number {
-    const scaledWidth: (number | undefined)[] = this.layers.map((layer: DownloadedAsset) => {
+    const scaledWidth: readonly (number | undefined)[] = this.layers.map((layer: DownloadedAsset) => {
       return layer.w !== undefined && layer.h !== undefined ? (layer.w / layer.h) * scaleToHeight : undefined;
     });
     const ret: number = Math.round(Math.min(Math.max(...scaledWidth.filter((sW) => sW !== undefined)), MAXWIDTH));
@@ -144,11 +131,11 @@ async function _getDuration(filename: string): Promise<number> {
 
 async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promise<DownloadedAsset> {
   const response = await fetch(asset.url);
-  const buffer = await response.arrayBuffer();
+  const buffer = Buffer.from(await response.arrayBuffer());
   const { animated } = asset;
   const hasWidthAndHeight = asset.width !== undefined && asset.height !== undefined;
-  const filename = join(outdir, `${i.toString()}_` + basename(asset.url));
-  await writeFile(filename, Buffer.from(buffer));
+  const filename = join(outdir, `${i}_${basename(asset.url)}`);
+  await writeFile(filename, buffer);
 
   let duration: Promise<number> | number = DEFAULTDURATION;
   let widthAndHeight: Promise<[number, number]> | [number | undefined, number | undefined] = [
@@ -174,15 +161,15 @@ async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promi
   };
 }
 
-export function emoteHandler(em: IEmoteMatcher) {
+export function emoteHandler(em: ReadOnlyEmoteMatcher) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const tokens: string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
+      const tokens: readonly string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
       const matchMulti_: readonly (AssetInfo | undefined)[] = em.matchMulti(tokens);
-      const assets: AssetInfo[] = matchMulti_.filter((asset: AssetInfo | undefined) => asset !== undefined);
+      const assets: readonly AssetInfo[] = matchMulti_.filter((asset: AssetInfo | undefined) => asset !== undefined);
 
-      if (assets.length === 0) {
+      if (assets.length === 0 || matchMulti_.some((asset) => asset === undefined)) {
         await defer;
         await interaction.editReply('jij');
         return;
@@ -191,8 +178,8 @@ export function emoteHandler(em: IEmoteMatcher) {
       if (assets.length === 1) {
         const asset: AssetInfo = assets[0];
         const platform: Platform = asset.platform;
-        const sizeString: string | undefined = String(interaction.options.get('size')?.value);
-        const size: number | undefined = sizeString ? Number(sizeString) : undefined;
+        const sizeOptions = interaction.options.get('size')?.value;
+        const size: number | undefined = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
         let url: string = asset.url;
 
         if (size !== undefined) {
@@ -320,14 +307,11 @@ export function emoteHandler(em: IEmoteMatcher) {
       );
 
       await defer;
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
+      console.log(`Error at emoteHandler --> ${error instanceof Error ? error : 'error'}`);
 
       await defer;
       return;
     }
-    /*} finally {
-      // rm(outdir, { recursive: true })
-    }*/
   };
 }

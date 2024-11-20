@@ -1,33 +1,11 @@
-import { scheduleJob } from 'node-schedule';
+import type { ReadOnlyTwitchGlobalHandler, ClientCredentialsGrantFlow } from '../types.js';
 
 const API_ENDPOINTS = {
   twitchAccessToken: 'https://id.twitch.tv/oauth2/token',
   twitchAccessTokenValidate: 'https://id.twitch.tv/oauth2/validate'
 };
 
-interface ClientCredentialsGrantFlow {
-  readonly access_token: string;
-  readonly expires_in: number;
-  readonly token_type: string;
-}
-
-export interface ITwitchGlobalHandler {
-  readonly gotAccessToken: () => boolean;
-  readonly isAccessTokenValidated: () => boolean;
-  readonly getTwitchAccessToken: () => Promise<void>;
-  readonly validateTwitchAccessToken: () => Promise<void>;
-  readonly getTwitchGlobalOptions: () =>
-    | {
-        readonly method: string;
-        readonly headers: {
-          readonly Authorization: string;
-          readonly 'Client-Id': string;
-        };
-      }
-    | undefined;
-}
-
-export class TwitchGlobalHandler implements ITwitchGlobalHandler {
+export class TwitchGlobalHandler implements ReadOnlyTwitchGlobalHandler {
   private readonly _twitchClientId: string;
   private readonly _twitchSecret: string;
 
@@ -100,41 +78,39 @@ export class TwitchGlobalHandler implements ITwitchGlobalHandler {
   }
 }
 
-async function getAndValidateTwitchAccessToken(twitchglobalhandler: ITwitchGlobalHandler): Promise<void> {
+async function getAndValidateTwitchAccessToken(twitchglobalhandler: ReadOnlyTwitchGlobalHandler): Promise<void> {
   await twitchglobalhandler.getTwitchAccessToken();
   await twitchglobalhandler.validateTwitchAccessToken();
 }
 
-function logGotAccessToken(twitchglobalhandler: ITwitchGlobalHandler): void {
+function logGotAccessToken(twitchglobalhandler: ReadOnlyTwitchGlobalHandler): void {
   if (twitchglobalhandler.gotAccessToken()) console.log('Got Twitch Access Token.');
   else console.log('Failed to get Twitch Access Token.');
 }
-function logIsAccessTokenValidated(twitchglobalhandler: ITwitchGlobalHandler): void {
+function logIsAccessTokenValidated(twitchglobalhandler: ReadOnlyTwitchGlobalHandler): void {
   if (twitchglobalhandler.isAccessTokenValidated()) console.log('Twitch Access Token is valid.');
   else console.log('Twitch Access Token is invalid.');
 
   return;
 }
 
-export async function createTwitchApi(twitchClientId: string, twitchSecret: string): Promise<TwitchGlobalHandler> {
-  const twitch = new TwitchGlobalHandler(twitchClientId, twitchSecret);
-  await twitch.validateTwitchAccessToken();
-  logIsAccessTokenValidated(twitch);
-  if (!twitch.isAccessTokenValidated()) {
-    await getAndValidateTwitchAccessToken(twitch);
-    logGotAccessToken(twitch);
-    logIsAccessTokenValidated(twitch);
-  }
+export async function validationHandler(twitchGlobalHandler: ReadOnlyTwitchGlobalHandler): Promise<void> {
+  await twitchGlobalHandler.validateTwitchAccessToken();
+  logIsAccessTokenValidated(twitchGlobalHandler);
 
-  // start background validation thread.
-  scheduleJob('*/60 * * * *', async () => {
-    await twitch.validateTwitchAccessToken();
-    logIsAccessTokenValidated(twitch);
-    if (!twitch.isAccessTokenValidated()) {
-      await getAndValidateTwitchAccessToken(twitch);
-      logGotAccessToken(twitch);
-      logIsAccessTokenValidated(twitch);
-    }
-  });
+  if (!twitchGlobalHandler.isAccessTokenValidated()) {
+    await getAndValidateTwitchAccessToken(twitchGlobalHandler);
+    logGotAccessToken(twitchGlobalHandler);
+    logIsAccessTokenValidated(twitchGlobalHandler);
+  }
+}
+
+export async function createTwitchApi(
+  twitchClientId: string,
+  twitchSecret: string
+): Promise<ReadOnlyTwitchGlobalHandler> {
+  const twitch: ReadOnlyTwitchGlobalHandler = new TwitchGlobalHandler(twitchClientId, twitchSecret);
+  await validationHandler(twitch);
+
   return twitch;
 }

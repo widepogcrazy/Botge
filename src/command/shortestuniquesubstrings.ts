@@ -1,7 +1,8 @@
-import type { AssetInfo, IEmoteMatcher } from '../emoteMatcher.js';
 import type { CommandInteraction } from 'discord.js';
 
-function getAllSubstrings(str: string): string[] {
+import type { AssetInfo, ReadOnlyEmoteMatcher } from '../types.js';
+
+function getAllSubstrings(str: string): readonly string[] {
   const result: string[] = [];
 
   for (let i = 0; i < str.length; i++) {
@@ -13,48 +14,46 @@ function getAllSubstrings(str: string): string[] {
   return result;
 }
 
-function getShortestUniqueSubstrings(em: IEmoteMatcher, text: string): [string | undefined, string[] | undefined] {
-  try {
-    const matchSingle_: AssetInfo | undefined = em.matchSingle(text);
-    if (!matchSingle_) {
-      return [undefined, undefined];
-    }
-    const original: string = matchSingle_.name;
-
-    const allSubstrings: string[] = getAllSubstrings(original);
-    const allSubstringUniqueness: (boolean | undefined)[] = allSubstrings.map((substring) =>
-      em.matchSingleUnique(substring, original)
-    );
-
-    const uniqueSubstrings: string[] = allSubstrings.filter((s, i) => {
-      if (allSubstringUniqueness[i] !== undefined) {
-        return s;
-      }
-    });
-
-    const shortestUniqueSubstringLength: number | undefined =
-      uniqueSubstrings.length !== 0
-        ? uniqueSubstrings.reduce((a, b) => (a.length < b.length ? a : b)).length
-        : undefined;
-    const shortestUniqueSubstrings: string[] | undefined =
-      shortestUniqueSubstringLength !== undefined
-        ? uniqueSubstrings.filter((s) => s.length === shortestUniqueSubstringLength)
-        : undefined;
-
-    return [original, shortestUniqueSubstrings];
-  } catch (error) {
-    if (error instanceof Error) console.error(`Error getting unique substring(s): ${error}`);
+function getShortestUniqueSubstrings(
+  em: ReadOnlyEmoteMatcher,
+  text: string
+): [string | undefined, readonly string[] | undefined] {
+  const matchSingle_: AssetInfo | undefined = em.matchSingle(text);
+  if (!matchSingle_) {
     return [undefined, undefined];
   }
+  const original: string = matchSingle_.name;
+
+  const allSubstrings: readonly string[] = getAllSubstrings(original);
+  const allSubstringUniqueness: readonly (boolean | undefined)[] = allSubstrings.map((substring) =>
+    em.matchSingleUnique(substring, original)
+  );
+
+  const uniqueSubstrings: readonly string[] = allSubstrings
+    .map((s, i) => {
+      if (allSubstringUniqueness[i] !== undefined) return s;
+      return undefined;
+    })
+    .filter((s) => s !== undefined);
+
+  const shortestUniqueSubstringLength: number | undefined =
+    uniqueSubstrings.length !== 0 ? uniqueSubstrings.reduce((a, b) => (a.length < b.length ? a : b)).length : undefined;
+
+  const shortestUniqueSubstrings: readonly string[] | undefined =
+    shortestUniqueSubstringLength !== undefined
+      ? uniqueSubstrings.filter((s) => s.length === shortestUniqueSubstringLength)
+      : undefined;
+
+  return [original, shortestUniqueSubstrings];
 }
 
-export function shortestuniquesubstringsHandler(em: IEmoteMatcher) {
+export function shortestuniquesubstringsHandler(em: ReadOnlyEmoteMatcher) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const text: string[] = String(interaction.options.get('emotes')?.value).split(/\s+/);
-      const getShortestUniqueSubstrings_: [string | undefined, string[] | undefined][] = text.map((t) =>
-        getShortestUniqueSubstrings(em, t)
+      const text: readonly string[] = String(interaction.options.get('emotes')?.value).split(/\s+/);
+      const getShortestUniqueSubstrings_: readonly [string | undefined, readonly string[] | undefined][] = text.map(
+        (t) => getShortestUniqueSubstrings(em, t)
       );
 
       let message = '';
@@ -83,7 +82,7 @@ export function shortestuniquesubstringsHandler(em: IEmoteMatcher) {
       await interaction.editReply(message);
       return;
     } catch (error) {
-      if (error instanceof Error) console.log(`Error at shortestuniquesubstrings --> ${error}`);
+      console.log(`Error at shortestuniquesubstrings --> ${error instanceof Error ? error : 'error'}`);
 
       await defer;
       await interaction.editReply('failed to provide shortest unique substrings.');

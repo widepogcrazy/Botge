@@ -10,7 +10,7 @@ export function helpHandler() {
       );
       return;
     } catch (error) {
-      if (error instanceof Error) console.log(`Error at help --> ${error}`);
+      console.log(`Error at help --> ${error instanceof Error ? error : 'error'}`);
 
       await defer;
       await interaction.editReply('Failed to help.');

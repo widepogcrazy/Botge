@@ -1,8 +1,6 @@
 import globals from "globals";
-import js from "@eslint/js";
 import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
-
 
 export default [
   {files: ["**/*.{mjs,cjs,ts}"]},
@@ -46,7 +44,7 @@ export default [
       "@typescript-eslint/no-restricted-imports" : "error",
       "@typescript-eslint/no-restricted-types" : "error",
       "@typescript-eslint/no-shadow" : "error",
-      "@typescript-eslint/no-type-alias" : "error",
+      //"@typescript-eslint/no-type-alias" : "error",
       "@typescript-eslint/no-unnecessary-parameter-property-assignment" : "error",
 
       "@typescript-eslint/no-unnecessary-qualifier" : "error",
@@ -63,8 +61,7 @@ export default [
         "error",
         { allow: [
           { from: "package", name: "RequestInit", package: "node-fetch" },
-          { from: "package", name: "OpenAI", package: "openai" },
-          { from: "package", name: ["Interaction", "CommandInteraction"], package: "discord.js" }
+          { from: "package", name: [ "Interaction", "CommandInteraction", "Client" ], package: "discord.js" }
         ] }
       ],
 
@@ -78,6 +75,8 @@ export default [
 
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true } ],
       "@typescript-eslint/no-misused-promises": [ "error", { checksVoidReturn: false } ],
+
+      "@typescript-eslint/consistent-type-definitions" : [ "error", 'type' ],
 
       "eqeqeq": "error",
       "strict": "error",

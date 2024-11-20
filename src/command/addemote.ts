@@ -1,17 +1,6 @@
-import { existsSync } from 'fs';
-import { ensureFileSync } from 'fs-extra';
-import { writeFile, readFile } from 'node:fs/promises';
-
 import type { CommandInteraction } from 'discord.js';
-import type { IEmoteMatcher, SevenEmoteNotInSet } from '../emoteMatcher.js';
-import type { FileEmoteDb } from '../api/filedb.js';
-import type { EmoteMatcher } from '../emoteMatcher.js';
 
-interface RequiredState {
-  db: FileEmoteDb;
-  em: EmoteMatcher;
-  refreshEmotes(): Promise<void>;
-}
+import type { SevenEmoteNotInSet, RequiredState } from '../types.js';
 
 const SPLITTER = '/';
 
@@ -21,8 +10,8 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: st
   return async function addEmoteHandlerSevenNotInSetInnerFunction(interaction: CommandInteraction): Promise<boolean> {
     const defer = interaction.deferReply();
     try {
-      const text: string = interaction.options.get('text')?.value as string;
-      const textSplit: string[] = text.split(SPLITTER);
+      const text = String(interaction.options.get('text')?.value);
+      const textSplit: readonly string[] = text.split(SPLITTER);
 
       const regExpSevenEmoteNotInSetTest: boolean = regExpSevenEmoteNotInSet.test(text);
 
@@ -48,14 +37,10 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: st
 
       await defer;
       await interaction.editReply(`added emote ${sevenEmoteNotInSet.name}`);
-      s.refreshEmotes();
+      await s.refreshEmotes();
       return true;
     } catch (error) {
-      if (error instanceof Error) {
-        console.log(`Error at ${addEmoteHandlerSevenNotInSet.name} --> ${error}`);
-      } else {
-        console.log(error);
-      }
+      console.log(`Error at addEmoteHandlerSevenNotInSet --> ${error instanceof Error ? error : 'error'}`);
 
       await defer;
       await interaction.editReply('failed to add emote');
