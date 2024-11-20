@@ -4,7 +4,7 @@ import type { SevenEmoteNotInSet, RequiredState } from '../types.js';
 
 const SPLITTER = '/';
 
-const regExpSevenEmoteNotInSet = new RegExp(/^https:\/\/7tv\.app\/emotes\/[A-Z0-9]{26}$/);
+const regExpSevenEmoteNotInSet: Readonly<RegExp> = new RegExp(/^https:\/\/7tv\.app\/emotes\/[A-Z0-9]{26}$/);
 
 export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: string) {
   return async function addEmoteHandlerSevenNotInSetInnerFunction(interaction: CommandInteraction): Promise<boolean> {
@@ -15,9 +15,7 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: st
 
       const regExpSevenEmoteNotInSetTest: boolean = regExpSevenEmoteNotInSet.test(text);
 
-      if (!regExpSevenEmoteNotInSetTest) {
-        return false;
-      }
+      if (!regExpSevenEmoteNotInSetTest) return false;
 
       // TODO: USE REGEX CAPTURE
       const sevenEmoteNotInSetId = textSplit.at(-1);
@@ -27,23 +25,26 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: st
         await fetch(sevenEmoteNotInSetURL)
       ).json()) as SevenEmoteNotInSet;
 
-      if (s.em.matchSingle(sevenEmoteNotInSet.name)) {
+      if (s.emoteMatcher.matchSingle(sevenEmoteNotInSet.name)) {
         await defer;
         await interaction.editReply('theres already an emote with the same name');
+
         return false;
       }
 
-      await s.db.add(sevenEmoteNotInSetURL);
+      await s.fileEmoteDb.add(sevenEmoteNotInSetURL);
+      await s.refreshEmotes();
 
       await defer;
       await interaction.editReply(`added emote ${sevenEmoteNotInSet.name}`);
-      await s.refreshEmotes();
+
       return true;
     } catch (error) {
       console.log(`Error at addEmoteHandlerSevenNotInSet --> ${error instanceof Error ? error : 'error'}`);
 
       await defer;
       await interaction.editReply('failed to add emote');
+
       return false;
     }
   };

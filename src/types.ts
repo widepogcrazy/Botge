@@ -101,16 +101,16 @@ export type ClientCredentialsGrantFlow = {
 };
 
 export type RequiredState = {
-  readonly db: Readonly<FileEmoteDb>;
-  readonly em: Readonly<EmoteMatcher>;
+  readonly fileEmoteDb: Readonly<FileEmoteDb>;
+  readonly emoteMatcher: Readonly<EmoteMatcher>;
   readonly refreshEmotes: () => Promise<void>;
 };
 
 export type DownloadedAsset = {
   readonly filename: string;
   readonly asset: AssetInfo;
-  readonly w: number | undefined;
-  readonly h: number | undefined;
+  readonly width: number | undefined;
+  readonly height: number | undefined;
   readonly duration: number; // stills are DEFAULTDURATION
   readonly animated: boolean;
 };

@@ -4,10 +4,9 @@ import { writeFile, readFile } from 'node:fs/promises';
 
 async function readEmotes(filepath: string): Promise<readonly string[]> {
   const exists = existsSync(filepath);
-  if (!exists) {
-    throw new Error(filepath + ' does not exist.');
-  }
-  const emotes = (await JSON.parse((await readFile(filepath)).toString())) as readonly string[];
+  if (!exists) throw new Error(filepath + ' does not exist.');
+
+  const emotes: readonly string[] = (await JSON.parse((await readFile(filepath)).toString())) as readonly string[];
   return emotes;
 }
 
@@ -30,7 +29,7 @@ export class FileEmoteDb {
   }
 }
 
-export async function createFileEmoteDbConnection(path: string): Promise<FileEmoteDb> {
+export async function createFileEmoteDbConnection(path: string): Promise<Readonly<FileEmoteDb>> {
   const exists: boolean = existsSync(path);
   if (!exists) {
     ensureFileSync(path);

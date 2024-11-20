@@ -6,8 +6,7 @@ export default function translateHandler(translate: v2.Translate) {
     const defer = interaction.deferReply();
     try {
       const text = String(interaction.options.get('text')?.value);
-      const resp = await translate.translate(text, 'en');
-      const [translatedText] = resp;
+      const [translatedText] = await translate.translate(text, 'en');
       // const api_resp = resp[1];  // how to check error?
 
       await defer;

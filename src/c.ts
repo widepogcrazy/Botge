@@ -84,7 +84,7 @@ try {
   console.log('Commands starting.');
 
   if (DISCORD_TOKEN !== undefined && APP_ID !== undefined) {
-    const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+    const rest: Readonly<REST> = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
     await rest.put(Routes.applicationCommands(APP_ID), { body: commands });
 
     console.log('Commands done.');

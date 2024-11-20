@@ -29,7 +29,7 @@ const FILE_ENDPOINTS = {
 };
 
 // emotes
-const EMOTE_ENDPOINTS: EmoteEndpoints = {
+const EMOTE_ENDPOINTS: Readonly<EmoteEndpoints> = {
   sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
   sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
   sevenEmotesNotInSet: 'https://7tv.io/v3/emotes',
@@ -40,15 +40,16 @@ const EMOTE_ENDPOINTS: EmoteEndpoints = {
   twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
 };
 
-const bot: Readonly<Bot> = await (async function (): Promise<Readonly<Bot>> {
-  const discord: Client = new Client({ intents: [] });
+const bot: Readonly<Bot> = await (async (): Promise<Readonly<Bot>> => {
+  const client: Client = new Client({ intents: [] });
 
   const openai: ReadonlyOpenAI | undefined =
-    OPENAI_API_KEY !== undefined ? (new OpenAI({ apiKey: OPENAI_API_KEY }) as ReadonlyOpenAI) : undefined;
+    OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
 
-  const translate: v2.Translate | undefined = await (async function (): Promise<v2.Translate | undefined> {
+  const translate: v2.Translate | undefined = await (async (): Promise<v2.Translate | undefined> => {
     const jsonCredentials =
       CREDENTIALS !== undefined ? ((await JSON.parse(CREDENTIALS)) as Readonly<JWTInput>) : undefined;
+
     return jsonCredentials
       ? new v2.Translate({
           credentials: jsonCredentials,
@@ -57,14 +58,14 @@ const bot: Readonly<Bot> = await (async function (): Promise<Readonly<Bot>> {
       : undefined;
   })();
 
-  const twitch: Readonly<TwitchGlobalHandler> | undefined =
+  const twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
       ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
 
-  const db: FileEmoteDb = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
+  const fileEmoteDb: Readonly<FileEmoteDb> = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
 
-  return await createBot(EMOTE_ENDPOINTS, discord, openai, translate, twitch, db);
+  return await createBot(EMOTE_ENDPOINTS, client, openai, translate, twitchGlobalHander, fileEmoteDb);
 })();
 
 // update every 5 minutes
@@ -76,7 +77,7 @@ scheduleJob('*/5 * * * *', async () => {
 });
 
 // update every 60 minutes
-if (bot.twitch) {
+if (bot.twitchGlobalHander) {
   scheduleJob('*/60 * * * *', async () => {
     await bot.validateTwitch();
   });

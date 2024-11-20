@@ -109,8 +109,8 @@ export async function createTwitchApi(
   twitchClientId: string,
   twitchSecret: string
 ): Promise<Readonly<TwitchGlobalHandler>> {
-  const twitch: Readonly<TwitchGlobalHandler> = new TwitchGlobalHandler(twitchClientId, twitchSecret);
-  await validationHandler(twitch);
+  const twitchGlobalHandler: Readonly<TwitchGlobalHandler> = new TwitchGlobalHandler(twitchClientId, twitchSecret);
+  await validationHandler(twitchGlobalHandler);
 
-  return twitch;
+  return twitchGlobalHandler;
 }

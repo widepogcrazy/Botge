@@ -18,7 +18,7 @@ function getAllSubstrings(str: string): readonly string[] {
 function getShortestUniqueSubstrings(
   em: Readonly<EmoteMatcher>,
   text: string
-): [string | undefined, readonly string[] | undefined] {
+): readonly [string | undefined, readonly string[] | undefined] {
   const matchSingle_: AssetInfo | undefined = em.matchSingle(text);
   if (!matchSingle_) {
     return [undefined, undefined];
@@ -53,9 +53,8 @@ export function shortestuniquesubstringsHandler(em: Readonly<EmoteMatcher>) {
     const defer = interaction.deferReply();
     try {
       const text: readonly string[] = String(interaction.options.get('emotes')?.value).split(/\s+/);
-      const getShortestUniqueSubstrings_: readonly [string | undefined, readonly string[] | undefined][] = text.map(
-        (t) => getShortestUniqueSubstrings(em, t)
-      );
+      const getShortestUniqueSubstrings_: readonly (readonly [string | undefined, readonly string[] | undefined])[] =
+        text.map((t) => getShortestUniqueSubstrings(em, t));
 
       let message = '';
       getShortestUniqueSubstrings_.forEach((i: readonly [string | undefined, readonly string[] | undefined], j) => {
