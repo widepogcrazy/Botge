@@ -13,10 +13,7 @@ import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
 import { createTwitchApi, type TwitchGlobalHandler } from './api/twitch.js';
 import { createBot, type Bot } from './bot.js';
 
-import type {
-  ReadonlyOpenAI,
-  EmoteEndpoints
-} from './types.js';
+import type { ReadonlyOpenAI, EmoteEndpoints } from './types.js';
 import { v2 } from '@google-cloud/translate';
 
 //dotenv

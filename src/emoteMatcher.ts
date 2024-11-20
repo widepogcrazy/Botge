@@ -10,9 +10,7 @@ import type {
   FFZPersonalEmotes,
   FFZGlobalEmotes,
   TwitchGlobalEmotes,
-  AssetInfo,
-  ReadonlySuffixTree,
-  ReadOnlyEmoteMatcher
+  AssetInfo
 } from './types.js';
 
 const EMOTESIZE = 2;
@@ -42,7 +40,7 @@ class EmoteNode {
   }
 }
 
-class SuffixTree implements ReadonlySuffixTree {
+class SuffixTree {
   private readonly _paths: Map<string, SuffixTree>;
   private readonly _data: EmoteNode;
 
@@ -221,7 +219,7 @@ function twitchToAsset(emote: TwitchEmote): AssetInfo {
   };
 }
 
-export class EmoteMatcher implements ReadOnlyEmoteMatcher {
+export class EmoteMatcher {
   private readonly root: SuffixTree;
   public constructor(
     sevenPersonal: SevenEmotes,
