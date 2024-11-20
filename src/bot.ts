@@ -5,12 +5,8 @@ import type { Client } from 'discord.js';
 
 import { EmoteMatcher } from './emoteMatcher.js';
 import type {
-  ReadonlyBot,
-  ReadOnlyFileEmoteDb,
   EmoteEndpoints,
-  ReadOnlyEmoteMatcher,
   ReadonlyOpenAI,
-  ReadOnlyTwitchGlobalHandler,
   SevenEmoteNotInSet,
   BTTVEmote,
   SevenEmotes,
@@ -25,13 +21,14 @@ import { helpHandler } from './command/help.js';
 import { chatgptHandler } from './command/openai.js';
 import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstrings.js';
 import translateHandler from './command/translate.js';
-import { validationHandler } from './api/twitch.js';
+import { validationHandler, type TwitchGlobalHandler } from './api/twitch.js';
+import type { FileEmoteDb } from './api/filedb.js';
 
 async function newEmoteMatcher(
-  endpoints: EmoteEndpoints,
-  twitchglobalhandler: ReadOnlyTwitchGlobalHandler | undefined,
-  db: ReadOnlyFileEmoteDb
-): Promise<ReadOnlyEmoteMatcher> {
+  endpoints: Readonly<EmoteEndpoints>,
+  twitchglobalhandler: Readonly<TwitchGlobalHandler> | undefined,
+  db: Readonly<FileEmoteDb>
+): Promise<Readonly<EmoteMatcher>> {
   const twitchGlobalOptions = twitchglobalhandler?.getTwitchGlobalOptions();
 
   const fetchAndJson = async (emoteEndpoint: string, options?: RequestInit): Promise<unknown> => {
@@ -55,13 +52,13 @@ async function newEmoteMatcher(
     (await ffzGlobal) as FFZGlobalEmotes,
     twitchGlobal ? ((await twitchGlobal) as TwitchGlobalEmotes) : undefined,
     (await Promise.all(sevenEmotesNotInSet_)) as readonly SevenEmoteNotInSet[]
-  ) as ReadOnlyEmoteMatcher;
+  ) as Readonly<EmoteMatcher>;
 }
 
-export class Bot implements ReadonlyBot {
-  public readonly db: ReadOnlyFileEmoteDb;
-  public em: ReadOnlyEmoteMatcher;
-  public readonly twitch: ReadOnlyTwitchGlobalHandler | undefined;
+export class Bot {
+  public readonly db: Readonly<FileEmoteDb>;
+  public em: Readonly<EmoteMatcher>;
+  public readonly twitch: Readonly<TwitchGlobalHandler> | undefined;
 
   private readonly discord: Client;
   private readonly openai: ReadonlyOpenAI | undefined;
@@ -70,13 +67,13 @@ export class Bot implements ReadonlyBot {
   private readonly emoteEndpoints: EmoteEndpoints;
 
   public constructor(
-    emoteEndpoints: EmoteEndpoints,
+    emoteEndpoints: Readonly<EmoteEndpoints>,
     discord: Client,
     openai: ReadonlyOpenAI | undefined,
     translate: v2.Translate | undefined,
-    twitch: ReadOnlyTwitchGlobalHandler | undefined,
-    db: ReadOnlyFileEmoteDb,
-    em: ReadOnlyEmoteMatcher
+    twitch: Readonly<TwitchGlobalHandler> | undefined,
+    db: Readonly<FileEmoteDb>,
+    em: Readonly<EmoteMatcher>
   ) {
     this.emoteEndpoints = emoteEndpoints;
     this.discord = discord;
@@ -151,13 +148,13 @@ export class Bot implements ReadonlyBot {
 }
 
 export async function createBot(
-  emoteEndpoints: EmoteEndpoints,
+  emoteEndpoints: Readonly<EmoteEndpoints>,
   discord: Client,
   openai: ReadonlyOpenAI | undefined,
   translate: v2.Translate | undefined,
-  twitch: ReadOnlyTwitchGlobalHandler | undefined,
-  db: ReadOnlyFileEmoteDb
-): Promise<ReadonlyBot> {
+  twitch: Readonly<TwitchGlobalHandler> | undefined,
+  db: Readonly<FileEmoteDb>
+): Promise<Readonly<Bot>> {
   return new Bot(
     emoteEndpoints,
     discord,

@@ -1,11 +1,11 @@
-import type { ReadOnlyTwitchGlobalHandler, ClientCredentialsGrantFlow } from '../types.js';
+import type { ClientCredentialsGrantFlow } from '../types.js';
 
 const API_ENDPOINTS = {
   twitchAccessToken: 'https://id.twitch.tv/oauth2/token',
   twitchAccessTokenValidate: 'https://id.twitch.tv/oauth2/validate'
 };
 
-export class TwitchGlobalHandler implements ReadOnlyTwitchGlobalHandler {
+export class TwitchGlobalHandler {
   private readonly _twitchClientId: string;
   private readonly _twitchSecret: string;
 
@@ -78,23 +78,23 @@ export class TwitchGlobalHandler implements ReadOnlyTwitchGlobalHandler {
   }
 }
 
-async function getAndValidateTwitchAccessToken(twitchglobalhandler: ReadOnlyTwitchGlobalHandler): Promise<void> {
+async function getAndValidateTwitchAccessToken(twitchglobalhandler: Readonly<TwitchGlobalHandler>): Promise<void> {
   await twitchglobalhandler.getTwitchAccessToken();
   await twitchglobalhandler.validateTwitchAccessToken();
 }
 
-function logGotAccessToken(twitchglobalhandler: ReadOnlyTwitchGlobalHandler): void {
+function logGotAccessToken(twitchglobalhandler: Readonly<TwitchGlobalHandler>): void {
   if (twitchglobalhandler.gotAccessToken()) console.log('Got Twitch Access Token.');
   else console.log('Failed to get Twitch Access Token.');
 }
-function logIsAccessTokenValidated(twitchglobalhandler: ReadOnlyTwitchGlobalHandler): void {
+function logIsAccessTokenValidated(twitchglobalhandler: Readonly<TwitchGlobalHandler>): void {
   if (twitchglobalhandler.isAccessTokenValidated()) console.log('Twitch Access Token is valid.');
   else console.log('Twitch Access Token is invalid.');
 
   return;
 }
 
-export async function validationHandler(twitchGlobalHandler: ReadOnlyTwitchGlobalHandler): Promise<void> {
+export async function validationHandler(twitchGlobalHandler: Readonly<TwitchGlobalHandler>): Promise<void> {
   await twitchGlobalHandler.validateTwitchAccessToken();
   logIsAccessTokenValidated(twitchGlobalHandler);
 
@@ -108,8 +108,8 @@ export async function validationHandler(twitchGlobalHandler: ReadOnlyTwitchGloba
 export async function createTwitchApi(
   twitchClientId: string,
   twitchSecret: string
-): Promise<ReadOnlyTwitchGlobalHandler> {
-  const twitch: ReadOnlyTwitchGlobalHandler = new TwitchGlobalHandler(twitchClientId, twitchSecret);
+): Promise<Readonly<TwitchGlobalHandler>> {
+  const twitch: Readonly<TwitchGlobalHandler> = new TwitchGlobalHandler(twitchClientId, twitchSecret);
   await validationHandler(twitch);
 
   return twitch;

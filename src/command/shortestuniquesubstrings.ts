@@ -1,6 +1,7 @@
 import type { CommandInteraction } from 'discord.js';
 
-import type { AssetInfo, ReadOnlyEmoteMatcher } from '../types.js';
+import type { AssetInfo } from '../types.js';
+import type { EmoteMatcher } from '../emoteMatcher.js';
 
 function getAllSubstrings(str: string): readonly string[] {
   const result: string[] = [];
@@ -15,7 +16,7 @@ function getAllSubstrings(str: string): readonly string[] {
 }
 
 function getShortestUniqueSubstrings(
-  em: ReadOnlyEmoteMatcher,
+  em: Readonly<EmoteMatcher>,
   text: string
 ): [string | undefined, readonly string[] | undefined] {
   const matchSingle_: AssetInfo | undefined = em.matchSingle(text);
@@ -47,7 +48,7 @@ function getShortestUniqueSubstrings(
   return [original, shortestUniqueSubstrings];
 }
 
-export function shortestuniquesubstringsHandler(em: ReadOnlyEmoteMatcher) {
+export function shortestuniquesubstringsHandler(em: Readonly<EmoteMatcher>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {

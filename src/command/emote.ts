@@ -6,9 +6,9 @@ import { writeFile, rm } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 
-import type { AssetInfo, ReadOnlyEmoteMatcher, DownloadedAsset, HstackElement } from '../types.js';
+import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
 
-import { Platform } from '../emoteMatcher.js';
+import { Platform, type EmoteMatcher } from '../emoteMatcher.js';
 
 const DEFAULTDURATION = 0;
 const DEFAULTFPS = 25;
@@ -161,7 +161,7 @@ async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promi
   };
 }
 
-export function emoteHandler(em: ReadOnlyEmoteMatcher) {
+export function emoteHandler(em: Readonly<EmoteMatcher>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {

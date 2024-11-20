@@ -9,16 +9,13 @@ import type { JWTInput } from 'google-auth-library';
 import OpenAI from 'openai';
 import { Client } from 'discord.js';
 
-import { createFileEmoteDbConnection } from './api/filedb.js';
-import { createTwitchApi } from './api/twitch.js';
-import { createBot } from './bot.js';
+import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
+import { createTwitchApi, type TwitchGlobalHandler } from './api/twitch.js';
+import { createBot, type Bot } from './bot.js';
 
 import type {
-  ReadOnlyFileEmoteDb,
   ReadonlyOpenAI,
-  ReadOnlyTwitchGlobalHandler,
-  EmoteEndpoints,
-  ReadonlyBot
+  EmoteEndpoints
 } from './types.js';
 import { v2 } from '@google-cloud/translate';
 
@@ -46,7 +43,7 @@ const EMOTE_ENDPOINTS: EmoteEndpoints = {
   twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
 };
 
-const bot: ReadonlyBot = await (async function (): Promise<ReadonlyBot> {
+const bot: Readonly<Bot> = await (async function (): Promise<Readonly<Bot>> {
   const discord: Client = new Client({ intents: [] });
 
   const openai: ReadonlyOpenAI | undefined =
@@ -63,12 +60,12 @@ const bot: ReadonlyBot = await (async function (): Promise<ReadonlyBot> {
       : undefined;
   })();
 
-  const twitch: ReadOnlyTwitchGlobalHandler | undefined =
+  const twitch: Readonly<TwitchGlobalHandler> | undefined =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
       ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
 
-  const db: ReadOnlyFileEmoteDb = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
+  const db: FileEmoteDb = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
 
   return await createBot(EMOTE_ENDPOINTS, discord, openai, translate, twitch, db);
 })();

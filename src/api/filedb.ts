@@ -2,8 +2,6 @@ import { existsSync, writeFileSync } from 'fs';
 import { ensureFileSync } from 'fs-extra';
 import { writeFile, readFile } from 'node:fs/promises';
 
-import type { ReadOnlyFileEmoteDb } from '../types.js';
-
 async function readEmotes(filepath: string): Promise<readonly string[]> {
   const exists = existsSync(filepath);
   if (!exists) {
@@ -13,7 +11,7 @@ async function readEmotes(filepath: string): Promise<readonly string[]> {
   return emotes;
 }
 
-export class FileEmoteDb implements ReadOnlyFileEmoteDb {
+export class FileEmoteDb {
   private readonly path: string;
   private readonly content: string[];
 
@@ -32,7 +30,7 @@ export class FileEmoteDb implements ReadOnlyFileEmoteDb {
   }
 }
 
-export async function createFileEmoteDbConnection(path: string): Promise<ReadOnlyFileEmoteDb> {
+export async function createFileEmoteDbConnection(path: string): Promise<FileEmoteDb> {
   const exists: boolean = existsSync(path);
   if (!exists) {
     ensureFileSync(path);
