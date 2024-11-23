@@ -10,11 +10,12 @@ import OpenAI from 'openai';
 import { Client } from 'discord.js';
 
 import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
-import { createTwitchApi, type TwitchGlobalHandler } from './api/twitch.js';
+import { createTwitchApi, getTwitchClipsFromClipIds, type TwitchGlobalHandler } from './api/twitch.js';
 import { createBot, type Bot } from './bot.js';
 
 import type { ReadonlyOpenAI, EmoteEndpoints } from './types.js';
 import { v2 } from '@google-cloud/translate';
+import { fetchAndJson } from './utils/fetchAndJson.js';
 
 //dotenv
 dotenv.config();
@@ -40,7 +41,18 @@ const EMOTE_ENDPOINTS: Readonly<EmoteEndpoints> = {
   twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
 };
 
-const bot: Readonly<Bot> = await (async (): Promise<Readonly<Bot>> => {
+const RANDOMCLIPS =
+  'https://raw.githubusercontent.com/TimotronPrime/timotronprime.github.io/refs/heads/main/cutedog_/randomclips.json';
+
+async function getClipIds(url: string): Promise<readonly string[]> {
+  const clips = (await fetchAndJson(url)) as readonly string[];
+  const clipIds = clips
+    .map((clipId) => clipId.split(' ').at(0)?.split('/').at(-1))
+    .filter((clipId) => clipId !== undefined);
+  return clipIds;
+}
+
+const bot = await (async (): Promise<Readonly<Bot>> => {
   const client: Client = new Client({ intents: [] });
 
   const openai: ReadonlyOpenAI | undefined =
@@ -65,7 +77,21 @@ const bot: Readonly<Bot> = await (async (): Promise<Readonly<Bot>> => {
 
   const fileEmoteDb: Readonly<FileEmoteDb> = await createFileEmoteDbConnection(FILE_ENDPOINTS.sevenNotInSetEmotes);
 
-  return await createBot(EMOTE_ENDPOINTS, client, openai, translate, twitchGlobalHander, fileEmoteDb);
+  const twitchGlobalOptions = twitchGlobalHander?.getTwitchGlobalOptions();
+  const clipsIds = await getClipIds(RANDOMCLIPS);
+  const twitchClips = twitchGlobalOptions ? await getTwitchClipsFromClipIds(twitchGlobalOptions, clipsIds) : undefined;
+
+  return await createBot(
+    EMOTE_ENDPOINTS,
+    client,
+    openai,
+    translate,
+    twitchGlobalHander,
+    fileEmoteDb,
+    undefined,
+    clipsIds,
+    twitchClips
+  );
 })();
 
 // update every 5 minutes
@@ -80,6 +106,10 @@ scheduleJob('*/5 * * * *', async () => {
 if (bot.twitchGlobalHander) {
   scheduleJob('*/60 * * * *', async () => {
     await bot.validateTwitch();
+  });
+
+  scheduleJob('*/60 * * * *', async () => {
+    await bot.refreshClips();
   });
 }
 

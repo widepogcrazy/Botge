@@ -1,8 +1,17 @@
-import type { ClientCredentialsGrantFlow } from '../types.js';
+import type {
+  ClientCredentialsGrantFlow,
+  TwitchClip,
+  TwitchClips,
+  TwitchGlobalOptions,
+  TwitchUsers
+} from '../types.js';
+import { fetchAndJson } from '../utils/fetchAndJson.js';
 
 const API_ENDPOINTS = {
   twitchAccessToken: 'https://id.twitch.tv/oauth2/token',
-  twitchAccessTokenValidate: 'https://id.twitch.tv/oauth2/validate'
+  twitchAccessTokenValidate: 'https://id.twitch.tv/oauth2/validate',
+  twitchUsers: 'https://api.twitch.tv/helix/users',
+  twitchClips: 'https://api.twitch.tv/helix/clips'
 };
 
 export class TwitchGlobalHandler {
@@ -53,20 +62,12 @@ export class TwitchGlobalHandler {
     this._accessTokenValidationStatus = twitchAccessTokenValidation.status;
   }
 
-  public getTwitchGlobalOptions():
-    | {
-        readonly method: string;
-        readonly headers: {
-          readonly Authorization: string;
-          readonly 'Client-Id': string;
-        };
-      }
-    | undefined {
+  public getTwitchGlobalOptions(): TwitchGlobalOptions | undefined {
     if (!this.gotAccessToken() || !this.isAccessTokenValidated()) {
       return undefined;
     }
 
-    const optionsTwitchGlobal = {
+    const optionsTwitchGlobal: TwitchGlobalOptions = {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${this._accessToken}`,
@@ -76,6 +77,68 @@ export class TwitchGlobalHandler {
 
     return optionsTwitchGlobal;
   }
+}
+
+export async function getTwitchUserId(twitchGlobalOptions: TwitchGlobalOptions, name: string): Promise<number> {
+  const twitchUsers = (await fetchAndJson(
+    `${API_ENDPOINTS.twitchUsers}?login=${name}`,
+    twitchGlobalOptions
+  )) as TwitchUsers;
+  return twitchUsers.data[0].id;
+}
+
+export async function getTwitchClipsFromBroadcasterId(
+  twitchGlobalOptions: TwitchGlobalOptions,
+  broadcasterId: number
+): Promise<readonly TwitchClip[]> {
+  const twitchClipsArray: TwitchClip[] = [];
+
+  const twitchClips = (await fetchAndJson(
+    `${API_ENDPOINTS.twitchClips}?broadcaster_id=${broadcasterId}&first=100`,
+    twitchGlobalOptions
+  )) as TwitchClips;
+  twitchClipsArray.push(...twitchClips.data);
+
+  let { cursor } = twitchClips.pagination;
+  while (cursor !== undefined) {
+    const twitchClips2 = (await fetchAndJson(
+      `${API_ENDPOINTS.twitchClips}?broadcaster_id=${broadcasterId}&first=100&after=${cursor}`,
+      twitchGlobalOptions
+    )) as TwitchClips;
+    twitchClipsArray.push(...twitchClips2.data);
+
+    ({ cursor } = twitchClips2.pagination);
+  }
+
+  return twitchClipsArray;
+}
+
+export async function getTwitchClipsFromClipIds(
+  twitchGlobalOptions: TwitchGlobalOptions,
+  clipIds: readonly string[]
+): Promise<readonly TwitchClip[]> {
+  const twitchClipsFetchAndJsons: Promise<unknown>[] = [];
+  const increment = 100;
+  let start = 0;
+  let end = start + increment;
+  let slice: readonly string[] = clipIds.slice(start, end);
+
+  while (slice.length !== 0) {
+    const ids: readonly string[] = slice.map((id) => `id=${id}`);
+    const idsJoined = ids.join('&');
+
+    const twitchClipsFetchAndJson = fetchAndJson(`${API_ENDPOINTS.twitchClips}?${idsJoined}`, twitchGlobalOptions);
+    twitchClipsFetchAndJsons.push(twitchClipsFetchAndJson);
+
+    start = end;
+    end += increment;
+    slice = clipIds.slice(start, end);
+  }
+
+  const twitchClipsArray = (await Promise.all(twitchClipsFetchAndJsons)) as readonly TwitchClips[];
+  const twitchClipArray: readonly TwitchClip[] = twitchClipsArray.map((twitchClips) => twitchClips.data).flat();
+
+  return twitchClipArray;
 }
 
 async function getAndValidateTwitchAccessToken(twitchglobalhandler: Readonly<TwitchGlobalHandler>): Promise<void> {

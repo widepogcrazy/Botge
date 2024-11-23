@@ -1,70 +1,90 @@
-import { exec, spawn, type ExecException } from 'child_process';
-import { join, basename } from 'path';
+import { spawn } from 'child_process';
+import { join } from 'path';
 import { ensureDirSync } from 'fs-extra';
-import fetch from 'node-fetch';
-import { writeFile, rm } from 'node:fs/promises';
+import { rm } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 
-import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
+import { downloadAsset } from '../utils/downloadAsset.js';
+import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/sizeChange.js';
+import { urlToAssetInfo } from '../utils/urlToAssetInfo.js';
+import type { DownloadedAsset, HstackElement } from '../types.js';
 
-import { Platform, type EmoteMatcher } from '../emoteMatcher.js';
+import type { EmoteMatcher } from '../emoteMatcher.js';
 
-const DEFAULTDURATION = 0;
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
 const MAXHEIGHT = 64;
 
+function getMaxWidth(layers: readonly DownloadedAsset[], scaleToHeight: number): number {
+  const scaledWidth = layers.map((layer) => (layer.width / layer.height) * scaleToHeight);
+
+  const ret: number = Math.round(Math.max(...scaledWidth));
+  return ret % 2 === 0 ? ret : ret + 1; // rounds up to even number because of ffmpeg
+}
+
 class SimpleElement implements HstackElement {
   public readonly id: number;
-  public readonly animated: boolean;
+  private readonly animated: boolean;
   private readonly asset: DownloadedAsset;
+  private readonly width: number;
+  private readonly heigth: number;
 
-  public constructor(id: number, asset: DownloadedAsset) {
+  public constructor(id: number, asset: DownloadedAsset, width: number, height: number) {
     this.id = id;
     this.asset = asset;
+    this.width = width;
+    this.heigth = height;
     this.animated = this.asset.animated;
   }
 
   public filterString(): string {
-    let filterString = `[${this.id}:v]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`;
-    if (this.animated) filterString += `,fps=${DEFAULTFPS},pad=h=${MAXHEIGHT}:x=-1:y=-1:color=black@0.0`;
+    let filterString = `[${this.id}:v]scale=${this.width}:${this.heigth}:force_original_aspect_ratio=decrease`;
+
+    if (this.animated) filterString += `,fps=${DEFAULTFPS},pad=h=${this.heigth}:x=-1:y=-1:color=black@0.0`;
     filterString += `[o${this.id}];`;
+
     return filterString;
   }
 }
 
 class OverlayElement implements HstackElement {
   public readonly id: number;
-  public readonly animated: boolean;
   private readonly layers: readonly DownloadedAsset[];
-  private readonly w: number;
-  private readonly h: number;
+  private readonly stretch: boolean;
+  private readonly height: number;
+  private readonly width: number;
 
-  public constructor(id: number, layers: readonly DownloadedAsset[], height: number) {
+  public constructor(id: number, layers: readonly DownloadedAsset[], stretch: boolean, width: number, height: number) {
     this.id = id;
     this.layers = layers;
-    this.h = height;
-    this.w = this._getMaxWidth(this.h);
-    this.animated = this.layers.some((layer: DownloadedAsset) => layer.animated);
+    this.stretch = stretch;
+
+    this.height = height;
+    this.width = width !== MAXWIDTH ? width : Math.min(getMaxWidth(this.layers, this.height), MAXWIDTH);
   }
 
   public filterString(): string {
     const segments: string[] = [];
 
-    let id: number = this.id;
+    let { id } = this;
     let layerId = 0;
     // first layer, pad the canvas
-    segments.push(`[${this.id}]scale=${MAXWIDTH}:${MAXHEIGHT}:force_original_aspect_ratio=decrease`);
-    if (this.animated && this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
-    segments.push(`,pad=${this.w}:${this.h}:-1:-1:color=black@0.0[o${this.id}];`);
+    segments.push(`[${this.id}]scale=${this.width}:${this.height}:force_original_aspect_ratio=decrease`);
+
+    if (this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
+
+    //if (this.stretch) segments.push(`,pad=${this.width}:${this.height}:-1:-1:color=black@0.0[o${this.id}];`);
+    segments.push(`,pad=${this.width}:${this.height}:-1:-1:color=black@0.0[o${this.id}];`);
+
     id++;
     layerId++;
 
     // other layers
     this.layers.slice(1).forEach(() => {
-      segments.push(`[${id}]scale=-1:${MAXHEIGHT}`);
-      if (this.animated && this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
+      segments.push(`[${id}]scale=${this.stretch ? this.width : -1}:${this.stretch ? this.height : MAXHEIGHT}`);
+
+      if (this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
       segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
 
       id++;
@@ -72,166 +92,85 @@ class OverlayElement implements HstackElement {
     });
 
     return segments.join('');
-    //// SURELY IT WORKS
-  }
-
-  private _getMaxWidth(scaleToHeight: number): number {
-    const scaledWidth: readonly (number | undefined)[] = this.layers.map((layer: DownloadedAsset) => {
-      return layer.width !== undefined && layer.height !== undefined
-        ? (layer.width / layer.height) * scaleToHeight
-        : undefined;
-    });
-
-    const ret: number = Math.round(Math.min(Math.max(...scaledWidth.filter((sW) => sW !== undefined)), MAXWIDTH));
-    return ret % 2 === 0 ? ret : ret + 1; // rounds up to even number because of ffmpeg
   }
 }
 
-async function _getDimension(filename: string): Promise<readonly [number, number]> {
-  return new Promise((resolve, reject) => {
-    exec(
-      `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 ${filename}`,
-      (error: Readonly<ExecException | null>, stdout) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const widthAndHeight = stdout.trim();
-
-        if (widthAndHeight === 'N/A' || widthAndHeight === '') {
-          reject(new Error('Width and height is either N/A or empty.'));
-        } else {
-          const widthAndHeightSplit: readonly string[] = widthAndHeight.split('x');
-          const width = Number(widthAndHeightSplit[0]);
-          const height = Number(widthAndHeightSplit[1]);
-
-          resolve([width, height]);
-        }
-      }
-    );
-  });
-}
-
-async function _getDuration(filename: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    exec(
-      `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${filename}"`,
-      (error: Readonly<ExecException | null>, stdout) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const duration = stdout.trim();
-        // Check if duration is "N/A" or empty, and use a default value
-        if (duration === 'N/A' || duration === '') {
-          reject(new Error('Duration is either N/A or empty.')); // or any default value you prefer
-        } else {
-          resolve(parseFloat(duration));
-        }
-      }
-    );
-  });
-}
-
-async function downloadAsset(outdir: string, asset: AssetInfo, i: number): Promise<DownloadedAsset> {
-  const response = await fetch(asset.url);
-  const buffer: Readonly<Buffer> = Buffer.from(await response.arrayBuffer());
-  const { animated } = asset;
-  const hasWidthAndHeight = asset.width !== undefined && asset.height !== undefined;
-  const filename = join(outdir, `${i}_${basename(asset.url)}`);
-  await writeFile(filename, buffer);
-
-  let duration: Promise<number> | number = DEFAULTDURATION;
-  let widthAndHeight: Promise<readonly [number, number]> | readonly [number | undefined, number | undefined] = [
-    asset.width,
-    asset.height
-  ];
-  if (animated) {
-    duration = _getDuration(filename);
-  }
-  if (!hasWidthAndHeight) {
-    widthAndHeight = _getDimension(filename);
-  }
-
-  widthAndHeight = await widthAndHeight;
-  duration = await duration;
-  return {
-    filename: filename,
-    asset: asset,
-    width: widthAndHeight[0],
-    height: widthAndHeight[1],
-    duration: duration,
-    animated: duration !== DEFAULTDURATION
-  };
-}
-
-export function emoteHandler(em: Readonly<EmoteMatcher>) {
+export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
+    const outdir = join('tmp', String(interaction.id));
     try {
       const tokens: readonly string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
-      const matchMulti_: readonly (AssetInfo | undefined)[] = em.matchMulti(tokens);
-      const assets: readonly AssetInfo[] = matchMulti_.filter((asset: AssetInfo | undefined) => asset !== undefined);
+      const sizeOptions = interaction.options.get('size')?.value;
+      const size = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
+      const fullSize = Boolean(interaction.options.get('fullsize')?.value);
+      const stretch = Boolean(interaction.options.get('stretch')?.value);
 
-      if (assets.length === 0 || matchMulti_.some((asset) => asset === undefined)) {
-        await defer;
-        await interaction.editReply('jij');
-        return;
-      }
+      const matchMulti_ = em.matchMulti(tokens);
+      //const matchMulti_NotUndefined = matchMulti_.filter((asset) => asset !== undefined);
+
+      const assets = await Promise.all(
+        matchMulti_.map(async (asset, i) =>
+          asset !== undefined
+            ? fullSize
+              ? assetSizeChange(asset, maxPlatformSize(asset.platform), emoteEndpont)
+              : size !== undefined
+                ? assetSizeChange(asset, size, emoteEndpont)
+                : asset
+            : urlToAssetInfo(tokens[i], emoteEndpont, fullSize)
+        )
+      );
+
+      //if (matchMulti_.some((asset) => asset === undefined)) {
+      //  await defer;
+      //  await interaction.editReply('jij');
+      //  return;
+      //}
 
       if (assets.length === 1) {
-        const asset: AssetInfo = assets[0];
-        const platform: Platform = asset.platform;
-        const sizeOptions = interaction.options.get('size')?.value;
-        const size: number | undefined = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
-        let url: string = asset.url;
+        const [asset] = assets;
 
-        if (size !== undefined) {
-          if (size >= 1 && size <= 4) {
-            if (platform === Platform.seven) {
-              url = url.replace('/2x', `/${size}x`);
-            } else if (platform === Platform.bttv) {
-              if (size < 4) {
-                url = url.replace('/2x', `/${size}x`);
-              }
-            } else if (platform === Platform.ffz) {
-              if (size !== 3) {
-                url = url.slice(0, -1) + `${size}`;
-              }
-            } else {
-              if (size < 4) {
-                url = url.replace('/2.0', `/${size}.0`);
-              }
-            }
-          }
+        if (typeof asset === 'string') {
+          await defer;
+          await interaction.editReply(asset);
+          return;
         }
 
         await defer;
-        await interaction.editReply(url);
+        await interaction.editReply(emoteSizeChange(asset.url, size, asset.platform));
         return;
       }
 
-      const outdir = join('tmp', String(interaction.id));
       ensureDirSync(outdir);
 
-      const downloadedAssets: readonly DownloadedAsset[] = await Promise.all(
-        assets.map(async (asset: AssetInfo, i) => downloadAsset(outdir, asset, i))
-      );
+      const downloadedAssets: readonly DownloadedAsset[] = (
+        await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i)))
+      ).filter((downloadedAsset) => downloadedAsset !== undefined);
+      if (downloadedAssets.length !== assets.length) {
+        throw new Error('Failed to download asset(s).');
+      }
+
+      const maxHeight_ = Math.max(...downloadedAssets.map((asset) => asset.height));
+      const maxHeight = fullSize ? (maxHeight_ % 2 === 0 ? maxHeight_ : maxHeight_ + 1) : MAXHEIGHT;
+      const maxWidth = fullSize ? getMaxWidth(downloadedAssets, maxHeight) : MAXWIDTH;
 
       // at least 2
       let boundary = 0;
       let i = 0;
       const elements: HstackElement[] = [];
       for (; i < downloadedAssets.length; i++) {
-        if (!assets[i].zeroWidth) {
+        const asset = assets[i];
+        if ((typeof asset === 'object' && !asset.zeroWidth) || typeof asset === 'string') {
           // new group
           if (i === boundary + 1) {
             // single element
-            elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
+            elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
             boundary = i;
           } else if (i > boundary) {
             // at least 2
-            elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), MAXHEIGHT));
+            elements.push(
+              new OverlayElement(boundary, downloadedAssets.slice(boundary, i), stretch, maxWidth, maxHeight)
+            );
             boundary = i;
           }
         }
@@ -240,18 +179,18 @@ export function emoteHandler(em: Readonly<EmoteMatcher>) {
       // don't forget last one
       if (i === boundary + 1) {
         // single element
-        elements.push(new SimpleElement(boundary, downloadedAssets[boundary]));
+        elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
       } else if (i > boundary) {
         // at least 2
-        elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), MAXHEIGHT));
+        elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), stretch, maxWidth, maxHeight));
       }
 
-      const maxDuration: number = Math.max(...downloadedAssets.map((layer: DownloadedAsset) => layer.duration));
-      const animated: boolean = maxDuration !== DEFAULTDURATION;
+      const maxDuration = Math.max(...downloadedAssets.map((layer) => layer.duration));
+      const animated = downloadedAssets.some((asset) => asset.animated);
 
       const args: string[] = [];
 
-      downloadedAssets.forEach((asset: DownloadedAsset) => {
+      downloadedAssets.forEach((asset) => {
         if (animated && asset.animated) {
           args.push('-stream_loop');
           args.push('-1');
@@ -263,11 +202,11 @@ export function emoteHandler(em: Readonly<EmoteMatcher>) {
       });
 
       args.push('-filter_complex');
-      const filter: string[] = elements.map((e: Readonly<HstackElement>) => e.filterString());
+      const filter: string[] = elements.map((element) => element.filterString());
 
       // hstack
       if (elements.length > 1) {
-        filter.push(elements.map((e: HstackElement) => `[o${e.id}]`).join(''));
+        filter.push(elements.map((element) => `[o${element.id}]`).join(''));
         filter.push(`hstack=inputs=${elements.length}`);
       } else {
         filter.push(`[o0]scale`); // only to point the output stream
@@ -315,6 +254,8 @@ export function emoteHandler(em: Readonly<EmoteMatcher>) {
       console.log(`Error at emoteHandler --> ${error instanceof Error ? error : 'error'}`);
 
       await defer;
+      await interaction.editReply('gif creation failed.');
+      void rm(outdir, { recursive: true });
       return;
     }
   };

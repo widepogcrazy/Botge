@@ -1,42 +1,35 @@
 import type { CommandInteraction } from 'discord.js';
 
-import type { SevenEmoteNotInSet, RequiredState } from '../types.js';
+import type { SevenEmoteNotInSet, RequiredState, AssetInfo } from '../types.js';
 
-const SPLITTER = '/';
+import { sevenUrlToSevenNotInSet } from '../utils/sevenUrlToSevenNotInSet.js';
 
-const regExpSevenEmoteNotInSet: Readonly<RegExp> = new RegExp(/^https:\/\/7tv\.app\/emotes\/[A-Z0-9]{26}$/);
+import { sevenNotInSetToAsset } from '../utils/emoteToAssetInfo.js';
 
 export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: string) {
   return async function addEmoteHandlerSevenNotInSetInnerFunction(interaction: CommandInteraction): Promise<boolean> {
     const defer = interaction.deferReply();
     try {
       const text = String(interaction.options.get('text')?.value);
-      const textSplit: readonly string[] = text.split(SPLITTER);
 
-      const regExpSevenEmoteNotInSetTest: boolean = regExpSevenEmoteNotInSet.test(text);
+      const urlToSevenNotInSet_: SevenEmoteNotInSet | undefined = await sevenUrlToSevenNotInSet(text, emoteEndpoint);
+      if (urlToSevenNotInSet_ === undefined) return false;
 
-      if (!regExpSevenEmoteNotInSetTest) return false;
+      const sevenEmoteNotInSet = urlToSevenNotInSet_;
+      const sevenEmoteNotInSetAssetInfo: AssetInfo = sevenNotInSetToAsset(sevenEmoteNotInSet);
 
-      // TODO: USE REGEX CAPTURE
-      const sevenEmoteNotInSetId = textSplit.at(-1);
-      const sevenEmoteNotInSetURL = `${emoteEndpoint}${SPLITTER}${sevenEmoteNotInSetId}`;
-
-      const sevenEmoteNotInSet: SevenEmoteNotInSet = (await (
-        await fetch(sevenEmoteNotInSetURL)
-      ).json()) as SevenEmoteNotInSet;
-
-      if (s.emoteMatcher.matchSingle(sevenEmoteNotInSet.name)) {
+      if (s.emoteMatcher.matchSingle(sevenEmoteNotInSetAssetInfo.name)) {
         await defer;
         await interaction.editReply('theres already an emote with the same name');
 
         return false;
       }
 
-      await s.fileEmoteDb.add(sevenEmoteNotInSetURL);
+      await s.fileEmoteDb.add(sevenEmoteNotInSetAssetInfo.url);
       await s.refreshEmotes();
 
       await defer;
-      await interaction.editReply(`added emote ${sevenEmoteNotInSet.name}`);
+      await interaction.editReply(`added emote ${sevenEmoteNotInSetAssetInfo.name}`);
 
       return true;
     } catch (error) {

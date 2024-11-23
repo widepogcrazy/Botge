@@ -11,18 +11,40 @@ const DISCORD_TOKEN: string | undefined = process.env.DISCORD_TOKEN;
 const commands = [
   {
     name: 'emote',
-    description: 'replies with emote gif/webp. precise lower/upper case not needed for uniquely named emotes.',
+    description: 'replies with a gif/webp/png. precise lower/upper case not needed for uniquely named emotes',
     options: [
       {
         type: 3,
         name: 'name',
-        description: 'the emote(s) name(s). works even if this input is a substring of the emotes original name.',
+        description: 'the emote(s) name(s). works even if this input is a substring of the emotes original name',
         required: true
       },
       {
         type: 3,
         name: 'size',
-        description: 'the emotes size( not required ). 1,2,3 or 4.'
+        description: 'the emotes size(not required): 1, 2, 3 or 4'
+      },
+      {
+        type: 5,
+        name: 'fullsize',
+        description: 'whether to use the full size of the input or not'
+      },
+      {
+        type: 5,
+        name: 'stretch',
+        description: 'whether to stretch the zero-width emotes instead of centering them'
+      }
+    ]
+  },
+  {
+    name: 'clip',
+    description: 'replies with clip url, if found.',
+    options: [
+      {
+        type: 3,
+        name: 'text',
+        description: 'the clips name.',
+        required: true
       }
     ]
   },

@@ -2,8 +2,9 @@ import type { DeepReadonly } from 'ts-essentials';
 
 import type OpenAI from 'openai';
 
-import type { EmoteMatcher, Platform } from './emoteMatcher.js';
+import type { EmoteMatcher } from './emoteMatcher.js';
 import type { FileEmoteDb } from './api/filedb.js';
+import type { Platform } from './enums.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 
@@ -16,8 +17,8 @@ export type SevenEmoteFile = {
 
 export type SevenEmoteInSet = {
   readonly name: string;
-  readonly flags: number;
   readonly data: {
+    readonly flags: number;
     readonly animated: boolean;
     readonly host: {
       readonly url: string;
@@ -108,16 +109,14 @@ export type RequiredState = {
 
 export type DownloadedAsset = {
   readonly filename: string;
-  readonly asset: AssetInfo;
-  readonly width: number | undefined;
-  readonly height: number | undefined;
+  readonly width: number;
+  readonly height: number;
   readonly duration: number; // stills are DEFAULTDURATION
   readonly animated: boolean;
 };
 
 export type HstackElement = {
   readonly id: number;
-  readonly animated: boolean;
   readonly filterString: () => string;
 };
 
@@ -130,4 +129,34 @@ export type EmoteEndpoints = {
   ffzPersonal: string;
   ffzGlobal: string;
   twitchGlobal: string;
+};
+
+export type TwitchGlobalOptions = {
+  readonly method: string;
+  readonly headers: {
+    readonly Authorization: string;
+    readonly 'Client-Id': string;
+  };
+};
+
+export type TwitchUser = {
+  readonly id: number;
+};
+
+export type TwitchUsers = {
+  readonly data: readonly TwitchUser[];
+};
+
+export type TwitchClip = {
+  readonly url: string;
+  readonly creator_name: string;
+  readonly game_id: number;
+  readonly title: string;
+};
+
+export type TwitchClips = {
+  readonly data: readonly TwitchClip[];
+  readonly pagination: {
+    readonly cursor?: string;
+  };
 };
