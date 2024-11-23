@@ -2,7 +2,7 @@ import type { SevenEmoteNotInSet } from '../types.js';
 
 import { fetchAndJson } from './fetchAndJson.js';
 
-const SPLITTER = '/';
+export const SPLITTER = '/';
 
 const regExpSevenEmoteNotInSet: Readonly<RegExp> = new RegExp(/^https:\/\/7tv\.app\/emotes\/[A-Z0-9]{26}$/);
 
