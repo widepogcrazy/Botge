@@ -1,6 +1,6 @@
 import type { CommandInteraction } from 'discord.js';
 
-import type { SevenEmoteNotInSet, RequiredState, AssetInfo } from '../types.js';
+import type { SevenEmoteNotInSet, RequiredState, AssetInfo, AddedEmote } from '../types.js';
 
 import { sevenUrlToSevenNotInSet, SPLITTER } from '../utils/sevenUrlToSevenNotInSet.js';
 
@@ -26,7 +26,8 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState, emoteEndpoint: st
       }
 
       const emoteId = text.split(SPLITTER).at(-1);
-      if (emoteId !== undefined) await s.fileEmoteDb.add(`${emoteEndpoint}${SPLITTER}${emoteId}`);
+      const addedEmote: AddedEmote = { url: `${emoteEndpoint}${SPLITTER}${emoteId}` };
+      if (emoteId !== undefined) s.addedEmotesDatabase.insert(addedEmote);
       await s.refreshEmotes();
 
       await defer;

@@ -91,26 +91,27 @@ export async function getTwitchClipsFromBroadcasterId(
   twitchGlobalOptions: TwitchGlobalOptions,
   broadcasterId: number
 ): Promise<readonly TwitchClip[]> {
-  const twitchClipsArray: TwitchClip[] = [];
+  const twitchClipArray: TwitchClip[] = [];
 
-  const twitchClips = (await fetchAndJson(
+  let twitchClips = (await fetchAndJson(
     `${API_ENDPOINTS.twitchClips}?broadcaster_id=${broadcasterId}&first=100`,
     twitchGlobalOptions
   )) as TwitchClips;
-  twitchClipsArray.push(...twitchClips.data);
+  twitchClipArray.push(...twitchClips.data);
 
   let { cursor } = twitchClips.pagination;
   while (cursor !== undefined) {
-    const twitchClips2 = (await fetchAndJson(
+    twitchClips = (await fetchAndJson(
       `${API_ENDPOINTS.twitchClips}?broadcaster_id=${broadcasterId}&first=100&after=${cursor}`,
       twitchGlobalOptions
     )) as TwitchClips;
-    twitchClipsArray.push(...twitchClips2.data);
+    twitchClipArray.push(...twitchClips.data);
 
-    ({ cursor } = twitchClips2.pagination);
+    ({ cursor } = twitchClips.pagination);
+    console.log(cursor);
   }
 
-  return twitchClipsArray;
+  return twitchClipArray;
 }
 
 export async function getTwitchClipsFromClipIds(

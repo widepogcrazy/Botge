@@ -32,7 +32,7 @@ function getShortestUniqueSubstrings(
 
   const uniqueSubstrings: readonly string[] = allSubstrings
     .map((s, i) => {
-      if (allSubstringUniqueness[i] !== undefined) return s;
+      if (allSubstringUniqueness[i] !== undefined && allSubstringUniqueness[i]) return s;
       return undefined;
     })
     .filter((s) => s !== undefined);

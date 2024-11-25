@@ -3,7 +3,7 @@ import type { DeepReadonly } from 'ts-essentials';
 import type OpenAI from 'openai';
 
 import type { EmoteMatcher } from './emoteMatcher.js';
-import type { FileEmoteDb } from './api/filedb.js';
+import type { AddedEmotesDatabase } from './api/added-emote-database.js';
 import type { Platform } from './enums.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
@@ -102,7 +102,7 @@ export type ClientCredentialsGrantFlow = {
 };
 
 export type RequiredState = {
-  readonly fileEmoteDb: Readonly<FileEmoteDb>;
+  readonly addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
   readonly emoteMatcher: Readonly<EmoteMatcher>;
   readonly refreshEmotes: () => Promise<void>;
 };
@@ -159,4 +159,8 @@ export type TwitchClips = {
   readonly pagination: {
     readonly cursor?: string;
   };
+};
+
+export type AddedEmote = {
+  readonly url: string;
 };
