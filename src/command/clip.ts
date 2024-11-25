@@ -9,7 +9,7 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index) {
       const text = String(interaction.options.get('text')?.value).trim().toLowerCase();
 
       const search = await twitchClipsMeiliSearchIndex.search(text, {
-        attributesToSearchOn: ['title']
+        attributesToSearchOn: ['title', 'creator_name']
       });
       const hits: readonly TwitchClip[] = search.hits.map((hit: ReadonlyHit) => hit as TwitchClip);
 
