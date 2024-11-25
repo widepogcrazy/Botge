@@ -4,4 +4,5 @@ node_modules
 dist
 tmp
 data
+meili_data
 compose.yaml
