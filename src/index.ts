@@ -27,6 +27,7 @@ const OPENAI_API_KEY: string | undefined = process.env.OPENAI_API_KEY;
 const CREDENTIALS: string | undefined = process.env.CREDENTIALS;
 const TWITCH_CLIENT_ID: string | undefined = process.env.TWITCH_CLIENT_ID;
 const TWITCH_SECRET: string | undefined = process.env.TWITCH_SECRET;
+const MEILISEARCH_HOST: string | undefined = process.env.MEILISEARCH_HOST;
 const MEILISEARCH_API_KEY: string | undefined = process.env.MEILISEARCH_API_KEY;
 
 const DATABASEDIR = 'data';
@@ -96,9 +97,9 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     });
 
   const meiliSearch: Readonly<MeiliSearch> | undefined =
-    MEILISEARCH_API_KEY !== undefined
+    MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
       ? new MeiliSearch({
-          host: 'http://localhost:7700',
+          host: MEILISEARCH_HOST,
           apiKey: MEILISEARCH_API_KEY
         })
       : undefined;

@@ -20,6 +20,7 @@ services:
       #- TWITCH_SECRET=
 
       # MeiliSearch
+      #- MEILISEARCH_HOST=
       #- MEILISEARCH_API_KEY=
     volumes:
       - ./tmp:/app/tmp
