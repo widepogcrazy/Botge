@@ -61,6 +61,7 @@ export default [
         "error",
         { allow: [
           { from: "package", name: "RequestInit", package: "node-fetch" },
+          { from: "package", name: "Index", package: "meilisearch" },
           { from: "package", name: [ "Interaction", "CommandInteraction", "Client" ], package: "discord.js" } ]
         }
       ],

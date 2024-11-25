@@ -2,6 +2,5 @@
 node_modules
 .DS_Store
 dist
-local_emotes
-temp_gifs
+tmp
 data

@@ -8,7 +8,7 @@ import type { CommandInteraction } from 'discord.js';
 import { downloadAsset } from '../utils/downloadAsset.js';
 import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/sizeChange.js';
 import { urlToAssetInfo } from '../utils/urlToAssetInfo.js';
-import type { DownloadedAsset, HstackElement } from '../types.js';
+import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
 
 import type { EmoteMatcher } from '../emoteMatcher.js';
 
@@ -107,9 +107,8 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string) {
       const stretch = Boolean(interaction.options.get('stretch')?.value);
 
       const matchMulti_ = em.matchMulti(tokens);
-      //const matchMulti_NotUndefined = matchMulti_.filter((asset) => asset !== undefined);
 
-      const assets = await Promise.all(
+      const assetsWithUndefined: readonly (AssetInfo | string | undefined)[] = await Promise.all(
         matchMulti_.map(async (asset, i) =>
           asset !== undefined
             ? fullSize
@@ -120,19 +119,21 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string) {
             : urlToAssetInfo(tokens[i], emoteEndpont, fullSize)
         )
       );
+      const assets: readonly (AssetInfo | string)[] = assetsWithUndefined.filter((asset) => asset !== undefined);
 
-      //if (matchMulti_.some((asset) => asset === undefined)) {
-      //  await defer;
-      //  await interaction.editReply('jij');
-      //  return;
-      //}
+      if (assetsWithUndefined.some((asset) => asset === undefined)) {
+        await defer;
+        await interaction.editReply('jij');
+        return;
+      }
 
       if (assets.length === 1) {
         const [asset] = assets;
 
         if (typeof asset === 'string') {
           await defer;
-          await interaction.editReply(asset);
+          await interaction.editReply('sending link through Botge wtf');
+
           return;
         }
 

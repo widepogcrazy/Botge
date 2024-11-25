@@ -9,6 +9,7 @@ import { ensureDirSync } from 'fs-extra';
 import type { JWTInput } from 'google-auth-library';
 import OpenAI from 'openai';
 import { Client } from 'discord.js';
+import { MeiliSearch, type Index } from 'meilisearch';
 
 import { AddedEmotesDatabase } from './api/added-emote-database.js';
 import { createTwitchApi, type TwitchGlobalHandler } from './api/twitch.js';
@@ -17,7 +18,6 @@ import { createBot, type Bot } from './bot.js';
 import type { ReadonlyOpenAI, EmoteEndpoints, AddedEmote } from './types.js';
 import { v2 } from '@google-cloud/translate';
 import { fetchAndJson } from './utils/fetchAndJson.js';
-import { TwitchClipsDatabase } from './api/twitch-clips-database.js';
 import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
 
 //dotenv
@@ -27,6 +27,7 @@ const OPENAI_API_KEY: string | undefined = process.env.OPENAI_API_KEY;
 const CREDENTIALS: string | undefined = process.env.CREDENTIALS;
 const TWITCH_CLIENT_ID: string | undefined = process.env.TWITCH_CLIENT_ID;
 const TWITCH_SECRET: string | undefined = process.env.TWITCH_SECRET;
+const MEILISEARCH_API_KEY: string | undefined = process.env.MEILISEARCH_API_KEY;
 
 const DATABASEDIR = 'data';
 
@@ -87,7 +88,6 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   //MIGRATE CURRENT DATA - WILL REMOVE LATER
   const fileEmoteDb: Readonly<FileEmoteDb> = await createFileEmoteDbConnection(DATABASE_ENDPOINTS.sevenNotInSetEmotes);
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
-  const twitchClipsDatabase: Readonly<TwitchClipsDatabase> = new TwitchClipsDatabase(DATABASE_ENDPOINTS.twitchClips);
   fileEmoteDb
     .getAll()
     .map((stringge) => ({ url: stringge }) as AddedEmote)
@@ -95,16 +95,28 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       addedEmotesDatabase.insert(addedEmote);
     });
 
+  const meiliSearch: Readonly<MeiliSearch> | undefined =
+    MEILISEARCH_API_KEY !== undefined
+      ? new MeiliSearch({
+          host: 'http://localhost:7700',
+          apiKey: MEILISEARCH_API_KEY
+        })
+      : undefined;
+
+  if (meiliSearch !== undefined) await meiliSearch.createIndex('twitchClips', { primaryKey: 'id' });
+  const twitchClipsMeiliSearchIndex: Index | undefined =
+    meiliSearch !== undefined ? await meiliSearch.getIndex('twitchClips') : undefined;
+
   const clipsIds = await getClipIds(RANDOMCLIPS);
 
   return await createBot(
     EMOTE_ENDPOINTS,
     client,
+    addedEmotesDatabase,
+    twitchClipsMeiliSearchIndex,
+    twitchGlobalHander,
     openai,
     translate,
-    twitchGlobalHander,
-    addedEmotesDatabase,
-    twitchClipsDatabase,
     undefined,
     clipsIds
   );
@@ -113,7 +125,6 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
 function closeDatabases(): void {
   try {
     bot.addedEmotesDatabase.close();
-    bot.twitchClipsDatabase.close();
   } catch (err) {
     console.log(`Error at closeDatabases: ${err instanceof Error ? err : 'error'}`);
   }

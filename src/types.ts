@@ -1,12 +1,14 @@
 import type { DeepReadonly } from 'ts-essentials';
 
 import type OpenAI from 'openai';
+import type { Hit } from 'meilisearch';
 
 import type { EmoteMatcher } from './emoteMatcher.js';
 import type { AddedEmotesDatabase } from './api/added-emote-database.js';
 import type { Platform } from './enums.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
+export type ReadonlyHit = DeepReadonly<Hit>;
 
 export type SevenEmoteFile = {
   readonly name: string;
@@ -148,6 +150,7 @@ export type TwitchUsers = {
 };
 
 export type TwitchClip = {
+  readonly id: string;
   readonly url: string;
   readonly creator_name: string;
   readonly game_id: number;

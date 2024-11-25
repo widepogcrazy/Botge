@@ -8,7 +8,7 @@ export async function urlToAssetInfo(
   url: string,
   emoteEndpoint: string,
   highestSize: boolean
-): Promise<AssetInfo | string> {
+): Promise<AssetInfo | string | undefined> {
   const urlToSevenNotInSet_ = await sevenUrlToSevenNotInSet(url, emoteEndpoint);
   const sevenNotInSetToAsset_ =
     urlToSevenNotInSet_ !== undefined
@@ -19,5 +19,10 @@ export async function urlToAssetInfo(
 
   if (sevenNotInSetToAsset_ !== undefined) return sevenNotInSetToAsset_;
 
-  return url;
+  try {
+    new URL(url);
+    return url;
+  } catch {
+    return undefined;
+  }
 }

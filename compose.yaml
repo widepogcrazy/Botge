@@ -18,7 +18,10 @@ services:
       # twitch
       #- TWITCH_CLIENT_ID=
       #- TWITCH_SECRET=
+
+      # MeiliSearch
+      #- MEILISEARCH_API_KEY=
     volumes:
-      - ./temp_gifs:/app/temp_gifs
-      - ./local_emotes:/app/local_emotes
+      - ./tmp:/app/tmp
+      - ./data:/app/data
     restart: always
