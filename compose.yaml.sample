@@ -1,28 +1,41 @@
 services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    ports:
+        - 7700:7700
+    environment:
+        - MEILI_MASTER_KEY=itmightbea24hourstreamtoday
+    volumes:
+        - ./meili_data:/meili_data
+    healthcheck:
+      test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
+      retries: 3
+      timeout: 5s
+
   server:
     image: ghcr.io/tresster/botge:main
-    build:
-      context: .
     environment:
       - NODE_ENV=production
       # discord
       - APP_ID=
       - DISCORD_TOKEN=
-      
+
       # open ai
-      #- OPENAI_API_KEY=
-      
+      - OPENAI_API_KEYTWO=
+
       # google
-      #- CREDENTIALS=
+      - CREDENTIALS=
 
       # twitch
-      #- TWITCH_CLIENT_ID=
-      #- TWITCH_SECRET=
+      - TWITCH_CLIENT_ID=
+      - TWITCH_SECRET=
 
       # MeiliSearch
-      #- MEILISEARCH_HOST=
-      #- MEILISEARCH_API_KEY=
+      - MEILISEARCH_HOST=http://localhost:7700
+      - MEILISEARCH_API_KEY=itmightbea24hourstreamtoday
     volumes:
       - ./tmp:/app/tmp
       - ./data:/app/data
     restart: always
+    depends_on:
+      - meilisearch
