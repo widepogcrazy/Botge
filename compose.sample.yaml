@@ -25,7 +25,7 @@ services:
       - DISCORD_TOKEN=
 
       # open ai
-      - OPENAI_API_KEYTWO=
+      - OPENAI_API_KEY=
 
       # google
       - CREDENTIALS=
