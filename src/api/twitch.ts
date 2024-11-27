@@ -120,9 +120,9 @@ async function transformGameIdFromIdToName(
     uniqueTwitchClipGameIds,
     API_ENDPOINTS.twitchGames
   ) as readonly Promise<TwitchGames>[];
-  const twitchGamesArray : readonly TwitchGames[] = (await Promise.all(twitchGameArrayFetchAndJsons));
+  const twitchGamesArray: readonly TwitchGames[] = await Promise.all(twitchGameArrayFetchAndJsons);
   const twitchGameArray: readonly TwitchGame[] = twitchGamesArray.map(({ data }) => data).flat();
-  console.log(twitchGameArray.length)
+  console.log(twitchGameArray.length);
 
   const twitchClipArrayTransformed: readonly TwitchClip[] = twitchClipArray.map(
     ({ id, url, creator_name, game_id, title }) => {
@@ -146,7 +146,7 @@ export async function getTwitchUserId(twitchGlobalOptions: TwitchGlobalOptions, 
     `${API_ENDPOINTS.twitchUsers}?login=${name}`,
     twitchGlobalOptions
   )) as TwitchUsers;
-  
+
   return twitchUsers.data[0].id;
 }
 
