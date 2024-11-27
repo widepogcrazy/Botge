@@ -1,6 +1,7 @@
 import type { v2 } from '@google-cloud/translate';
 import type { Client } from 'discord.js';
 import type { Index } from 'meilisearch';
+import type { CachedUrl } from './api/cached-url.js';
 
 import { EmoteMatcher } from './emoteMatcher.js';
 import type {
@@ -70,6 +71,7 @@ export class Bot {
   private readonly _client: Client;
   private readonly _openai: ReadonlyOpenAI | undefined;
   private readonly _translate: v2.Translate | undefined;
+  private readonly _CachedUrl: CachedUrl;
 
   private readonly _broadcasterId: number | undefined;
   private readonly _clipIds: readonly string[] | undefined;
@@ -83,6 +85,7 @@ export class Bot {
     twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined,
     openai: ReadonlyOpenAI | undefined,
     translate: v2.Translate | undefined,
+    cachedUrl: CachedUrl,
     broadcasterId?: number,
     clipIds?: readonly string[]
   ) {
@@ -94,6 +97,7 @@ export class Bot {
     this.twitchGlobalHander = twitchGlobalHander;
     this._openai = openai;
     this._translate = translate;
+    this._CachedUrl = cachedUrl;
 
     if (broadcasterId !== undefined && clipIds !== undefined)
       throw new Error('Can not set both broadcasterId and clipIds.');
@@ -157,7 +161,7 @@ export class Bot {
 
       //interaction emote
       if (interaction.commandName === 'emote') {
-        void emoteHandler(this.emoteMatcher, this._emoteEndpoints.sevenEmotesNotInSet)(interaction);
+        void emoteHandler(this.emoteMatcher, this._emoteEndpoints.sevenEmotesNotInSet, this._CachedUrl)(interaction);
 
         return;
       }
@@ -216,6 +220,7 @@ export async function createBot(
   twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined,
   openai: ReadonlyOpenAI | undefined,
   translate: v2.Translate | undefined,
+  cachedUrl: CachedUrl,
   broadcasterId?: number,
   clipIds?: readonly string[]
 ): Promise<Readonly<Bot>> {
@@ -228,6 +233,7 @@ export async function createBot(
     twitchGlobalHander,
     openai,
     translate,
+    cachedUrl,
     broadcasterId,
     clipIds
   );

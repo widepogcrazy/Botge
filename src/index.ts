@@ -19,6 +19,7 @@ import type { ReadonlyOpenAI, EmoteEndpoints, AddedEmote } from './types.js';
 import { v2 } from '@google-cloud/translate';
 import { fetchAndJson } from './utils/fetchAndJson.js';
 import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
+import { CachedUrl } from './api/cached-url.js';
 
 //dotenv
 dotenv.config();
@@ -29,6 +30,7 @@ const TWITCH_CLIENT_ID: string | undefined = process.env.TWITCH_CLIENT_ID;
 const TWITCH_SECRET: string | undefined = process.env.TWITCH_SECRET;
 const MEILISEARCH_HOST: string | undefined = process.env.MEILISEARCH_HOST;
 const MEILISEARCH_API_KEY: string | undefined = process.env.MEILISEARCH_API_KEY;
+const LOCAL_CACHE_BASE: string | undefined = process.env.LOCAL_CACHE_BASE;
 
 const DATABASEDIR = 'data';
 
@@ -81,6 +83,8 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       : undefined;
   })();
 
+  const cachedUrl = new CachedUrl(LOCAL_CACHE_BASE);
+
   const twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
       ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
@@ -118,6 +122,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     twitchGlobalHander,
     openai,
     translate,
+    cachedUrl,
     undefined,
     clipsIds
   );

@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 import { ensureDirSync } from 'fs-extra';
 import { rm } from 'node:fs/promises';
+import { CachedUrl } from '../api/cached-url.js';
 
 import type { CommandInteraction } from 'discord.js';
 
@@ -95,7 +96,7 @@ class OverlayElement implements HstackElement {
   }
 }
 
-export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string) {
+export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string, cachedUrl: CachedUrl) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     const outdir = join('tmp', String(interaction.id));
@@ -145,7 +146,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string) {
       ensureDirSync(outdir);
 
       const downloadedAssets: readonly DownloadedAsset[] = (
-        await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i)))
+        await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i, cachedUrl)))
       ).filter((downloadedAsset) => downloadedAsset !== undefined);
       if (downloadedAssets.length !== assets.length) {
         throw new Error('Failed to download asset(s).');

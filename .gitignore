@@ -6,3 +6,4 @@ tmp
 data
 meili_data
 compose.yaml
+nginx/cache
