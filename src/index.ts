@@ -21,6 +21,8 @@ import { fetchAndJson } from './utils/fetchAndJson.js';
 import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
 import { CachedUrl } from './api/cached-url.js';
 
+import { listClipIds } from './api/list-clips.js';
+
 //dotenv
 dotenv.config();
 const DISCORD_TOKEN: string | undefined = process.env.DISCORD_TOKEN;
@@ -51,17 +53,6 @@ const EMOTE_ENDPOINTS: Readonly<EmoteEndpoints> = {
   ffzGlobal: 'https://api.frankerfacez.com/v1/set/global',
   twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
 };
-
-const RANDOMCLIPS =
-  'https://raw.githubusercontent.com/TimotronPrime/timotronprime.github.io/refs/heads/main/cutedog_/randomclips.json';
-
-async function getClipIds(url: string): Promise<readonly string[]> {
-  const clips = (await fetchAndJson(url)) as readonly string[];
-  const clipIds = clips
-    .map((clipId) => clipId.split(' ').at(0)?.split('/').at(-1))
-    .filter((clipId) => clipId !== undefined);
-  return clipIds;
-}
 
 const bot = await (async (): Promise<Readonly<Bot>> => {
   ensureDirSync(DATABASEDIR);
@@ -112,7 +103,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   const twitchClipsMeiliSearchIndex: Index | undefined =
     meiliSearch !== undefined ? await meiliSearch.getIndex('twitchClips') : undefined;
 
-  const clipsIds = await getClipIds(RANDOMCLIPS);
+  const clipsIds = await listClipIds();
 
   return await createBot(
     EMOTE_ENDPOINTS,
