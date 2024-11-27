@@ -149,11 +149,20 @@ export type TwitchUsers = {
   readonly data: readonly TwitchUser[];
 };
 
+export type TwitchGame = {
+  readonly id: string;
+  readonly name: string;
+};
+
+export type TwitchGames = {
+  readonly data: readonly TwitchGame[];
+};
+
 export type TwitchClip = {
   readonly id: string;
   readonly url: string;
   readonly creator_name: string;
-  readonly game_id: number;
+  readonly game_id: string;
   readonly title: string;
 };
 

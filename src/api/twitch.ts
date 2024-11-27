@@ -2,6 +2,8 @@ import type {
   ClientCredentialsGrantFlow,
   TwitchClip,
   TwitchClips,
+  TwitchGame,
+  TwitchGames,
   TwitchGlobalOptions,
   TwitchUsers
 } from '../types.js';
@@ -11,6 +13,7 @@ const API_ENDPOINTS = {
   twitchAccessToken: 'https://id.twitch.tv/oauth2/token',
   twitchAccessTokenValidate: 'https://id.twitch.tv/oauth2/validate',
   twitchUsers: 'https://api.twitch.tv/helix/users',
+  twitchGames: 'https://api.twitch.tv/helix/games',
   twitchClips: 'https://api.twitch.tv/helix/clips'
 };
 
@@ -79,11 +82,71 @@ export class TwitchGlobalHandler {
   }
 }
 
+function fetchandJsonsFromIds(
+  twitchGlobalOptions: TwitchGlobalOptions,
+  ids: readonly string[],
+  endpoint: string
+): readonly Promise<unknown>[] {
+  const fetchAndJsons: Promise<unknown>[] = [];
+  const increment = 100;
+  let start = 0;
+  let end = start + increment;
+  let slice: readonly string[] = ids.slice(start, end);
+
+  while (slice.length > 0) {
+    const slicedIdsMapped: readonly string[] = slice.map((id) => `id=${id}`);
+    const slicedIdsMappedJoined = slicedIdsMapped.join('&');
+
+    const fetchAndJson_ = fetchAndJson(`${endpoint}?${slicedIdsMappedJoined}`, twitchGlobalOptions);
+    fetchAndJsons.push(fetchAndJson_);
+
+    start = end;
+    end += increment;
+    slice = ids.slice(start, end);
+  }
+
+  return fetchAndJsons;
+}
+
+async function transformGameIdFromIdToName(
+  twitchGlobalOptions: TwitchGlobalOptions,
+  twitchClipArray: readonly TwitchClip[]
+): Promise<readonly TwitchClip[]> {
+  const twitchClipGameIds: readonly string[] = twitchClipArray.map(({ game_id }) => game_id);
+  const uniqueTwitchClipGameIds: readonly string[] = [...new Set(twitchClipGameIds)];
+
+  const twitchGameArrayFetchAndJsons = fetchandJsonsFromIds(
+    twitchGlobalOptions,
+    uniqueTwitchClipGameIds,
+    API_ENDPOINTS.twitchGames
+  ) as readonly Promise<TwitchGames>[];
+  const twitchGamesArray : readonly TwitchGames[] = (await Promise.all(twitchGameArrayFetchAndJsons));
+  const twitchGameArray: readonly TwitchGame[] = twitchGamesArray.map(({ data }) => data).flat();
+  console.log(twitchGameArray.length)
+
+  const twitchClipArrayTransformed: readonly TwitchClip[] = twitchClipArray.map(
+    ({ id, url, creator_name, game_id, title }) => {
+      const transformedGameId = twitchGameArray.find((twitchGame) => twitchGame.id === game_id)?.name;
+
+      return {
+        id,
+        url,
+        creator_name,
+        game_id: transformedGameId !== undefined ? transformedGameId : game_id,
+        title
+      } as TwitchClip;
+    }
+  );
+
+  return twitchClipArrayTransformed;
+}
+
 export async function getTwitchUserId(twitchGlobalOptions: TwitchGlobalOptions, name: string): Promise<number> {
   const twitchUsers = (await fetchAndJson(
     `${API_ENDPOINTS.twitchUsers}?login=${name}`,
     twitchGlobalOptions
   )) as TwitchUsers;
+  
   return twitchUsers.data[0].id;
 }
 
@@ -111,35 +174,27 @@ export async function getTwitchClipsFromBroadcasterId(
     console.log(cursor);
   }
 
-  return twitchClipArray;
+  const transformedTwitchClipArray = await transformGameIdFromIdToName(twitchGlobalOptions, twitchClipArray);
+
+  return transformedTwitchClipArray;
 }
 
 export async function getTwitchClipsFromClipIds(
   twitchGlobalOptions: TwitchGlobalOptions,
   clipIds: readonly string[]
 ): Promise<readonly TwitchClip[]> {
-  const twitchClipsFetchAndJsons: Promise<unknown>[] = [];
-  const increment = 100;
-  let start = 0;
-  let end = start + increment;
-  let slice: readonly string[] = clipIds.slice(start, end);
+  const twitchClipsArrayFetchAndJsons = fetchandJsonsFromIds(
+    twitchGlobalOptions,
+    clipIds,
+    API_ENDPOINTS.twitchClips
+  ) as readonly Promise<TwitchClips>[];
 
-  while (slice.length !== 0) {
-    const ids: readonly string[] = slice.map((id) => `id=${id}`);
-    const idsJoined = ids.join('&');
+  const twitchClipsArray = (await Promise.all(twitchClipsArrayFetchAndJsons)) as readonly TwitchClips[];
+  const twitchClipArray: readonly TwitchClip[] = twitchClipsArray.map(({ data }) => data).flat();
 
-    const twitchClipsFetchAndJson = fetchAndJson(`${API_ENDPOINTS.twitchClips}?${idsJoined}`, twitchGlobalOptions);
-    twitchClipsFetchAndJsons.push(twitchClipsFetchAndJson);
+  const twitchClipArrayTransformed = await transformGameIdFromIdToName(twitchGlobalOptions, twitchClipArray);
 
-    start = end;
-    end += increment;
-    slice = clipIds.slice(start, end);
-  }
-
-  const twitchClipsArray = (await Promise.all(twitchClipsFetchAndJsons)) as readonly TwitchClips[];
-  const twitchClipArray: readonly TwitchClip[] = twitchClipsArray.map((twitchClips) => twitchClips.data).flat();
-
-  return twitchClipArray;
+  return twitchClipArrayTransformed;
 }
 
 async function getAndValidateTwitchAccessToken(twitchglobalhandler: Readonly<TwitchGlobalHandler>): Promise<void> {
