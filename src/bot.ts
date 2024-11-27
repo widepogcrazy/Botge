@@ -21,6 +21,7 @@ import { helpHandler } from './command/help.js';
 import { chatgptHandler } from './command/openai.js';
 import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstrings.js';
 import translateHandler from './command/translate.js';
+import { transientHandler } from './command/transient.js';
 import {
   getTwitchClipsFromBroadcasterId,
   getTwitchClipsFromClipIds,
@@ -197,6 +198,11 @@ export class Bot {
         if (this._translate !== undefined) void translateHandler(this._translate)(interaction);
         else void interaction.reply('translate command is currently not available.');
 
+        return;
+      }
+
+      if (interaction.commandName === 'transient') {
+        transientHandler()(interaction);
         return;
       }
 

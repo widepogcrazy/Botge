@@ -1,7 +1,12 @@
 import dotenv from 'dotenv';
 import process from 'node:process';
 
-import { REST, Routes } from 'discord.js';
+import {
+  ApplicationCommandNumericOptionMinMaxValueMixin,
+  ApplicationCommandOptionType,
+  REST,
+  Routes
+} from 'discord.js';
 
 dotenv.config();
 
@@ -93,6 +98,31 @@ const commands = [
         name: 'emotes',
         description: 'emote or emotes separated by space',
         required: true
+      }
+    ]
+  },
+  {
+    name: 'transient',
+    description: 'Sends a message for you, and delete it after a certain time',
+    options: [
+      {
+        type: ApplicationCommandOptionType.String,
+        name: 'text',
+        description: 'text/link to send',
+        required: false
+      },
+      {
+        type: ApplicationCommandOptionType.Attachment,
+        name: 'file',
+        description: 'file to send',
+        required: false
+      },
+      {
+        type: ApplicationCommandOptionType.Integer,
+        name: 'duration',
+        description: 'duration in seconds before deletion, default: 3',
+        maxValue: 600,
+        required: false
       }
     ]
   },
