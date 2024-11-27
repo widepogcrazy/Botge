@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 import { ensureDirSync } from 'fs-extra';
 import { rm } from 'node:fs/promises';
-import { CachedUrl } from '../api/cached-url.js';
+import type { CachedUrl } from '../api/cached-url.js';
 
 import type { CommandInteraction } from 'discord.js';
 
@@ -96,7 +96,7 @@ class OverlayElement implements HstackElement {
   }
 }
 
-export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string, cachedUrl: CachedUrl) {
+export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string, cachedUrl: Readonly<CachedUrl>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     const outdir = join('tmp', String(interaction.id));

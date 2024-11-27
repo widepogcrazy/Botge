@@ -2,7 +2,7 @@ import { join, basename } from 'path';
 import fetch from 'node-fetch';
 import { writeFile } from 'node:fs/promises';
 
-import { CachedUrl } from '../api/cached-url.js';
+import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset } from '../types.js';
 import { getDimension, getDuration } from '../utils/ffprobeUtils.js';
 
@@ -12,16 +12,14 @@ export async function downloadAsset(
   outdir: string,
   asset: AssetInfo | string,
   i: number,
-  cachedUrl: CachedUrl
+  cachedUrl: Readonly<CachedUrl>
 ): Promise<DownloadedAsset | undefined> {
   if (typeof asset === 'object') {
     const { animated, width, height, url } = asset;
 
     const [localUrl, ok] = cachedUrl.get(url);
-    let filename: string;
-    if (ok) {
-      filename = localUrl;
-    } else {
+    let filename = localUrl;
+    if (!ok) {
       console.log('url not cached: ' + url);
       const response = await fetch(url);
       const buffer: Readonly<Buffer> = Buffer.from(await response.arrayBuffer());

@@ -1,7 +1,5 @@
-import fetch, { type RequestInit } from 'node-fetch';
-
 // each pattern should have one and only one capturing group. usually just the entirety of path.
-const rules: [RegExp, string][] = [
+const rules: readonly (readonly [Readonly<RegExp>, string])[] = [
   [new RegExp(/https:\/\/cdn.7tv.app(.*)/), '/7tv'],
   [new RegExp(/https:\/\/cdn.betterttv.net(.*)/), '/bttv'],
   [new RegExp(/https:\/\/cdn.frankerfacez.com(.*)/), '/ffz']
@@ -9,13 +7,13 @@ const rules: [RegExp, string][] = [
 
 export class CachedUrl {
   private readonly _base?: string;
-  constructor(base?: string) {
+  public constructor(base?: string) {
     this._base = base;
   }
 
   // translate remote url like https://cdn.tv.app/xxx to a local one pointing to cached data on disk.
   // returns [localUrl, false]. if a url is not supported, returns [remoteUrl, false]
-  public get(remoteUrl: string): [string, boolean] {
+  public get(remoteUrl: string): readonly [string, boolean] {
     if (this._base === undefined) {
       return [remoteUrl, false];
     }

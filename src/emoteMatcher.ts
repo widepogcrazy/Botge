@@ -189,6 +189,11 @@ export class EmoteMatcher {
     }
     if (sevenNotInSet) {
       for (const emote of sevenNotInSet) {
+        //there may be a case where an emote was added with /addemote
+        //and afterwards added to the channel
+        const matchSingle_ = this.matchSingle(emote.name);
+        if (matchSingle_ !== undefined) continue;
+
         this._root.addAllSuffix(sevenNotInSetToAsset(emote), 8);
       }
     }

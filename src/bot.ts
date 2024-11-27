@@ -70,9 +70,9 @@ export class Bot {
 
   private readonly _emoteEndpoints: EmoteEndpoints;
   private readonly _client: Client;
+  private readonly _cachedUrl: Readonly<CachedUrl>;
   private readonly _openai: ReadonlyOpenAI | undefined;
   private readonly _translate: v2.Translate | undefined;
-  private readonly _CachedUrl: CachedUrl;
 
   private readonly _broadcasterId: number | undefined;
   private readonly _clipIds: readonly string[] | undefined;
@@ -82,11 +82,11 @@ export class Bot {
     client: Client,
     emoteMatcher: Readonly<EmoteMatcher>,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
+    cachedUrl: Readonly<CachedUrl>,
     twitchClipsMeiliSearchIndex: Index | undefined,
     twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined,
     openai: ReadonlyOpenAI | undefined,
     translate: v2.Translate | undefined,
-    cachedUrl: CachedUrl,
     broadcasterId?: number,
     clipIds?: readonly string[]
   ) {
@@ -98,7 +98,7 @@ export class Bot {
     this.twitchGlobalHander = twitchGlobalHander;
     this._openai = openai;
     this._translate = translate;
-    this._CachedUrl = cachedUrl;
+    this._cachedUrl = cachedUrl;
 
     if (broadcasterId !== undefined && clipIds !== undefined)
       throw new Error('Can not set both broadcasterId and clipIds.');
@@ -162,7 +162,7 @@ export class Bot {
 
       //interaction emote
       if (interaction.commandName === 'emote') {
-        void emoteHandler(this.emoteMatcher, this._emoteEndpoints.sevenEmotesNotInSet, this._CachedUrl)(interaction);
+        void emoteHandler(this.emoteMatcher, this._emoteEndpoints.sevenEmotesNotInSet, this._cachedUrl)(interaction);
 
         return;
       }
@@ -222,11 +222,11 @@ export async function createBot(
   emoteEndpoints: Readonly<EmoteEndpoints>,
   client: Client,
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
+  cachedUrl: Readonly<CachedUrl>,
   twitchClipsMeiliSearchIndex: Index | undefined,
   twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined,
   openai: ReadonlyOpenAI | undefined,
   translate: v2.Translate | undefined,
-  cachedUrl: CachedUrl,
   broadcasterId?: number,
   clipIds?: readonly string[]
 ): Promise<Readonly<Bot>> {
@@ -235,11 +235,11 @@ export async function createBot(
     client,
     await newEmoteMatcher(emoteEndpoints, twitchGlobalHander, addedEmotesDatabase),
     addedEmotesDatabase,
+    cachedUrl,
     twitchClipsMeiliSearchIndex,
     twitchGlobalHander,
     openai,
     translate,
-    cachedUrl,
     broadcasterId,
     clipIds
   );

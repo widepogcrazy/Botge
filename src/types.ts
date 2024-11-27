@@ -9,6 +9,7 @@ import type { Platform } from './enums.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 export type ReadonlyHit = DeepReadonly<Hit>;
+export type ReadonlyRegExpExecArray = DeepReadonly<RegExpExecArray>;
 
 export type SevenEmoteFile = {
   readonly name: string;

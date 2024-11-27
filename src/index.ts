@@ -15,10 +15,8 @@ import { AddedEmotesDatabase } from './api/added-emote-database.js';
 import { createTwitchApi, type TwitchGlobalHandler } from './api/twitch.js';
 import { createBot, type Bot } from './bot.js';
 
-import type { ReadonlyOpenAI, EmoteEndpoints, AddedEmote } from './types.js';
+import type { ReadonlyOpenAI, EmoteEndpoints } from './types.js';
 import { v2 } from '@google-cloud/translate';
-import { fetchAndJson } from './utils/fetchAndJson.js';
-import { createFileEmoteDbConnection, type FileEmoteDb } from './api/filedb.js';
 import { CachedUrl } from './api/cached-url.js';
 
 import { listClipIds } from './api/list-clips.js';
@@ -74,22 +72,14 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       : undefined;
   })();
 
-  const cachedUrl = new CachedUrl(LOCAL_CACHE_BASE);
+  const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
   const twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
       ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
 
-  //MIGRATE CURRENT DATA - WILL REMOVE LATER
-  const fileEmoteDb: Readonly<FileEmoteDb> = await createFileEmoteDbConnection(DATABASE_ENDPOINTS.sevenNotInSetEmotes);
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
-  fileEmoteDb
-    .getAll()
-    .map((stringge) => ({ url: stringge }) as AddedEmote)
-    .forEach((addedEmote) => {
-      addedEmotesDatabase.insert(addedEmote);
-    });
 
   const meiliSearch: Readonly<MeiliSearch> | undefined =
     MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
@@ -109,11 +99,11 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     EMOTE_ENDPOINTS,
     client,
     addedEmotesDatabase,
+    cachedUrl,
     twitchClipsMeiliSearchIndex,
     twitchGlobalHander,
     openai,
     translate,
-    cachedUrl,
     undefined,
     clipsIds
   );
