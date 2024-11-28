@@ -67,8 +67,6 @@ export class Bot {
   private readonly _openai: ReadonlyOpenAI | undefined;
   private readonly _translate: v2.Translate | undefined;
 
-  private readonly _clipIds: readonly string[] | undefined;
-
   public constructor(
     emoteEndpoints: Readonly<EmoteEndpoints>,
     client: Client,
@@ -97,7 +95,7 @@ export class Bot {
 
   public async refreshClips(): Promise<void> {
     if (this.twitchClipsMeiliSearchIndex === undefined) return;
-    if (this.twitchApi === undefined || this._clipIds === undefined) return;
+    if (this.twitchApi === undefined) return;
 
     const increment = 100;
     let updated = 0;
