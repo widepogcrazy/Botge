@@ -12,14 +12,12 @@ import { Client } from 'discord.js';
 import { MeiliSearch, type Index } from 'meilisearch';
 
 import { AddedEmotesDatabase } from './api/added-emote-database.js';
-import { createTwitchApi, type TwitchApi } from './api/twitch.js';
+import { createTwitchApi } from './api/twitch.js';
 import { createBot, type Bot } from './bot.js';
 
 import type { ReadonlyOpenAI, EmoteEndpoints } from './types.js';
 import { v2 } from '@google-cloud/translate';
 import { CachedUrl } from './api/cached-url.js';
-
-import { listClipIds } from './api/list-clips.js';
 
 //dotenv
 dotenv.config();
@@ -32,12 +30,12 @@ const MEILISEARCH_HOST: string | undefined = process.env.MEILISEARCH_HOST;
 const MEILISEARCH_API_KEY: string | undefined = process.env.MEILISEARCH_API_KEY;
 const LOCAL_CACHE_BASE: string | undefined = process.env.LOCAL_CACHE_BASE;
 
-const DATABASEDIR = 'data';
+const DATABASE_DIR = 'data';
 
 const DATABASE_ENDPOINTS = {
-  sevenNotInSetEmotes: `${DATABASEDIR}/sevenNotInSetEmotes.json`,
-  addedEmotes: `${DATABASEDIR}/addedEmotes.sqlite`,
-  twitchClips: `${DATABASEDIR}/twitchClips.sqlite`
+  sevenNotInSetEmotes: `${DATABASE_DIR}/sevenNotInSetEmotes.json`,
+  addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`,
+  twitchClips: `${DATABASE_DIR}/twitchClips.sqlite`
 };
 
 // emotes
@@ -52,7 +50,7 @@ const EMOTE_ENDPOINTS: Readonly<EmoteEndpoints> = {
 };
 
 const bot = await (async (): Promise<Readonly<Bot>> => {
-  ensureDirSync(DATABASEDIR);
+  ensureDirSync(DATABASE_DIR);
 
   const client: Client = new Client({ intents: [] });
 
@@ -91,8 +89,6 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   if (meiliSearch !== undefined) await meiliSearch.createIndex('twitchClips', { primaryKey: 'id' });
   const twitchClipsMeiliSearchIndex: Index | undefined =
     meiliSearch !== undefined ? await meiliSearch.getIndex('twitchClips') : undefined;
-
-  const clipsIds = await listClipIds();
 
   return await createBot(
     EMOTE_ENDPOINTS,
@@ -153,7 +149,7 @@ scheduleJob('*/5 * * * *', async () => {
 });
 
 // update every 60 minutes
-if (bot.twitchApi) {
+if (bot.twitchApi !== undefined) {
   scheduleJob('*/60 * * * *', async () => {
     await bot.twitchApi?.validateAccessToken();
   });

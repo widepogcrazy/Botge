@@ -12,8 +12,7 @@ import type {
   SevenEmotes,
   BTTVPersonalEmotes,
   FFZPersonalEmotes,
-  FFZGlobalEmotes,
-  TwitchGlobalEmotes
+  FFZGlobalEmotes
 } from './types.js';
 import { addEmoteHandlerSevenNotInSet } from './command/addemote.js';
 import { emoteHandler } from './command/emote.js';
@@ -22,7 +21,7 @@ import { chatgptHandler } from './command/openai.js';
 import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstrings.js';
 import translateHandler from './command/translate.js';
 import { transientHandler } from './command/transient.js';
-import { TwitchApi, getClipsWithGameName } from './api/twitch.js';
+import { getClipsWithGameName, type TwitchApi } from './api/twitch.js';
 import { fetchAndJson } from './utils/fetchAndJson.js';
 import { clipHandler } from './command/clip.js';
 import type { AddedEmotesDatabase } from './api/added-emote-database.js';
@@ -51,7 +50,7 @@ async function newEmoteMatcher(
     (await bttvGlobal) as readonly BTTVEmote[],
     (await ffzPersonal) as FFZPersonalEmotes,
     (await ffzGlobal) as FFZGlobalEmotes,
-    twitchGlobal ? ((await twitchGlobal) as TwitchGlobalEmotes) : undefined,
+    twitchGlobal ? await twitchGlobal : undefined,
     (await Promise.all(addedEmotes)) as readonly SevenEmoteNotInSet[]
   );
 }
@@ -79,8 +78,7 @@ export class Bot {
     twitchClipsMeiliSearchIndex: Index | undefined,
     twitchApi: Readonly<TwitchApi> | undefined,
     openai: ReadonlyOpenAI | undefined,
-    translate: v2.Translate | undefined,
-    clipIds?: readonly string[]
+    translate: v2.Translate | undefined
   ) {
     this._emoteEndpoints = emoteEndpoints;
     this._client = client;
@@ -98,24 +96,25 @@ export class Bot {
   }
 
   public async refreshClips(): Promise<void> {
+    if (this.twitchClipsMeiliSearchIndex === undefined) return;
     if (this.twitchApi === undefined || this._clipIds === undefined) return;
+
     const increment = 100;
     let updated = 0;
     const clipIds = await listClipIds();
     for (let i = 0; i < clipIds.length; i += increment) {
       // update list of clip ids too
-      const clips = await getClipsWithGameName(this.twitchApi!, clipIds.slice(i, i + increment));
-      await this.twitchClipsMeiliSearchIndex?.addDocuments(clips);
+      const clips = await getClipsWithGameName(this.twitchApi, clipIds.slice(i, i + increment));
+      await this.twitchClipsMeiliSearchIndex.addDocuments(clips);
       updated += clips.length;
     }
     console.log(`Updated ${updated} of ${clipIds.length} clips.`);
   }
 
   public registerHandlers(): void {
-    //const self = this; // silence typescript warning
-
     this._client.on('ready', () => {
       console.log(`Logged in as ${this._client.user?.tag ?? ''}!`);
+
       return;
     });
 
@@ -166,12 +165,14 @@ export class Bot {
       }
 
       if (interaction.commandName === 'transient') {
-        transientHandler()(interaction);
+        void transientHandler()(interaction);
+
         return;
       }
 
       if (interaction.commandName === 'help') {
         void helpHandler()(interaction);
+
         return;
       }
     });
@@ -179,6 +180,8 @@ export class Bot {
 
   public async start(discordToken: string | undefined): Promise<void> {
     await this._client.login(discordToken);
+
+    return;
   }
 }
 
@@ -202,5 +205,5 @@ export async function createBot(
     twitchApi,
     openai,
     translate
-  );
+  ) as Readonly<Bot>;
 }

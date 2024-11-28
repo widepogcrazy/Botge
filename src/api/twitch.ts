@@ -21,7 +21,7 @@ const API_ENDPOINTS = {
 // raw twitch api methods
 export class TwitchApi {
   private readonly _clientId: string;
-  private _accessToken: string;
+  private readonly _accessToken: string;
 
   public constructor(clientId: string, accessToken: string) {
     this._clientId = clientId;
@@ -36,12 +36,34 @@ export class TwitchApi {
       }
     });
 
-    if (resp.status != 200) {
-      console.error('Error validating twitch access token: ' + resp.status);
+    if (resp.status !== 200) {
+      console.error(`Error validating twitch access token: ${resp.status}`);
     }
   }
 
-  _apiRequestOptions(): TwitchGlobalOptions {
+  // max 100 ids
+  public async clips(ids: Readonly<Iterable<string>>): Promise<TwitchClips> {
+    const query: string = [...ids].map((id) => `id=${id}`).join('&');
+    return (await fetchAndJson(`${API_ENDPOINTS.clips}?${query}`, this._apiRequestOptions())) as TwitchClips;
+  }
+
+  // max 100 ids
+  public async games(ids: Readonly<Iterable<string>>): Promise<TwitchGames> {
+    const query: string = [...ids].map((id) => `id=${id}`).join('&');
+    return (await fetchAndJson(`${API_ENDPOINTS.games}?${query}`, this._apiRequestOptions())) as TwitchGames;
+  }
+
+  // max 100 ids
+  public async users(ids: Readonly<Iterable<string>>): Promise<TwitchUsers> {
+    const query: string = [...ids].map((id) => `id=${id}`).join('&');
+    return (await fetchAndJson(`${API_ENDPOINTS.games}?${query}`, this._apiRequestOptions())) as TwitchUsers;
+  }
+
+  public async emotesGlobal(): Promise<TwitchGlobalEmotes> {
+    return (await fetchAndJson(API_ENDPOINTS.emotesGlobal, this._apiRequestOptions())) as TwitchGlobalEmotes;
+  }
+
+  private _apiRequestOptions(): TwitchGlobalOptions {
     const optionsTwitchGlobal: TwitchGlobalOptions = {
       method: 'GET',
       headers: {
@@ -51,28 +73,6 @@ export class TwitchApi {
     };
 
     return optionsTwitchGlobal;
-  }
-
-  // max 100 ids
-  async clips(ids: Iterable<string>): Promise<TwitchClips> {
-    const query: string = [...ids].map((id) => `id=${id}`).join('&');
-    return (await fetchAndJson(`${API_ENDPOINTS.clips}?${query}`, this._apiRequestOptions())) as TwitchClips;
-  }
-
-  // max 100 ids
-  async games(ids: Iterable<string>): Promise<TwitchGames> {
-    const query: string = [...ids].map((id) => `id=${id}`).join('&');
-    return (await fetchAndJson(`${API_ENDPOINTS.games}?${query}`, this._apiRequestOptions())) as TwitchGames;
-  }
-
-  // max 100 ids
-  async users(ids: Iterable<string>): Promise<TwitchUsers> {
-    const query: string = [...ids].map((id) => `id=${id}`).join('&');
-    return (await fetchAndJson(`${API_ENDPOINTS.games}?${query}`, this._apiRequestOptions())) as TwitchUsers;
-  }
-
-  async emotesGlobal(): Promise<TwitchGlobalEmotes> {
-    return (await fetchAndJson(API_ENDPOINTS.emotesGlobal, this._apiRequestOptions())) as TwitchGlobalEmotes;
   }
 }
 
@@ -86,7 +86,7 @@ async function getTwitchAccessToken(clientId: string, clientSecret: string): Pro
   });
 
   if (!resp.ok) {
-    throw new Error('Cannot get access token fro twitch: ' + resp.status);
+    throw new Error(`Cannot get access token from twitch: ${resp.status}`);
   }
   return ((await resp.json()) as ClientCredentialsGrantFlow).access_token;
 }
@@ -103,7 +103,7 @@ export async function createTwitchApi(twitchClientId: string, twitchSecret: stri
 // max 100 ids
 export async function getClipsWithGameName(
   twitchApi: Readonly<TwitchApi>,
-  ids: Iterable<string>
+  ids: Readonly<Iterable<string>>
 ): Promise<TwitchClip[]> {
   const clips = await twitchApi.clips(ids);
   const gameIds = new Set(clips.data.map((clip) => clip.game_id));
@@ -115,7 +115,7 @@ export async function getClipsWithGameName(
       id,
       url,
       creator_name,
-      game_id: gameName !== undefined ? gameName : game_id,
+      game_id: gameName ?? game_id,
       title
     } as TwitchClip;
   });

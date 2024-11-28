@@ -1,12 +1,7 @@
 import dotenv from 'dotenv';
 import process from 'node:process';
 
-import {
-  ApplicationCommandNumericOptionMinMaxValueMixin,
-  ApplicationCommandOptionType,
-  REST,
-  Routes
-} from 'discord.js';
+import { ApplicationCommandOptionType, REST, Routes } from 'discord.js';
 
 dotenv.config();
 
