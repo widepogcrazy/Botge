@@ -9,4 +9,3 @@ export async function listClipIds(): Promise<readonly string[]> {
   const matches = html.matchAll(clipPattern);
   return Array.from(matches, (m: ReadonlyRegExpExecArray) => m[1]);
 }
-

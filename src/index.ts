@@ -48,8 +48,7 @@ const EMOTE_ENDPOINTS: Readonly<EmoteEndpoints> = {
   bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
   bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
   ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
-  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global',
-  twitchGlobal: 'https://api.twitch.tv/helix/chat/emotes/global'
+  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global'
 };
 
 const bot = await (async (): Promise<Readonly<Bot>> => {
@@ -103,8 +102,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     twitchClipsMeiliSearchIndex,
     twitchApi,
     openai,
-    translate,
-    clipsIds
+    translate
   );
 })();
 
@@ -165,6 +163,5 @@ if (bot.twitchApi) {
   });
 }
 
-await bot.refreshClips();
 bot.registerHandlers();
 await bot.start(DISCORD_TOKEN);

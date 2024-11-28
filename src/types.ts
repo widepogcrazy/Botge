@@ -131,7 +131,6 @@ export type EmoteEndpoints = {
   bttvGlobal: string;
   ffzPersonal: string;
   ffzGlobal: string;
-  twitchGlobal: string;
 };
 
 export type TwitchGlobalOptions = {

@@ -26,6 +26,7 @@ import { TwitchApi, getClipsWithGameName } from './api/twitch.js';
 import { fetchAndJson } from './utils/fetchAndJson.js';
 import { clipHandler } from './command/clip.js';
 import type { AddedEmotesDatabase } from './api/added-emote-database.js';
+import { listClipIds } from './api/list-clips.js';
 
 async function newEmoteMatcher(
   emoteEndpoints: Readonly<EmoteEndpoints>,
@@ -90,10 +91,6 @@ export class Bot {
     this._openai = openai;
     this._translate = translate;
     this._cachedUrl = cachedUrl;
-
-    if (clipIds === undefined) throw new Error('clipIds required.');
-
-    this._clipIds = clipIds;
   }
 
   public async refreshEmotes(): Promise<void> {
@@ -104,13 +101,14 @@ export class Bot {
     if (this.twitchApi === undefined || this._clipIds === undefined) return;
     const increment = 100;
     let updated = 0;
-    for (let i = 0; i < this._clipIds.length; i += increment) {
+    const clipIds = await listClipIds();
+    for (let i = 0; i < clipIds.length; i += increment) {
       // update list of clip ids too
-      const clips = await getClipsWithGameName(this.twitchApi!, this._clipIds.slice(i, i + increment));
+      const clips = await getClipsWithGameName(this.twitchApi!, clipIds.slice(i, i + increment));
       await this.twitchClipsMeiliSearchIndex?.addDocuments(clips);
       updated += clips.length;
     }
-    console.log(`Updated ${updated} of ${this._clipIds.length} clips.`);
+    console.log(`Updated ${updated} of ${clipIds.length} clips.`);
   }
 
   public registerHandlers(): void {
@@ -192,8 +190,7 @@ export async function createBot(
   twitchClipsMeiliSearchIndex: Index | undefined,
   twitchApi: Readonly<TwitchApi> | undefined,
   openai: ReadonlyOpenAI | undefined,
-  translate: v2.Translate | undefined,
-  clipIds?: readonly string[]
+  translate: v2.Translate | undefined
 ): Promise<Readonly<Bot>> {
   return new Bot(
     emoteEndpoints,
@@ -204,7 +201,6 @@ export async function createBot(
     twitchClipsMeiliSearchIndex,
     twitchApi,
     openai,
-    translate,
-    clipIds
+    translate
   );
 }
