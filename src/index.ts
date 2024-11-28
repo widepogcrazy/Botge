@@ -12,7 +12,7 @@ import { Client } from 'discord.js';
 import { MeiliSearch, type Index } from 'meilisearch';
 
 import { AddedEmotesDatabase } from './api/added-emote-database.js';
-import { createTwitchApi, type TwitchGlobalHandler } from './api/twitch.js';
+import { createTwitchApi, type TwitchApi } from './api/twitch.js';
 import { createBot, type Bot } from './bot.js';
 
 import type { ReadonlyOpenAI, EmoteEndpoints } from './types.js';
@@ -74,7 +74,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
 
   const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
-  const twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined =
+  const twitchApi =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
       ? await createTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
@@ -101,10 +101,9 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     addedEmotesDatabase,
     cachedUrl,
     twitchClipsMeiliSearchIndex,
-    twitchGlobalHander,
+    twitchApi,
     openai,
     translate,
-    undefined,
     clipsIds
   );
 })();
@@ -156,9 +155,9 @@ scheduleJob('*/5 * * * *', async () => {
 });
 
 // update every 60 minutes
-if (bot.twitchGlobalHander) {
+if (bot.twitchApi) {
   scheduleJob('*/60 * * * *', async () => {
-    await bot.validateTwitch();
+    await bot.twitchApi?.validateAccessToken();
   });
 
   scheduleJob('*/60 * * * *', async () => {

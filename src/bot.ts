@@ -22,30 +22,23 @@ import { chatgptHandler } from './command/openai.js';
 import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstrings.js';
 import translateHandler from './command/translate.js';
 import { transientHandler } from './command/transient.js';
-import {
-  getTwitchClipsFromBroadcasterId,
-  getTwitchClipsFromClipIds,
-  validationHandler,
-  type TwitchGlobalHandler
-} from './api/twitch.js';
+import { TwitchApi, getClipsWithGameName } from './api/twitch.js';
 import { fetchAndJson } from './utils/fetchAndJson.js';
 import { clipHandler } from './command/clip.js';
 import type { AddedEmotesDatabase } from './api/added-emote-database.js';
 
 async function newEmoteMatcher(
   emoteEndpoints: Readonly<EmoteEndpoints>,
-  twitchglobalhandler: Readonly<TwitchGlobalHandler> | undefined,
+  twitchApi: Readonly<TwitchApi> | undefined,
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>
 ): Promise<Readonly<EmoteMatcher>> {
-  const twitchGlobalOptions = twitchglobalhandler?.getTwitchGlobalOptions();
-
   const sevenPersonal = fetchAndJson(emoteEndpoints.sevenPersonal);
   const sevenGlobal = fetchAndJson(emoteEndpoints.sevenGlobal);
   const bttvPersonal = fetchAndJson(emoteEndpoints.bttvPersonal);
   const bttvGlobal = fetchAndJson(emoteEndpoints.bttvGlobal);
   const ffzPersonal = fetchAndJson(emoteEndpoints.ffzPersonal);
   const ffzGlobal = fetchAndJson(emoteEndpoints.ffzGlobal);
-  const twitchGlobal = twitchGlobalOptions ? fetchAndJson(emoteEndpoints.twitchGlobal, twitchGlobalOptions) : undefined;
+  const twitchGlobal = twitchApi ? twitchApi.emotesGlobal() : undefined;
   const addedEmotes: readonly Promise<unknown>[] = addedEmotesDatabase
     .getAll()
     .map(async (addedEmote) => fetchAndJson(addedEmote.url));
@@ -66,7 +59,7 @@ export class Bot {
   public emoteMatcher: Readonly<EmoteMatcher>;
   public readonly addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
   public readonly twitchClipsMeiliSearchIndex: Index | undefined;
-  public readonly twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined;
+  public readonly twitchApi: Readonly<TwitchApi> | undefined;
 
   private readonly _emoteEndpoints: EmoteEndpoints;
   private readonly _client: Client;
@@ -74,7 +67,6 @@ export class Bot {
   private readonly _openai: ReadonlyOpenAI | undefined;
   private readonly _translate: v2.Translate | undefined;
 
-  private readonly _broadcasterId: number | undefined;
   private readonly _clipIds: readonly string[] | undefined;
 
   public constructor(
@@ -84,10 +76,9 @@ export class Bot {
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
     cachedUrl: Readonly<CachedUrl>,
     twitchClipsMeiliSearchIndex: Index | undefined,
-    twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined,
+    twitchApi: Readonly<TwitchApi> | undefined,
     openai: ReadonlyOpenAI | undefined,
     translate: v2.Translate | undefined,
-    broadcasterId?: number,
     clipIds?: readonly string[]
   ) {
     this._emoteEndpoints = emoteEndpoints;
@@ -95,56 +86,31 @@ export class Bot {
     this.emoteMatcher = emoteMatcher;
     this.addedEmotesDatabase = addedEmotesDatabase;
     this.twitchClipsMeiliSearchIndex = twitchClipsMeiliSearchIndex;
-    this.twitchGlobalHander = twitchGlobalHander;
+    this.twitchApi = twitchApi;
     this._openai = openai;
     this._translate = translate;
     this._cachedUrl = cachedUrl;
 
-    if (broadcasterId !== undefined && clipIds !== undefined)
-      throw new Error('Can not set both broadcasterId and clipIds.');
+    if (clipIds === undefined) throw new Error('clipIds required.');
 
-    this._broadcasterId = broadcasterId;
     this._clipIds = clipIds;
   }
 
   public async refreshEmotes(): Promise<void> {
-    this.emoteMatcher = await newEmoteMatcher(this._emoteEndpoints, this.twitchGlobalHander, this.addedEmotesDatabase);
-  }
-
-  public async validateTwitch(): Promise<void> {
-    if (this.twitchGlobalHander) await validationHandler(this.twitchGlobalHander);
+    this.emoteMatcher = await newEmoteMatcher(this._emoteEndpoints, this.twitchApi, this.addedEmotesDatabase);
   }
 
   public async refreshClips(): Promise<void> {
-    if (this.twitchGlobalHander === undefined) return;
-
-    if (this._broadcasterId !== undefined || this._clipIds !== undefined) {
-      const twitchGlobalOptions = this.twitchGlobalHander.getTwitchGlobalOptions();
-      if (twitchGlobalOptions === undefined) return;
-
-      if (this._broadcasterId !== undefined) {
-        const getTwitchClipsFromBroadcasterId_ = await getTwitchClipsFromBroadcasterId(
-          twitchGlobalOptions,
-          this._broadcasterId
-        );
-
-        const twitchClips = [...getTwitchClipsFromBroadcasterId_];
-        await this.twitchClipsMeiliSearchIndex?.addDocuments(twitchClips);
-
-        return;
-      }
-
-      if (this._clipIds !== undefined) {
-        const getTwitchClipsFromClipIds_ = await getTwitchClipsFromClipIds(twitchGlobalOptions, this._clipIds);
-
-        const twitchClips = [...getTwitchClipsFromClipIds_];
-        await this.twitchClipsMeiliSearchIndex?.addDocuments(twitchClips);
-
-        return;
-      }
+    if (this.twitchApi === undefined || this._clipIds === undefined) return;
+    const increment = 100;
+    let updated = 0;
+    for (let i = 0; i < this._clipIds.length; i += increment) {
+      // update list of clip ids too
+      const clips = await getClipsWithGameName(this.twitchApi!, this._clipIds.slice(i, i + increment));
+      await this.twitchClipsMeiliSearchIndex?.addDocuments(clips);
+      updated += clips.length;
     }
-
-    return;
+    console.log(`Updated ${updated} of ${this._clipIds.length} clips.`);
   }
 
   public registerHandlers(): void {
@@ -224,23 +190,21 @@ export async function createBot(
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
   cachedUrl: Readonly<CachedUrl>,
   twitchClipsMeiliSearchIndex: Index | undefined,
-  twitchGlobalHander: Readonly<TwitchGlobalHandler> | undefined,
+  twitchApi: Readonly<TwitchApi> | undefined,
   openai: ReadonlyOpenAI | undefined,
   translate: v2.Translate | undefined,
-  broadcasterId?: number,
   clipIds?: readonly string[]
 ): Promise<Readonly<Bot>> {
   return new Bot(
     emoteEndpoints,
     client,
-    await newEmoteMatcher(emoteEndpoints, twitchGlobalHander, addedEmotesDatabase),
+    await newEmoteMatcher(emoteEndpoints, twitchApi, addedEmotesDatabase),
     addedEmotesDatabase,
     cachedUrl,
     twitchClipsMeiliSearchIndex,
-    twitchGlobalHander,
+    twitchApi,
     openai,
     translate,
-    broadcasterId,
     clipIds
   );
 }
