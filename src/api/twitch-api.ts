@@ -7,7 +7,7 @@ import type {
   TwitchGlobalOptions,
   TwitchUsers
 } from '../types.js';
-import { fetchAndJson } from '../utils/fetchAndJson.js';
+import { fetchAndJson } from '../utils/fetch-and-json.js';
 
 const API_ENDPOINTS = {
   accessToken: 'https://id.twitch.tv/oauth2/token',

@@ -1,15 +1,11 @@
+import { sevenNotInSetToAsset } from './emote-to-asset.js';
+import { maxPlatformSize } from './size-change.js';
+import { sevenUrlToSevenNotInSet } from './platform-url-to-api-url.js';
 import type { AssetInfo } from '../types.js';
-import { sevenNotInSetToAsset } from './emoteToAssetInfo.js';
-import { maxPlatformSize } from './sizeChange.js';
-import { sevenUrlToSevenNotInSet } from './sevenUrlToSevenNotInSet.js';
 import { Platform } from '../enums.js';
 
-export async function urlToAssetInfo(
-  url: string,
-  emoteEndpoint: string,
-  highestSize: boolean
-): Promise<AssetInfo | string | undefined> {
-  const urlToSevenNotInSet_ = await sevenUrlToSevenNotInSet(url, emoteEndpoint);
+export async function urlToAssetInfo(url: string, highestSize: boolean): Promise<AssetInfo | string | undefined> {
+  const urlToSevenNotInSet_ = await sevenUrlToSevenNotInSet(url);
   const sevenNotInSetToAsset_ =
     urlToSevenNotInSet_ !== undefined
       ? highestSize

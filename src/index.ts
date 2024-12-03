@@ -9,15 +9,16 @@ import { ensureDirSync } from 'fs-extra';
 import type { JWTInput } from 'google-auth-library';
 import OpenAI from 'openai';
 import { Client } from 'discord.js';
-import { MeiliSearch, type Index } from 'meilisearch';
+import { MeiliSearch, type Index, type EnqueuedTask } from 'meilisearch';
 
 import { AddedEmotesDatabase } from './api/added-emote-database.js';
-import { createTwitchApi } from './api/twitch.js';
+import { createTwitchApi } from './api/twitch-api.js';
 import { createBot, type Bot } from './bot.js';
 
-import type { ReadonlyOpenAI, EmoteEndpoints } from './types.js';
+import type { ReadonlyOpenAI } from './types.js';
 import { v2 } from '@google-cloud/translate';
 import { CachedUrl } from './api/cached-url.js';
+import { DATABASE_DIR, DATABASE_ENDPOINTS } from './paths-and-endpoints.js';
 
 //dotenv
 dotenv.config();
@@ -29,25 +30,6 @@ const TWITCH_SECRET: string | undefined = process.env.TWITCH_SECRET;
 const MEILISEARCH_HOST: string | undefined = process.env.MEILISEARCH_HOST;
 const MEILISEARCH_API_KEY: string | undefined = process.env.MEILISEARCH_API_KEY;
 const LOCAL_CACHE_BASE: string | undefined = process.env.LOCAL_CACHE_BASE;
-
-const DATABASE_DIR = 'data';
-
-const DATABASE_ENDPOINTS = {
-  sevenNotInSetEmotes: `${DATABASE_DIR}/sevenNotInSetEmotes.json`,
-  addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`,
-  twitchClips: `${DATABASE_DIR}/twitchClips.sqlite`
-};
-
-// emotes
-const EMOTE_ENDPOINTS: Readonly<EmoteEndpoints> = {
-  sevenPersonal: 'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
-  sevenGlobal: 'https://7tv.io/v3/emote-sets/global',
-  sevenEmotesNotInSet: 'https://7tv.io/v3/emotes',
-  bttvPersonal: 'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
-  bttvGlobal: 'https://api.betterttv.net/3/cached/emotes/global',
-  ffzPersonal: 'https://api.frankerfacez.com/v1/room/cutedog_',
-  ffzGlobal: 'https://api.frankerfacez.com/v1/set/global'
-};
 
 const bot = await (async (): Promise<Readonly<Bot>> => {
   ensureDirSync(DATABASE_DIR);
@@ -86,12 +68,16 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
         })
       : undefined;
 
-  if (meiliSearch !== undefined) await meiliSearch.createIndex('twitchClips', { primaryKey: 'id' });
+  if (meiliSearch !== undefined) {
+    const createIndexEnqueuedTask: Readonly<EnqueuedTask> = await meiliSearch.createIndex('twitchClips', {
+      primaryKey: 'id'
+    });
+    await meiliSearch.waitForTask(createIndexEnqueuedTask.taskUid);
+  }
   const twitchClipsMeiliSearchIndex: Index | undefined =
     meiliSearch !== undefined ? await meiliSearch.getIndex('twitchClips') : undefined;
 
   return await createBot(
-    EMOTE_ENDPOINTS,
     client,
     addedEmotesDatabase,
     cachedUrl,

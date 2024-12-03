@@ -1,11 +1,9 @@
 import type { v2 } from '@google-cloud/translate';
 import type { Client } from 'discord.js';
 import type { Index } from 'meilisearch';
-import type { CachedUrl } from './api/cached-url.js';
 
 import { EmoteMatcher } from './emoteMatcher.js';
 import type {
-  EmoteEndpoints,
   ReadonlyOpenAI,
   SevenEmoteNotInSet,
   BTTVEmote,
@@ -14,30 +12,31 @@ import type {
   FFZPersonalEmotes,
   FFZGlobalEmotes
 } from './types.js';
-import { addEmoteHandlerSevenNotInSet } from './command/addemote.js';
+import { EMOTE_ENDPOINTS } from './paths-and-endpoints.js';
+import type { CachedUrl } from './api/cached-url.js';
+import { listClipIds } from './utils/list-clip-ids.js';
+import { fetchAndJson } from './utils/fetch-and-json.js';
+import { getClipsWithGameName, type TwitchApi } from './api/twitch-api.js';
+import type { AddedEmotesDatabase } from './api/added-emote-database.js';
+import { addEmoteHandlerSevenNotInSet } from './command/add-emote.js';
 import { emoteHandler } from './command/emote.js';
 import { helpHandler } from './command/help.js';
 import { chatgptHandler } from './command/openai.js';
-import { shortestuniquesubstringsHandler } from './command/shortestuniquesubstrings.js';
-import translateHandler from './command/translate.js';
+import { shortestuniquesubstringsHandler } from './command/shortest-unique-substrings.js';
+import { translateHandler } from './command/translate.js';
 import { transientHandler } from './command/transient.js';
-import { getClipsWithGameName, type TwitchApi } from './api/twitch.js';
-import { fetchAndJson } from './utils/fetchAndJson.js';
 import { clipHandler } from './command/clip.js';
-import type { AddedEmotesDatabase } from './api/added-emote-database.js';
-import { listClipIds } from './api/list-clips.js';
 
 async function newEmoteMatcher(
-  emoteEndpoints: Readonly<EmoteEndpoints>,
   twitchApi: Readonly<TwitchApi> | undefined,
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>
 ): Promise<Readonly<EmoteMatcher>> {
-  const sevenPersonal = fetchAndJson(emoteEndpoints.sevenPersonal);
-  const sevenGlobal = fetchAndJson(emoteEndpoints.sevenGlobal);
-  const bttvPersonal = fetchAndJson(emoteEndpoints.bttvPersonal);
-  const bttvGlobal = fetchAndJson(emoteEndpoints.bttvGlobal);
-  const ffzPersonal = fetchAndJson(emoteEndpoints.ffzPersonal);
-  const ffzGlobal = fetchAndJson(emoteEndpoints.ffzGlobal);
+  const sevenPersonal = fetchAndJson(EMOTE_ENDPOINTS.sevenPersonal);
+  const sevenGlobal = fetchAndJson(EMOTE_ENDPOINTS.sevenGlobal);
+  const bttvPersonal = fetchAndJson(EMOTE_ENDPOINTS.bttvPersonal);
+  const bttvGlobal = fetchAndJson(EMOTE_ENDPOINTS.bttvGlobal);
+  const ffzPersonal = fetchAndJson(EMOTE_ENDPOINTS.ffzPersonal);
+  const ffzGlobal = fetchAndJson(EMOTE_ENDPOINTS.ffzGlobal);
   const twitchGlobal = twitchApi ? twitchApi.emotesGlobal() : undefined;
   const addedEmotes: readonly Promise<unknown>[] = addedEmotesDatabase
     .getAll()
@@ -61,14 +60,12 @@ export class Bot {
   public readonly twitchClipsMeiliSearchIndex: Index | undefined;
   public readonly twitchApi: Readonly<TwitchApi> | undefined;
 
-  private readonly _emoteEndpoints: EmoteEndpoints;
   private readonly _client: Client;
   private readonly _cachedUrl: Readonly<CachedUrl>;
   private readonly _openai: ReadonlyOpenAI | undefined;
   private readonly _translate: v2.Translate | undefined;
 
   public constructor(
-    emoteEndpoints: Readonly<EmoteEndpoints>,
     client: Client,
     emoteMatcher: Readonly<EmoteMatcher>,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
@@ -78,7 +75,6 @@ export class Bot {
     openai: ReadonlyOpenAI | undefined,
     translate: v2.Translate | undefined
   ) {
-    this._emoteEndpoints = emoteEndpoints;
     this._client = client;
     this.emoteMatcher = emoteMatcher;
     this.addedEmotesDatabase = addedEmotesDatabase;
@@ -90,12 +86,11 @@ export class Bot {
   }
 
   public async refreshEmotes(): Promise<void> {
-    this.emoteMatcher = await newEmoteMatcher(this._emoteEndpoints, this.twitchApi, this.addedEmotesDatabase);
+    this.emoteMatcher = await newEmoteMatcher(this.twitchApi, this.addedEmotesDatabase);
   }
 
   public async refreshClips(): Promise<void> {
-    if (this.twitchClipsMeiliSearchIndex === undefined) return;
-    if (this.twitchApi === undefined) return;
+    if (this.twitchClipsMeiliSearchIndex === undefined || this.twitchApi === undefined) return;
 
     const increment = 100;
     let updated = 0;
@@ -103,7 +98,7 @@ export class Bot {
     for (let i = 0; i < clipIds.length; i += increment) {
       // update list of clip ids too
       const clips = await getClipsWithGameName(this.twitchApi, clipIds.slice(i, i + increment));
-      await this.twitchClipsMeiliSearchIndex.addDocuments(clips);
+      void this.twitchClipsMeiliSearchIndex.updateDocuments(clips);
       updated += clips.length;
     }
     console.log(`Updated ${updated} of ${clipIds.length} clips.`);
@@ -123,7 +118,7 @@ export class Bot {
 
       //interaction emote
       if (interaction.commandName === 'emote') {
-        void emoteHandler(this.emoteMatcher, this._emoteEndpoints.sevenEmotesNotInSet, this._cachedUrl)(interaction);
+        void emoteHandler(this.emoteMatcher, this._cachedUrl)(interaction);
 
         return;
       }
@@ -137,7 +132,7 @@ export class Bot {
       }
 
       if (interaction.commandName === 'addemote') {
-        await addEmoteHandlerSevenNotInSet(this, this._emoteEndpoints.sevenEmotesNotInSet)(interaction);
+        await addEmoteHandlerSevenNotInSet(this)(interaction);
 
         return;
       }
@@ -184,7 +179,6 @@ export class Bot {
 }
 
 export async function createBot(
-  emoteEndpoints: Readonly<EmoteEndpoints>,
   client: Client,
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
   cachedUrl: Readonly<CachedUrl>,
@@ -194,9 +188,8 @@ export async function createBot(
   translate: v2.Translate | undefined
 ): Promise<Readonly<Bot>> {
   return new Bot(
-    emoteEndpoints,
     client,
-    await newEmoteMatcher(emoteEndpoints, twitchApi, addedEmotesDatabase),
+    await newEmoteMatcher(twitchApi, addedEmotesDatabase),
     addedEmotesDatabase,
     cachedUrl,
     twitchClipsMeiliSearchIndex,

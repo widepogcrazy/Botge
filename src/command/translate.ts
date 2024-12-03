@@ -1,7 +1,7 @@
 import type { CommandInteraction } from 'discord.js';
 import type { v2 } from '@google-cloud/translate';
 
-export default function translateHandler(translate: v2.Translate) {
+export function translateHandler(translate: v2.Translate) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {

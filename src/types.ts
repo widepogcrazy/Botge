@@ -3,9 +3,9 @@ import type { DeepReadonly } from 'ts-essentials';
 import type OpenAI from 'openai';
 import type { Hit } from 'meilisearch';
 
+import type { Platform } from './enums.js';
 import type { EmoteMatcher } from './emoteMatcher.js';
 import type { AddedEmotesDatabase } from './api/added-emote-database.js';
-import type { Platform } from './enums.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 export type ReadonlyHit = DeepReadonly<Hit>;
@@ -121,16 +121,6 @@ export type DownloadedAsset = {
 export type HstackElement = {
   readonly id: number;
   readonly filterString: () => string;
-};
-
-export type EmoteEndpoints = {
-  sevenPersonal: string;
-  sevenGlobal: string;
-  sevenEmotesNotInSet: string;
-  bttvPersonal: string;
-  bttvGlobal: string;
-  ffzPersonal: string;
-  ffzGlobal: string;
 };
 
 export type TwitchGlobalOptions = {

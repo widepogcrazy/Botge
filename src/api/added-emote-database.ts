@@ -1,5 +1,18 @@
+import Database from 'better-sqlite3';
+
 import type { AddedEmote } from '../types.js';
-import { LocalDatabase } from './local-database.js';
+
+class LocalDatabase {
+  protected readonly database: Database.Database;
+  protected constructor(filepath: string) {
+    this.database = new Database(filepath);
+    this.database.pragma('journal_mode = WAL');
+  }
+
+  public close(): void {
+    this.database.close();
+  }
+}
 
 export class AddedEmotesDatabase extends LocalDatabase {
   public constructor(filepath: string) {

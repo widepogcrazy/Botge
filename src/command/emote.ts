@@ -2,16 +2,16 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 import { ensureDirSync } from 'fs-extra';
 import { rm } from 'node:fs/promises';
-import type { CachedUrl } from '../api/cached-url.js';
 
 import type { CommandInteraction } from 'discord.js';
 
-import { downloadAsset } from '../utils/downloadAsset.js';
-import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/sizeChange.js';
-import { urlToAssetInfo } from '../utils/urlToAssetInfo.js';
+import { downloadAsset } from '../utils/download-asset.js';
+import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/size-change.js';
+import { urlToAssetInfo } from '../utils/url-to-asset.js';
+import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
-
 import type { EmoteMatcher } from '../emoteMatcher.js';
+import { TMP_DIR } from '../paths-and-endpoints.js';
 
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
@@ -40,9 +40,9 @@ class SimpleElement implements HstackElement {
   }
 
   public filterString(): string {
-    let filterString = `[${this.id}:v]scale=${this.width}:${this.heigth}:force_original_aspect_ratio=decrease`;
+    let filterString = `[${this.id}:v]scale=${this.width}:${this.heigth}:force_original_aspect_ratio=decrease,pad=h=${this.heigth}:x=-1:y=-1:color=black@0.0`;
 
-    if (this.animated) filterString += `,fps=${DEFAULTFPS},pad=h=${this.heigth}:x=-1:y=-1:color=black@0.0`;
+    if (this.animated) filterString += `,fps=${DEFAULTFPS}`;
     filterString += `[o${this.id}];`;
 
     return filterString;
@@ -96,16 +96,47 @@ class OverlayElement implements HstackElement {
   }
 }
 
-export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string, cachedUrl: Readonly<CachedUrl>) {
+export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
-    const outdir = join('tmp', String(interaction.id));
+    const outdir = join(TMP_DIR, String(interaction.id));
     try {
+      ensureDirSync(outdir);
+
       const tokens: readonly string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
       const sizeOptions = interaction.options.get('size')?.value;
       const size = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
       const fullSize = Boolean(interaction.options.get('fullsize')?.value);
       const stretch = Boolean(interaction.options.get('stretch')?.value);
+
+      if (tokens.length === 1) {
+        const [token] = tokens;
+        const match = em.matchSingle(token);
+
+        if (match === undefined) {
+          try {
+            new URL(token);
+            await defer;
+            await interaction.editReply('posting link through Botge wtf');
+          } catch {
+            await defer;
+            await interaction.editReply('jij');
+          }
+
+          return;
+        }
+
+        const { url, platform } = match;
+        const reply = fullSize
+          ? emoteSizeChange(url, maxPlatformSize(platform), platform)
+          : size !== undefined
+            ? emoteSizeChange(url, size, platform)
+            : url;
+
+        await defer;
+        await interaction.editReply(reply);
+        return;
+      }
 
       const matchMulti_ = em.matchMulti(tokens);
 
@@ -113,11 +144,11 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string, c
         matchMulti_.map(async (asset, i) =>
           asset !== undefined
             ? fullSize
-              ? assetSizeChange(asset, maxPlatformSize(asset.platform), emoteEndpont)
+              ? assetSizeChange(asset, maxPlatformSize(asset.platform))
               : size !== undefined
-                ? assetSizeChange(asset, size, emoteEndpont)
+                ? assetSizeChange(asset, size)
                 : asset
-            : urlToAssetInfo(tokens[i], emoteEndpont, fullSize)
+            : urlToAssetInfo(tokens[i], fullSize)
         )
       );
       const assets: readonly (AssetInfo | string)[] = assetsWithUndefined.filter((asset) => asset !== undefined);
@@ -127,23 +158,6 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, emoteEndpont: string, c
         await interaction.editReply('jij');
         return;
       }
-
-      if (assets.length === 1) {
-        const [asset] = assets;
-
-        if (typeof asset === 'string') {
-          await defer;
-          await interaction.editReply('sending link through Botge wtf');
-
-          return;
-        }
-
-        await defer;
-        await interaction.editReply(emoteSizeChange(asset.url, size, asset.platform));
-        return;
-      }
-
-      ensureDirSync(outdir);
 
       const downloadedAssets: readonly DownloadedAsset[] = (
         await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i, cachedUrl)))
