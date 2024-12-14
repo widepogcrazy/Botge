@@ -52,13 +52,22 @@ class SimpleElement implements HstackElement {
 class OverlayElement implements HstackElement {
   public readonly id: number;
   private readonly layers: readonly DownloadedAsset[];
+  private readonly fullSize: boolean;
   private readonly stretch: boolean;
   private readonly height: number;
   private readonly width: number;
 
-  public constructor(id: number, layers: readonly DownloadedAsset[], stretch: boolean, width: number, height: number) {
+  public constructor(
+    id: number,
+    layers: readonly DownloadedAsset[],
+    fullSize: boolean,
+    stretch: boolean,
+    width: number,
+    height: number
+  ) {
     this.id = id;
     this.layers = layers;
+    this.fullSize = fullSize;
     this.stretch = stretch;
 
     this.height = height;
@@ -83,7 +92,10 @@ class OverlayElement implements HstackElement {
 
     // other layers
     this.layers.slice(1).forEach(() => {
-      segments.push(`[${id}]scale=${this.stretch ? this.width : -1}:${this.stretch ? this.height : MAXHEIGHT}`);
+      const segmentWidth = this.stretch ? this.width : this.fullSize ? this.layers[layerId].width : -1;
+      const segmentHeight = this.stretch ? this.height : this.fullSize ? this.layers[layerId].height : MAXHEIGHT;
+
+      segments.push(`[${id}]scale=${segmentWidth}:${segmentHeight}`);
 
       if (this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
       segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
@@ -185,7 +197,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
           } else if (i > boundary) {
             // at least 2
             elements.push(
-              new OverlayElement(boundary, downloadedAssets.slice(boundary, i), stretch, maxWidth, maxHeight)
+              new OverlayElement(boundary, downloadedAssets.slice(boundary, i), fullSize, stretch, maxWidth, maxHeight)
             );
             boundary = i;
           }
@@ -198,7 +210,9 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
         elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
       } else if (i > boundary) {
         // at least 2
-        elements.push(new OverlayElement(boundary, downloadedAssets.slice(boundary, i), stretch, maxWidth, maxHeight));
+        elements.push(
+          new OverlayElement(boundary, downloadedAssets.slice(boundary, i), fullSize, stretch, maxWidth, maxHeight)
+        );
       }
 
       const maxDuration = Math.max(...downloadedAssets.map((layer) => layer.duration));

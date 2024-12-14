@@ -1,6 +1,6 @@
-ARG NODE_VERSION=23.1.0
+ARG NODE_VERSION=23.3.0
 
-FROM node:${NODE_VERSION}-alpine as build
+FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 
 RUN npm run build
 
-FROM node:${NODE_VERSION}-alpine as release
+FROM node:${NODE_VERSION}-alpine AS release
 
 WORKDIR /app
 
