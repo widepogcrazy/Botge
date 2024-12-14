@@ -82,7 +82,7 @@ export default [
       "eqeqeq": "error",
       "strict": "error",
       "array-callback-return": "error",
-      "no-await-in-loop": "error",
+      //"no-await-in-loop": "error",
       "no-constructor-return": "error",
 
       "no-duplicate-imports": "error",
