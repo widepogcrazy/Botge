@@ -7,13 +7,13 @@
     "start": "tsc && node dist/c.js && node dist/index.js",
     "commandgeupdate": "tsc && node dist/c.js",
     "lint": "eslint src",
-    "prettier-format": "prettier --config .prettierrc src/**/*.ts --write",
+    "prettier-format": "prettier --config .prettierrc src --write",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky || true"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@google-cloud/translate": "^8.5.0",
@@ -22,10 +22,10 @@
     "dotenv": "^16.4.7",
     "fs-extra": "^11.2.0",
     "google-auth-library": "^9.15.0",
-    "meilisearch": "^0.46.0",
+    "meilisearch": "^0.47.0",
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
-    "openai": "^4.76.3"
+    "openai": "^4.77.0"
   },
   "type": "module",
   "devDependencies": {
@@ -34,11 +34,11 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node-schedule": "^2.1.7",
     "eslint": "^9.17.0",
-    "globals": "^15.13.0",
+    "globals": "^15.14.0",
     "husky": "^9.1.7",
     "prettier": "^3.4.2",
-    "ts-essentials": "^10.0.3",
+    "ts-essentials": "^10.0.4",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0"
+    "typescript-eslint": "^8.18.2"
   }
 }

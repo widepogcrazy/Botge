@@ -1,6 +1,6 @@
 import { fetchAndJson } from './fetch-and-json.js';
 import type { SevenEmoteNotInSet } from '../types.js';
-import { EMOTE_ENDPOINTS } from '../paths-and-endpoints.js';
+import { SEVEN_NOT_IN_SET_ENDPOINT } from '../paths-and-endpoints.js';
 
 export const SPLITTER = '/';
 
@@ -15,7 +15,7 @@ export async function sevenUrlToSevenNotInSet(url: string): Promise<SevenEmoteNo
 
   // TODO: USE REGEX CAPTURE
   const sevenEmoteNotInSetId = urlSplit.at(-1);
-  const sevenEmoteNotInSetUrl = `${EMOTE_ENDPOINTS.sevenEmotesNotInSet}${SPLITTER}${sevenEmoteNotInSetId}`;
+  const sevenEmoteNotInSetUrl = `${SEVEN_NOT_IN_SET_ENDPOINT}${SPLITTER}${sevenEmoteNotInSetId}`;
 
   const sevenEmoteNotInSet = (await fetchAndJson(sevenEmoteNotInSetUrl)) as SevenEmoteNotInSet;
 

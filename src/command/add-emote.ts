@@ -1,10 +1,17 @@
 import type { CommandInteraction } from 'discord.js';
 
 import { sevenUrlToSevenNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
-import type { SevenEmoteNotInSet, RequiredState, AddedEmote } from '../types.js';
-import { EMOTE_ENDPOINTS } from '../paths-and-endpoints.js';
+import type { SevenEmoteNotInSet, AddedEmote } from '../types.js';
+import { SEVEN_NOT_IN_SET_ENDPOINT } from '../paths-and-endpoints.js';
+import type { AddedEmotesDatabase } from '../api/database/added-emotes-database.js';
+import type { TwitchApi } from '../api/twitch-api.js';
+import type { Guild } from '../guild.js';
 
-export function addEmoteHandlerSevenNotInSet(s: RequiredState) {
+export function addEmoteHandlerSevenNotInSet(
+  twitchApi: Readonly<TwitchApi> | undefined,
+  addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
+  guild: Readonly<Guild>
+) {
   return async function addEmoteHandlerSevenNotInSetInnerFunction(interaction: CommandInteraction): Promise<void> {
     const defer = interaction.deferReply();
     try {
@@ -13,7 +20,7 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState) {
       const urlToSevenNotInSet_: SevenEmoteNotInSet | undefined = await sevenUrlToSevenNotInSet(text);
       if (urlToSevenNotInSet_ === undefined) return;
 
-      if (s.emoteMatcher.matchSingleExact(urlToSevenNotInSet_.name)) {
+      if (guild.getEmoteMatcher().matchSingleExact(urlToSevenNotInSet_.name)) {
         await defer;
         await interaction.editReply('theres already an emote with the same name');
 
@@ -21,9 +28,9 @@ export function addEmoteHandlerSevenNotInSet(s: RequiredState) {
       }
 
       const emoteId = text.split(SPLITTER).at(-1);
-      const addedEmote: AddedEmote = { url: `${EMOTE_ENDPOINTS.sevenEmotesNotInSet}${SPLITTER}${emoteId}` };
-      if (emoteId !== undefined) s.addedEmotesDatabase.insert(addedEmote);
-      await s.refreshEmotes();
+      const addedEmote: AddedEmote = { url: `${SEVEN_NOT_IN_SET_ENDPOINT}${SPLITTER}${emoteId}` };
+      if (emoteId !== undefined) addedEmotesDatabase.insert(addedEmote, guild.id);
+      await guild.refreshEmotes(twitchApi, addedEmotesDatabase);
 
       await defer;
       await interaction.editReply(`added emote ${urlToSevenNotInSet_.name}`);

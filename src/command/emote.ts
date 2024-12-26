@@ -113,8 +113,6 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
     const defer = interaction.deferReply();
     const outdir = join(TMP_DIR, String(interaction.id));
     try {
-      ensureDirSync(outdir);
-
       const tokens: readonly string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
       const sizeOptions = interaction.options.get('size')?.value;
       const size = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
@@ -149,6 +147,9 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
         await interaction.editReply(reply);
         return;
       }
+
+      //dir sync only if multiple emotes
+      ensureDirSync(outdir);
 
       const matchMulti_ = em.matchMulti(tokens);
 
@@ -265,15 +266,15 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
           return async function (code: number): Promise<void> {
             if (code === 0) {
               await defer;
-              await interaction.editReply({ files: [outfile] }).then(() => {
-                void rm(outdir, { recursive: true });
-              });
+              await interaction.editReply({ files: [outfile] });
+              void rm(outdir, { recursive: true });
+
               return;
             }
             await defer;
-            await interaction.editReply({ content: 'gif creation failed' }).then(() => {
-              void rm(outdir, { recursive: true });
-            });
+            await interaction.editReply({ content: 'gif creation failed' });
+            void rm(outdir, { recursive: true });
+
             return;
           };
         })() // closure to keep |interaction|
@@ -286,6 +287,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
       await defer;
       await interaction.editReply('gif creation failed.');
       void rm(outdir, { recursive: true });
+
       return;
     }
   };

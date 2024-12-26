@@ -32,14 +32,14 @@ services:
       - DISCORD_TOKEN=
 
       # open ai
-      - OPENAI_API_KEY=
+      #- OPENAI_API_KEY=
 
       # google
-      - CREDENTIALS=
+      #- CREDENTIALS=
 
       # twitch
-      - TWITCH_CLIENT_ID=
-      - TWITCH_SECRET=
+      #- TWITCH_CLIENT_ID=
+      #- TWITCH_SECRET=
 
       # MeiliSearch
       - MEILISEARCH_HOST=http://meilisearch:7700

@@ -4,8 +4,6 @@ import type OpenAI from 'openai';
 import type { Hit } from 'meilisearch';
 
 import type { Platform } from './enums.js';
-import type { EmoteMatcher } from './emoteMatcher.js';
-import type { AddedEmotesDatabase } from './api/added-emote-database.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 export type ReadonlyHit = DeepReadonly<Hit>;
@@ -88,6 +86,38 @@ export type TwitchGlobalEmotes = {
   readonly data: readonly TwitchEmote[];
 };
 
+export type TwitchClip = {
+  readonly id: string;
+  readonly url: string;
+  readonly creator_name: string;
+  readonly game_id: string;
+  readonly title: string;
+};
+export type TwitchGame = {
+  readonly id: string;
+  readonly name: string;
+};
+export type TwitchUser = {
+  readonly id: string;
+};
+
+export type TwitchClips = {
+  readonly data: readonly TwitchClip[];
+  readonly pagination: {
+    readonly cursor?: string;
+  };
+};
+export type TwitchGames = {
+  readonly data: readonly TwitchGame[];
+};
+export type TwitchUsers = {
+  readonly data: readonly TwitchUser[];
+};
+
+export type AddedEmote = {
+  readonly url: string;
+};
+
 export type AssetInfo = {
   readonly name: string;
   readonly url: string;
@@ -98,71 +128,29 @@ export type AssetInfo = {
   readonly platform: Platform;
 };
 
+export type DownloadedAsset = {
+  readonly filename: string;
+  readonly width: number;
+  readonly height: number;
+  readonly duration: number;
+  readonly animated: boolean;
+};
+
+export type TwitchGlobalOptions = {
+  readonly method: string;
+  readonly headers: {
+    readonly 'Authorization': string;
+    readonly 'Client-Id': string;
+  };
+};
+
 export type ClientCredentialsGrantFlow = {
   readonly access_token: string;
   readonly expires_in: number;
   readonly token_type: string;
 };
 
-export type RequiredState = {
-  readonly addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
-  readonly emoteMatcher: Readonly<EmoteMatcher>;
-  readonly refreshEmotes: () => Promise<void>;
-};
-
-export type DownloadedAsset = {
-  readonly filename: string;
-  readonly width: number;
-  readonly height: number;
-  readonly duration: number; // stills are DEFAULTDURATION
-  readonly animated: boolean;
-};
-
 export type HstackElement = {
   readonly id: number;
   readonly filterString: () => string;
-};
-
-export type TwitchGlobalOptions = {
-  readonly method: string;
-  readonly headers: {
-    readonly Authorization: string;
-    readonly 'Client-Id': string;
-  };
-};
-
-export type TwitchUser = {
-  readonly id: number;
-};
-
-export type TwitchUsers = {
-  readonly data: readonly TwitchUser[];
-};
-
-export type TwitchGame = {
-  readonly id: string;
-  readonly name: string;
-};
-
-export type TwitchGames = {
-  readonly data: readonly TwitchGame[];
-};
-
-export type TwitchClip = {
-  readonly id: string;
-  readonly url: string;
-  readonly creator_name: string;
-  readonly game_id: string;
-  readonly title: string;
-};
-
-export type TwitchClips = {
-  readonly data: readonly TwitchClip[];
-  readonly pagination: {
-    readonly cursor?: string;
-  };
-};
-
-export type AddedEmote = {
-  readonly url: string;
 };

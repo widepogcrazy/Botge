@@ -192,52 +192,74 @@ export class EmoteMatcher {
   private readonly _root: SuffixTree;
 
   public constructor(
-    sevenPersonal: SevenEmotes,
-    sevenGlobal: SevenEmotes,
-    bttvPersonal: BTTVPersonalEmotes,
-    bttvGlobal: readonly BTTVEmote[],
-    ffzPersonal: FFZPersonalEmotes,
-    ffzGlobal: FFZGlobalEmotes,
+    sevenPersonal: SevenEmotes | undefined,
+    sevenGlobal: SevenEmotes | undefined,
+    bttvPersonal: BTTVPersonalEmotes | undefined,
+    bttvGlobal: readonly BTTVEmote[] | undefined,
+    ffzPersonal: FFZPersonalEmotes | undefined,
+    ffzGlobal: FFZGlobalEmotes | undefined,
     twitchGlobal: TwitchGlobalEmotes | undefined,
     sevenNotInSet: readonly SevenEmoteNotInSet[] | undefined
   ) {
+    if (arguments.length === 0) throw new Error('no arguments provided.');
+
     this._root = new SuffixTree();
     let priority = arguments.length;
 
-    for (const emote of sevenPersonal.emotes) {
-      this._root.addAllSuffix(sevenInSetToAsset(emote), priority);
+    if (sevenPersonal !== undefined) {
+      for (const emote of sevenPersonal.emotes) {
+        this._root.addAllSuffix(sevenInSetToAsset(emote), priority);
+      }
+      priority--;
     }
-    priority--;
-    for (const emote of sevenGlobal.emotes) {
-      this._root.addAllSuffix(sevenInSetToAsset(emote), priority);
+
+    if (sevenGlobal !== undefined) {
+      for (const emote of sevenGlobal.emotes) {
+        this._root.addAllSuffix(sevenInSetToAsset(emote), priority);
+      }
+      priority--;
     }
-    priority--;
-    for (const emote of bttvPersonal.channelEmotes) {
-      this._root.addAllSuffix(bttvToAsset(emote), priority);
+
+    if (bttvPersonal !== undefined) {
+      for (const emote of bttvPersonal.channelEmotes) {
+        this._root.addAllSuffix(bttvToAsset(emote), priority);
+      }
+      priority--;
+
+      for (const emote of bttvPersonal.sharedEmotes) {
+        this._root.addAllSuffix(bttvToAsset(emote), priority);
+      }
+      priority--;
     }
-    priority--;
-    for (const emote of bttvPersonal.sharedEmotes) {
-      this._root.addAllSuffix(bttvToAsset(emote), priority);
+
+    if (bttvGlobal !== undefined) {
+      for (const emote of bttvGlobal) {
+        this._root.addAllSuffix(bttvToAsset(emote), priority);
+      }
+      priority--;
     }
-    priority--;
-    for (const emote of bttvGlobal) {
-      this._root.addAllSuffix(bttvToAsset(emote), priority);
+
+    if (ffzPersonal !== undefined) {
+      for (const emote of ffzPersonal.sets[ffzPersonal.room.set].emoticons) {
+        this._root.addAllSuffix(ffzToAsset(emote), priority);
+      }
+      priority--;
     }
-    priority--;
-    for (const emote of ffzPersonal.sets[ffzPersonal.room.set].emoticons) {
-      this._root.addAllSuffix(ffzToAsset(emote), priority);
+
+    if (ffzGlobal !== undefined) {
+      for (const emote of ffzGlobal.sets[`${FFZGLOBALSETSKEY}`].emoticons) {
+        this._root.addAllSuffix(ffzToAsset(emote), priority);
+      }
+      priority--;
     }
-    priority--;
-    for (const emote of ffzGlobal.sets[`${FFZGLOBALSETSKEY}`].emoticons) {
-      this._root.addAllSuffix(ffzToAsset(emote), priority);
-    }
-    priority--;
+
     if (twitchGlobal !== undefined) {
       for (const emote of twitchGlobal.data) {
         this._root.addAllSuffix(twitchToAsset(emote), priority);
       }
       priority--;
     }
+
     if (sevenNotInSet !== undefined) {
       for (const emote of sevenNotInSet) {
         //there may be a case where an emote was added with /addemote
