@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node dist/c.js && node dist/index.js",
+    "start": "tsc && node dist/index.js",
     "commandgeupdate": "tsc && node dist/c.js",
     "lint": "eslint src",
     "prettier-format": "prettier --config .prettierrc src --write",

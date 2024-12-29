@@ -5,7 +5,7 @@ import type { ReadonlyOpenAI } from './types.js';
 import type { Guild } from './guild.js';
 import type { CachedUrl } from './api/cached-url.js';
 import type { TwitchApi } from './api/twitch-api.js';
-import type { AddedEmotesDatabase } from './api/database/added-emotes-database.js';
+import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import { addEmoteHandlerSevenNotInSet } from './command/add-emote.js';
 import { emoteHandler } from './command/emote.js';
 import { helpHandler } from './command/help.js';
@@ -43,12 +43,16 @@ export class Bot {
   }
 
   public refreshEmotes(): void {
+    if (this._twitchApi?.isValidated() === false) return;
+
     this._guilds.forEach((guild) => {
       void guild.refreshEmotes(this._twitchApi, this._addedEmotesDatabase);
     });
   }
 
   public refreshClips(): void {
+    if (this._twitchApi?.isValidated() === false) return;
+
     this._guilds.forEach((guild) => {
       void guild.refreshClips(this._twitchApi);
     });
@@ -63,14 +67,12 @@ export class Bot {
   }
 
   public validateTwitchAccessToken(): void {
-    if (this._twitchApi !== undefined) void this._twitchApi.validateAccessToken();
+    void this._twitchApi?.validateAccessToken();
   }
 
   public registerHandlers(): void {
     this._client.on('ready', () => {
       console.log(`Logged in as ${this._client.user?.tag ?? ''}!`);
-
-      return;
     });
 
     //interaction
@@ -138,7 +140,5 @@ export class Bot {
 
   public async start(discordToken: string | undefined): Promise<void> {
     await this._client.login(discordToken);
-
-    return;
   }
 }

@@ -1,9 +1,9 @@
 import type { CommandInteraction } from 'discord.js';
 
-import { sevenUrlToSevenNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
-import type { SevenEmoteNotInSet, AddedEmote } from '../types.js';
-import { SEVEN_NOT_IN_SET_ENDPOINT } from '../paths-and-endpoints.js';
-import type { AddedEmotesDatabase } from '../api/database/added-emotes-database.js';
+import { sevenTVUrlToSevenNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
+import type { SevenTVEmoteNotInSet, AddedEmote } from '../types.js';
+import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
+import type { AddedEmotesDatabase } from '../api/added-emotes-database.js';
 import type { TwitchApi } from '../api/twitch-api.js';
 import type { Guild } from '../guild.js';
 
@@ -17,7 +17,7 @@ export function addEmoteHandlerSevenNotInSet(
     try {
       const text = String(interaction.options.get('text')?.value);
 
-      const urlToSevenNotInSet_: SevenEmoteNotInSet | undefined = await sevenUrlToSevenNotInSet(text);
+      const urlToSevenNotInSet_: SevenTVEmoteNotInSet | undefined = await sevenTVUrlToSevenNotInSet(text);
       if (urlToSevenNotInSet_ === undefined) return;
 
       if (guild.getEmoteMatcher().matchSingleExact(urlToSevenNotInSet_.name)) {
@@ -28,7 +28,7 @@ export function addEmoteHandlerSevenNotInSet(
       }
 
       const emoteId = text.split(SPLITTER).at(-1);
-      const addedEmote: AddedEmote = { url: `${SEVEN_NOT_IN_SET_ENDPOINT}${SPLITTER}${emoteId}` };
+      const addedEmote: AddedEmote = { url: `${CDN_ENDPOINTS.sevenTVNotInSet}${SPLITTER}${emoteId}` };
       if (emoteId !== undefined) addedEmotesDatabase.insert(addedEmote, guild.id);
       await guild.refreshEmotes(twitchApi, addedEmotesDatabase);
 

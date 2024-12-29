@@ -1,16 +1,16 @@
-import { EmoteMatcher } from '../../emoteMatcher.js';
+import { EmoteMatcher } from '../../emote-matcher.js';
 import type {
-  SevenEmoteNotInSet,
+  SevenTVEmoteNotInSet,
   BTTVEmote,
-  SevenEmotes,
   BTTVPersonalEmotes,
   FFZPersonalEmotes,
-  FFZGlobalEmotes
+  FFZGlobalEmotes,
+  SevenTVEmotes
 } from '../../types.js';
 import { GLOBAL_EMOTE_ENDPOINTS, type PersonalEmoteEndpoints } from '../../paths-and-endpoints.js';
 import { fetchAndJson } from '../../utils/fetch-and-json.js';
 import type { TwitchApi } from '../../api/twitch-api.js';
-import type { AddedEmotesDatabase } from '../../api/database/added-emotes-database.js';
+import type { AddedEmotesDatabase } from '../../api/added-emotes-database.js';
 
 export async function newEmoteMatcher(
   guildId: string,
@@ -19,26 +19,33 @@ export async function newEmoteMatcher(
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>
 ): Promise<Readonly<EmoteMatcher>> {
   const sevenPersonal =
-    personalEmoteEndpoints.seven !== undefined ? fetchAndJson(personalEmoteEndpoints.seven) : undefined;
-  const sevenGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.seven);
+    personalEmoteEndpoints.sevenTV !== undefined
+      ? (fetchAndJson(personalEmoteEndpoints.sevenTV) as Promise<SevenTVEmotes>)
+      : undefined;
+  const sevenGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.sevenTV) as Promise<SevenTVEmotes>;
   const bttvPersonal =
-    personalEmoteEndpoints.bttv !== undefined ? fetchAndJson(personalEmoteEndpoints.bttv) : undefined;
-  const bttvGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.bttv);
-  const ffzPersonal = personalEmoteEndpoints.ffz !== undefined ? fetchAndJson(personalEmoteEndpoints.ffz) : undefined;
-  const ffzGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.ffz);
-  const twitchGlobal = twitchApi ? twitchApi.emotesGlobal() : undefined;
-  const addedEmotes: readonly Promise<unknown>[] = addedEmotesDatabase
+    personalEmoteEndpoints.bttv !== undefined
+      ? (fetchAndJson(personalEmoteEndpoints.bttv) as Promise<BTTVPersonalEmotes>)
+      : undefined;
+  const bttvGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.bttv) as Promise<readonly BTTVEmote[]>;
+  const ffzPersonal =
+    personalEmoteEndpoints.ffz !== undefined
+      ? (fetchAndJson(personalEmoteEndpoints.ffz) as Promise<FFZPersonalEmotes>)
+      : undefined;
+  const ffzGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.ffz) as Promise<FFZGlobalEmotes>;
+  const twitchGlobal = twitchApi?.emotesGlobal();
+  const addedEmotes = addedEmotesDatabase
     .getAll(guildId)
-    .map(async (addedEmote) => fetchAndJson(addedEmote.url));
+    .map(async (addedEmote) => fetchAndJson(addedEmote.url)) as readonly Promise<SevenTVEmoteNotInSet>[];
 
   return new EmoteMatcher(
-    (await sevenPersonal) as SevenEmotes,
-    (await sevenGlobal) as SevenEmotes,
-    (await bttvPersonal) as BTTVPersonalEmotes,
-    (await bttvGlobal) as readonly BTTVEmote[],
-    (await ffzPersonal) as FFZPersonalEmotes,
-    (await ffzGlobal) as FFZGlobalEmotes,
-    twitchGlobal ? await twitchGlobal : undefined,
-    (await Promise.all(addedEmotes)) as readonly SevenEmoteNotInSet[]
+    await sevenPersonal,
+    await sevenGlobal,
+    await bttvPersonal,
+    await bttvGlobal,
+    await ffzPersonal,
+    await ffzGlobal,
+    await twitchGlobal,
+    await Promise.all(addedEmotes)
   );
 }

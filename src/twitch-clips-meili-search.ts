@@ -23,4 +23,8 @@ export class TwitchClipsMeiliSearch {
 
     return await this._meiliSearch.getIndex(indexName);
   }
+
+  public deleteOldTwitchClipsIndex(): void {
+    void this._meiliSearch.deleteIndex(INDEX_NAME);
+  }
 }

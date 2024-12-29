@@ -1,27 +1,25 @@
 import { Platform } from '../enums.js';
 import type {
-  SevenEmoteFile,
-  SevenEmoteInSet,
-  SevenEmoteNotInSet,
+  SevenTVEmoteFile,
+  SevenTVEmoteInSet,
+  SevenTVEmoteNotInSet,
   BTTVEmote,
   FFZEmote,
   TwitchEmote,
   AssetInfo
 } from '../types.js';
+import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
 
 const EMOTESIZE = 2;
-const HTTPS = 'https';
-const BTTVCDN = 'cdn.betterttv.net/emote';
-const TWITCHCDN = 'static-cdn.jtvnw.net/emoticons/v2';
 
-export function sevenInSetToAsset(emote: SevenEmoteInSet, size?: number): AssetInfo {
+export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): AssetInfo {
   const { name, data } = emote;
   const { flags, host, animated } = data;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
-  const file = host.files.find((f: SevenEmoteFile) => f.name === filename);
+  const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);
   return {
     name: name,
-    url: `${HTTPS}:${host.url}/${file?.name}`,
+    url: `https:${host.url}/${file?.name}`,
     zeroWidth: !!(256 & flags),
     animated: animated,
     width: file?.width,
@@ -30,13 +28,13 @@ export function sevenInSetToAsset(emote: SevenEmoteInSet, size?: number): AssetI
   };
 }
 
-export function sevenNotInSetToAsset(emote: SevenEmoteNotInSet, size?: number): AssetInfo {
+export function sevenTVNotInSetToAsset(emote: SevenTVEmoteNotInSet, size?: number): AssetInfo {
   const { name, flags, host, animated } = emote;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
-  const file = host.files.find((f: SevenEmoteFile) => f.name === filename);
+  const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);
   return {
     name: name,
-    url: `${HTTPS}:${host.url}/${file?.name}`,
+    url: `https:${host.url}/${file?.name}`,
     zeroWidth: !!(256 & flags),
     animated: animated,
     width: file?.width,
@@ -50,7 +48,7 @@ export function bttvToAsset(emote: BTTVEmote): AssetInfo {
   const filename = `${EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   return {
     name: code,
-    url: `${HTTPS}://${BTTVCDN}/${id}/${filename}`,
+    url: `https://${CDN_ENDPOINTS.bttv}/${id}/${filename}`,
     zeroWidth: false,
     animated: animated,
     width: undefined,
@@ -79,7 +77,7 @@ export function twitchToAsset(emote: TwitchEmote): AssetInfo {
   const chosenThemeMode = theme_mode.length === 2 ? theme_mode[1] : theme_mode[0];
   return {
     name: name,
-    url: `${HTTPS}://${TWITCHCDN}/${id}/${chosenFormat}/${chosenThemeMode}/${EMOTESIZE}.0`,
+    url: `https://${CDN_ENDPOINTS.twitch}/${id}/${chosenFormat}/${chosenThemeMode}/${EMOTESIZE}.0`,
     zeroWidth: false,
     animated: animated,
     width: undefined,

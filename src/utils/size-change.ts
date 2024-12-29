@@ -1,5 +1,5 @@
-import { sevenNotInSetToAsset } from './emote-to-asset.js';
-import { sevenUrlToSevenNotInSet } from './platform-url-to-api-url.js';
+import { sevenTVNotInSetToAsset } from './emote-to-asset.js';
+import { sevenTVUrlToSevenNotInSet } from './platform-url-to-api-url.js';
 import type { AssetInfo } from '../types.js';
 import { Platform } from '../enums.js';
 
@@ -37,9 +37,9 @@ export async function assetSizeChange(asset: AssetInfo, size: number): Promise<A
   if (platform === Platform.sevenInSet || platform === Platform.sevenNotInSet) {
     const emoteId = url.split('/').at(-2);
     const sevenUrl = `https://7tv.app/emotes/${emoteId}`;
-    const sevenUrlToSevenNotInSet_ = await sevenUrlToSevenNotInSet(sevenUrl);
+    const sevenUrlToSevenNotInSet_ = await sevenTVUrlToSevenNotInSet(sevenUrl);
     const sevenNotInSetToAsset_ =
-      sevenUrlToSevenNotInSet_ !== undefined ? sevenNotInSetToAsset(sevenUrlToSevenNotInSet_, size) : undefined;
+      sevenUrlToSevenNotInSet_ !== undefined ? sevenTVNotInSetToAsset(sevenUrlToSevenNotInSet_, size) : undefined;
 
     return sevenNotInSetToAsset_ ?? asset;
   }

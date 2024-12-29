@@ -10,12 +10,13 @@ import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/size
 import { urlToAssetInfo } from '../utils/url-to-asset.js';
 import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
-import type { EmoteMatcher } from '../emoteMatcher.js';
+import type { EmoteMatcher } from '../emote-matcher.js';
 import { TMP_DIR } from '../paths-and-endpoints.js';
 
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
 const MAXHEIGHT = 64;
+const DOWNLOAD_ASSET_ERROR_MESSAGE = 'Failed to download asset(s).';
 
 function getMaxWidth(layers: readonly DownloadedAsset[], scaleToHeight: number): number {
   const scaledWidth = layers.map((layer) => (layer.width / layer.height) * scaleToHeight);
@@ -176,7 +177,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
         await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i, cachedUrl)))
       ).filter((downloadedAsset) => downloadedAsset !== undefined);
       if (downloadedAssets.length !== assets.length) {
-        throw new Error('Failed to download asset(s).');
+        throw new Error(DOWNLOAD_ASSET_ERROR_MESSAGE);
       }
 
       const maxHeight_ = Math.max(...downloadedAssets.map((asset) => asset.height));
@@ -283,9 +284,13 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
       await defer;
     } catch (error: unknown) {
       console.log(`Error at emoteHandler --> ${error instanceof Error ? error : 'error'}`);
+      const editReplyMessage =
+        error instanceof Error && error.message === DOWNLOAD_ASSET_ERROR_MESSAGE
+          ? 'failed to download gif(s)/png(s)'
+          : 'gif creation failed.';
 
       await defer;
-      await interaction.editReply('gif creation failed.');
+      await interaction.editReply(editReplyMessage);
       void rm(outdir, { recursive: true });
 
       return;

@@ -9,31 +9,31 @@ export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 export type ReadonlyHit = DeepReadonly<Hit>;
 export type ReadonlyRegExpExecArray = DeepReadonly<RegExpExecArray>;
 
-export type SevenEmoteFile = {
+export type SevenTVEmoteFile = {
   readonly name: string;
   readonly width: number;
   readonly height: number;
   readonly format: string;
 };
 
-export type SevenEmoteInSet = {
+export type SevenTVEmoteInSet = {
   readonly name: string;
   readonly data: {
     readonly flags: number;
     readonly animated: boolean;
     readonly host: {
       readonly url: string;
-      readonly files: readonly SevenEmoteFile[];
+      readonly files: readonly SevenTVEmoteFile[];
     };
   };
 };
-export type SevenEmoteNotInSet = {
+export type SevenTVEmoteNotInSet = {
   readonly name: string;
   readonly flags: number;
   readonly animated: boolean;
   readonly host: {
     readonly url: string;
-    readonly files: readonly SevenEmoteFile[];
+    readonly files: readonly SevenTVEmoteFile[];
   };
 };
 export type BTTVEmote = {
@@ -52,8 +52,8 @@ export type TwitchEmote = {
   readonly theme_mode: readonly string[];
 };
 
-export type SevenEmotes = {
-  readonly emotes: readonly SevenEmoteInSet[];
+export type SevenTVEmotes = {
+  readonly emotes: readonly SevenTVEmoteInSet[];
 };
 export type BTTVPersonalEmotes = {
   readonly channelEmotes: readonly BTTVEmote[];

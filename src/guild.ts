@@ -1,14 +1,11 @@
 import type { Index } from 'meilisearch';
-import type { EmoteMatcher } from './emoteMatcher.js';
+import type { EmoteMatcher } from './emote-matcher.js';
 import { newEmoteMatcher } from './utils/constructors/new-emote-matcher.js';
 import type { PersonalEmoteEndpoints } from './paths-and-endpoints.js';
-import {
-  getClipsWithGameNameFromIds,
-  getClipsWithGameNameFromBroadcasterName,
-  type TwitchApi
-} from './api/twitch-api.js';
-import type { AddedEmotesDatabase } from './api/database/added-emotes-database.js';
-import { listClipIds } from './utils/list-clip-ids.js';
+import type { TwitchApi } from './api/twitch-api.js';
+import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
+import { listCutedogClipIds } from './utils/list-cutedog-clip-ids.js';
+import { getClipsWithGameNameFromBroadcasterName, getClipsWithGameNameFromIds } from './utils/twitch-api-utils.js';
 
 export const GUILD_ID_CUTEDOG = '251211223012474880';
 export const GUILD_ID_ELLY = '1265071702812135424';
@@ -40,31 +37,27 @@ export class Guild {
     twitchApi: Readonly<TwitchApi> | undefined,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>
   ): Promise<void> {
-    this._emoteMatcher = await newEmoteMatcher(
-      this.id,
-      this._personalEmoteEndpoints,
-      twitchApi?.isValidated() === true ? twitchApi : undefined,
-      addedEmotesDatabase
-    );
+    this._emoteMatcher = await newEmoteMatcher(this.id, this._personalEmoteEndpoints, twitchApi, addedEmotesDatabase);
 
     return;
   }
 
   public async refreshClips(twitchApi: Readonly<TwitchApi> | undefined): Promise<void> {
     if (this._twitchClipsMeiliSearchIndex === undefined || twitchApi === undefined) return;
-    if (!twitchApi.isValidated()) return;
 
     let updated = 0;
 
     if (this.id === GUILD_ID_CUTEDOG) {
+      //custom clips
       const increment = 100;
-      const clipIds = await listClipIds();
+      const clipIds = await listCutedogClipIds();
       for (let i = 0; i < clipIds.length; i += increment) {
         const clips = await getClipsWithGameNameFromIds(twitchApi, clipIds.slice(i, i + increment));
         void this._twitchClipsMeiliSearchIndex.updateDocuments(clips);
         updated += clips.length;
       }
     } else {
+      //get top 1000 most viewed clips
       let [clips, cursor] = await getClipsWithGameNameFromBroadcasterName(twitchApi, this._broadcasterName);
       void this._twitchClipsMeiliSearchIndex.updateDocuments(clips);
 

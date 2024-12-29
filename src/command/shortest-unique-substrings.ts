@@ -1,7 +1,7 @@
 import type { CommandInteraction } from 'discord.js';
 
 import type { AssetInfo } from '../types.js';
-import type { EmoteMatcher } from '../emoteMatcher.js';
+import type { EmoteMatcher } from '../emote-matcher.js';
 
 function getAllSubstrings(str: string): readonly string[] {
   const result: string[] = [];
