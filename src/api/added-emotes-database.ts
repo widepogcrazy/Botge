@@ -9,28 +9,28 @@ function getTableName(guildId: string): string {
 }
 
 export class AddedEmotesDatabase {
-  private readonly database: Database.Database;
+  readonly #database: Database.Database;
 
   public constructor(filepath: string) {
-    this.database = new Database(filepath);
+    this.#database = new Database(filepath);
   }
 
   public insert(addedEmote: AddedEmote, guildId: string): void {
-    const insert = this.database.prepare(`INSERT INTO ${getTableName(guildId)} (url) VALUES (?)`);
+    const insert = this.#database.prepare(`INSERT INTO ${getTableName(guildId)} (url) VALUES (?)`);
     const { url } = addedEmote;
 
     insert.run(url);
   }
 
   public getAll(guildId: string): readonly AddedEmote[] {
-    const select = this.database.prepare(`SELECT url FROM ${getTableName(guildId)}`);
+    const select = this.#database.prepare(`SELECT url FROM ${getTableName(guildId)}`);
     const urls = select.all() as readonly AddedEmote[];
 
     return urls;
   }
 
   public createTable(guildId: string): void {
-    const createTable = this.database.prepare(`
+    const createTable = this.#database.prepare(`
       CREATE TABLE IF NOT EXISTS ${getTableName(guildId)} (
         url TEXT NOT NULL PRIMARY KEY
       );
@@ -40,6 +40,6 @@ export class AddedEmotesDatabase {
   }
 
   public close(): void {
-    this.database.close();
+    this.#database.close();
   }
 }

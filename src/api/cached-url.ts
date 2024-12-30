@@ -6,24 +6,23 @@ const rules: readonly (readonly [Readonly<RegExp>, string])[] = [
 ];
 
 export class CachedUrl {
-  private readonly _base?: string;
+  readonly #base?: string;
   public constructor(base?: string) {
-    this._base = base;
+    this.#base = base;
   }
 
   // translate remote url like https://cdn.tv.app/xxx to a local one pointing to cached data on disk.
   // returns [localUrl, false]. if a url is not supported, returns [remoteUrl, false]
   public get(remoteUrl: string): readonly [string, boolean] {
-    if (this._base === undefined) {
-      return [remoteUrl, false];
-    }
+    if (this.#base === undefined) return [remoteUrl, false];
+
     for (const [regex, prefix] of rules) {
       const match = remoteUrl.match(regex);
-      if (match === null) {
-        continue;
-      }
-      return [this._base + prefix + match[1], true];
+      if (match === null) continue;
+
+      return [this.#base + prefix + match[1], true];
     }
+
     return [remoteUrl, false];
   }
 }

@@ -34,12 +34,12 @@ class EmoteNode {
 }
 
 class SuffixTree {
-  private readonly _paths: Map<string, SuffixTree>;
-  private _data: EmoteNode | undefined;
+  readonly #paths: Map<string, SuffixTree>;
+  #data: EmoteNode | undefined;
 
   public constructor() {
-    this._paths = new Map();
-    this._data = undefined;
+    this.#paths = new Map();
+    this.#data = undefined;
   }
 
   public addAllSuffix(asset: AssetInfo, priority: number): void {
@@ -61,42 +61,35 @@ class SuffixTree {
     return this._queryExact(suffix.toLowerCase(), suffix);
   }
 
-  private _getOrAddTree(char: string): SuffixTree | undefined {
-    if (!this._paths.has(char)) {
-      this._paths.set(char, new SuffixTree());
-    }
-    return this._paths.get(char);
-  }
-
   private _addAllSuffix(suffix: string, priority: number, asset: AssetInfo, fromFullString: boolean): void {
     const exact = fromFullString && suffix === '';
 
-    if (this._data === undefined) {
-      this._data = new EmoteNode(exact, priority, asset);
+    if (this.#data === undefined) {
+      this.#data = new EmoteNode(exact, priority, asset);
     } else {
-      this._data.uniquePath = false;
-      if (this._data.exact && exact) {
-        if (priority > this._data.highestPriority) {
-          this._data.highestPriority = priority;
-          this._data.assets.unshift(asset);
+      this.#data.uniquePath = false;
+      if (this.#data.exact && exact) {
+        if (priority > this.#data.highestPriority) {
+          this.#data.highestPriority = priority;
+          this.#data.assets.unshift(asset);
         } else {
-          this._data.assets.push(asset);
+          this.#data.assets.push(asset);
         }
-      } else if (!this._data.exact && !exact) {
-        if (priority > this._data.highestPriority) {
-          this._data.highestPriority = priority;
-          this._data.assets = [asset];
+      } else if (!this.#data.exact && !exact) {
+        if (priority > this.#data.highestPriority) {
+          this.#data.highestPriority = priority;
+          this.#data.assets = [asset];
         }
-      } else if (!this._data.exact && exact) {
+      } else if (!this.#data.exact && exact) {
         // replace
-        this._data.exact = exact;
-        this._data.highestPriority = priority;
-        this._data.assets = [asset];
+        this.#data.exact = exact;
+        this.#data.highestPriority = priority;
+        this.#data.assets = [asset];
       }
     }
 
     if (suffix !== '') {
-      const tree = this._getOrAddTree(suffix.charAt(0));
+      const tree = this.#getOrAddTree(suffix.charAt(0));
       tree?._addAllSuffix(suffix.slice(1), priority, asset, fromFullString);
       return;
     }
@@ -104,42 +97,42 @@ class SuffixTree {
 
   private _query(normalizedSuffix: string, original: string): AssetInfo | undefined {
     if (normalizedSuffix === '') {
-      if (this._data === undefined) return undefined;
+      if (this.#data === undefined) return undefined;
       // reached the end of the query string
 
-      if (this._data.assets.length === 1) return this._data.assets[0];
+      if (this.#data.assets.length === 1) return this.#data.assets[0];
 
-      for (const asset of this._data.assets) {
+      for (const asset of this.#data.assets) {
         // exact match and case match
         if (asset.name === original) return asset;
       }
 
-      if (this._data.assets.length > 0) return this._data.assets[0];
+      if (this.#data.assets.length > 0) return this.#data.assets[0];
 
       return undefined;
     }
 
     const nextChar = normalizedSuffix.charAt(0);
-    if (!this._paths.has(nextChar)) return undefined;
-    return this._paths.get(nextChar)?._query(normalizedSuffix.slice(1), original);
+    if (!this.#paths.has(nextChar)) return undefined;
+    return this.#paths.get(nextChar)?._query(normalizedSuffix.slice(1), original);
   }
 
   private _queryUnique(normalizedSuffix: string, original: string): boolean {
     if (normalizedSuffix === '') {
-      if (this._data === undefined) return false;
-      if (this._data.assets.length !== 1) return false;
-      const [asset] = this._data.assets;
+      if (this.#data === undefined) return false;
+      if (this.#data.assets.length !== 1) return false;
+      const [asset] = this.#data.assets;
 
-      if (this._paths.size === 0) {
-        if (!this._data.uniquePath) return false;
+      if (this.#paths.size === 0) {
+        if (!this.#data.uniquePath) return false;
         if (asset.name === original) return true;
-      } else if (this._paths.size === 1) {
-        const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this._paths.entries();
+      } else if (this.#paths.size === 1) {
+        const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this.#paths.entries();
         let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
 
         while (pathsMapIteratorNextValue !== undefined) {
           const pathsMapIteratorNextAssets: readonly AssetInfo[] | undefined =
-            pathsMapIteratorNextValue[1]._data?.assets;
+            pathsMapIteratorNextValue[1].#data?.assets;
 
           if (pathsMapIteratorNextAssets === undefined) {
             pathsMapIteratorNextValue = pathsMapIterator.next().value;
@@ -147,7 +140,7 @@ class SuffixTree {
           }
 
           if (pathsMapIteratorNextAssets.length !== 1) return false;
-          if (!this._data.uniquePath) return false;
+          if (!this.#data.uniquePath) return false;
           if (asset.name !== original) return false;
 
           pathsMapIteratorNextValue = pathsMapIterator.next().value;
@@ -160,15 +153,15 @@ class SuffixTree {
     }
 
     const nextChar = normalizedSuffix.charAt(0);
-    if (!this._paths.has(nextChar)) return false;
-    return this._paths.get(nextChar)?._queryUnique(normalizedSuffix.slice(1), original) ?? false;
+    if (!this.#paths.has(nextChar)) return false;
+    return this.#paths.get(nextChar)?._queryUnique(normalizedSuffix.slice(1), original) ?? false;
   }
 
   private _queryExact(normalizedSuffix: string, original: string): boolean {
     if (normalizedSuffix === '') {
-      if (this._data === undefined) return false;
+      if (this.#data === undefined) return false;
       // reached the end of the query string
-      for (const asset of this._data.assets) {
+      for (const asset of this.#data.assets) {
         // exact match and case match
         if (asset.name === original) return true;
       }
@@ -177,78 +170,89 @@ class SuffixTree {
     }
 
     const nextChar = normalizedSuffix.charAt(0);
-    if (!this._paths.has(nextChar)) return false;
-    return this._paths.get(nextChar)?._queryExact(normalizedSuffix.slice(1), original) ?? false;
+    if (!this.#paths.has(nextChar)) return false;
+    return this.#paths.get(nextChar)?._queryExact(normalizedSuffix.slice(1), original) ?? false;
+  }
+
+  #getOrAddTree(char: string): SuffixTree | undefined {
+    if (!this.#paths.has(char)) {
+      this.#paths.set(char, new SuffixTree());
+    }
+    return this.#paths.get(char);
   }
 }
 
 export class EmoteMatcher {
-  private readonly _root: SuffixTree;
+  readonly #root: Readonly<SuffixTree>;
 
   public constructor(
-    sevenPersonal: SevenTVEmotes | undefined,
-    sevenGlobal: SevenTVEmotes | undefined,
-    bttvPersonal: BTTVPersonalEmotes | undefined,
-    bttvGlobal: readonly BTTVEmote[] | undefined,
-    ffzPersonal: FFZPersonalEmotes | undefined,
-    ffzGlobal: FFZGlobalEmotes | undefined,
+    sevenGlobal: SevenTVEmotes,
+    bttvGlobal: readonly BTTVEmote[],
+    ffzGlobal: FFZGlobalEmotes,
     twitchGlobal: TwitchGlobalEmotes | undefined,
+    sevenPersonal: SevenTVEmotes | undefined,
+    bttvPersonal: BTTVPersonalEmotes | undefined,
+    ffzPersonal: FFZPersonalEmotes | undefined,
     sevenNotInSet: readonly SevenTVEmoteNotInSet[] | undefined
   ) {
-    if (arguments.length === 0) throw new Error('no arguments provided.');
-
-    this._root = new SuffixTree();
+    this.#root = new SuffixTree();
     let priority = arguments.length;
 
-    for (const emote of sevenPersonal?.emotes ?? []) this._root.addAllSuffix(sevenTVInSetToAsset(emote), priority);
+    for (const emote of sevenGlobal.emotes) this.#root.addAllSuffix(sevenTVInSetToAsset(emote), priority);
+    priority--;
+
+    for (const emote of bttvGlobal) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    priority--;
+
+    for (const emote of ffzGlobal.sets[`${FFZGLOBALSETSKEY}`].emoticons)
+      this.#root.addAllSuffix(ffzToAsset(emote), priority);
+    priority--;
+
+    for (const emote of twitchGlobal?.data ?? []) this.#root.addAllSuffix(twitchToAsset(emote), priority);
+    if (twitchGlobal !== undefined) priority--;
+
+    for (const emote of sevenPersonal?.emotes ?? []) this.#root.addAllSuffix(sevenTVInSetToAsset(emote), priority);
     if (sevenPersonal !== undefined) priority--;
 
-    for (const emote of sevenGlobal?.emotes ?? []) this._root.addAllSuffix(sevenTVInSetToAsset(emote), priority);
-    if (sevenGlobal !== undefined) priority--;
-
-    for (const emote of bttvPersonal?.channelEmotes ?? []) this._root.addAllSuffix(bttvToAsset(emote), priority);
+    for (const emote of bttvPersonal?.channelEmotes ?? []) this.#root.addAllSuffix(bttvToAsset(emote), priority);
     if (bttvPersonal !== undefined) priority--;
 
-    for (const emote of bttvPersonal?.sharedEmotes ?? []) this._root.addAllSuffix(bttvToAsset(emote), priority);
+    for (const emote of bttvPersonal?.sharedEmotes ?? []) this.#root.addAllSuffix(bttvToAsset(emote), priority);
     if (bttvPersonal !== undefined) priority--;
-
-    for (const emote of bttvGlobal ?? []) this._root.addAllSuffix(bttvToAsset(emote), priority);
-    if (bttvGlobal !== undefined) priority--;
 
     for (const emote of ffzPersonal?.sets[ffzPersonal.room.set].emoticons ?? [])
-      this._root.addAllSuffix(ffzToAsset(emote), priority);
+      this.#root.addAllSuffix(ffzToAsset(emote), priority);
     if (ffzPersonal !== undefined) priority--;
-
-    for (const emote of ffzGlobal?.sets[`${FFZGLOBALSETSKEY}`].emoticons ?? [])
-      this._root.addAllSuffix(ffzToAsset(emote), priority);
-    if (ffzGlobal !== undefined) priority--;
-
-    for (const emote of twitchGlobal?.data ?? []) this._root.addAllSuffix(twitchToAsset(emote), priority);
-    if (twitchGlobal !== undefined) priority--;
 
     for (const emote of sevenNotInSet ?? []) {
       //there may be a case where an emote was added with /addemote
       //and afterwards added to the channel
+      //or it was added to 7tv global emotes
       if (this.matchSingleExact(emote.name)) continue;
 
-      this._root.addAllSuffix(sevenTVNotInSetToAsset(emote), priority);
+      this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), priority);
     }
+    //no need for priority-- here
   }
 
   public matchSingle(query: string): AssetInfo | undefined {
-    return this._root.query(query);
+    return this.#root.query(query);
   }
 
   public matchSingleUnique(query: string, original: string): boolean {
-    return this._root.queryUnique(query, original);
+    return this.#root.queryUnique(query, original);
   }
 
   public matchSingleExact(query: string): boolean {
-    return this._root.queryExact(query);
+    return this.#root.queryExact(query);
   }
 
   // returns undefined for unmatched
   public matchMulti(queries: readonly string[]): readonly (AssetInfo | undefined)[] {
-    return queries.map((q) => this._root.query(q));
+    return queries.map((q) => this.#root.query(q));
+  }
+
+  public addSevenTVEmoteNotInSetSuffix(emote: SevenTVEmoteNotInSet): void {
+    this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), 0);
   }
 }

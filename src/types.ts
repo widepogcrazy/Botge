@@ -18,8 +18,8 @@ export type SevenTVEmoteFile = {
 
 export type SevenTVEmoteInSet = {
   readonly name: string;
+  readonly flags: number;
   readonly data: {
-    readonly flags: number;
     readonly animated: boolean;
     readonly host: {
       readonly url: string;

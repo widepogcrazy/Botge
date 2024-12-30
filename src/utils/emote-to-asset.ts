@@ -13,14 +13,14 @@ import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
 const EMOTESIZE = 2;
 
 export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): AssetInfo {
-  const { name, data } = emote;
-  const { flags, host, animated } = data;
+  const { name, flags, data } = emote;
+  const { host, animated } = data;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);
   return {
     name: name,
     url: `https:${host.url}/${file?.name}`,
-    zeroWidth: !!(256 & flags),
+    zeroWidth: !!(1 & flags),
     animated: animated,
     width: file?.width,
     height: file?.height,

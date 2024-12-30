@@ -5,6 +5,7 @@ import { rm } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 
+import { GUILD_ID_CUTEDOG } from '../guild.js';
 import { downloadAsset } from '../utils/download-asset.js';
 import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/size-change.js';
 import { urlToAssetInfo } from '../utils/url-to-asset.js';
@@ -119,6 +120,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
       const size = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
       const fullSize = Boolean(interaction.options.get('fullsize')?.value);
       const stretch = Boolean(interaction.options.get('stretch')?.value);
+      const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
       if (tokens.length === 1) {
         const [token] = tokens;
@@ -131,7 +133,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
             await interaction.editReply('posting link through Botge wtf');
           } catch {
             await defer;
-            await interaction.editReply('jij');
+            await interaction.editReply(emoteNotFoundReply);
           }
 
           return;
@@ -169,7 +171,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
 
       if (assetsWithUndefined.some((asset) => asset === undefined)) {
         await defer;
-        await interaction.editReply('jij');
+        await interaction.editReply(emoteNotFoundReply);
         return;
       }
 

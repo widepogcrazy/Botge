@@ -1,27 +1,38 @@
-import { newEmoteMatcher } from './new-emote-matcher.js';
 import { Guild } from '../../guild.js';
-import type { PersonalEmoteEndpoints } from '../../paths-and-endpoints.js';
+import type { EmoteMatcher } from '../../emote-matcher.js';
+import type { PersonalEmoteMatcherConstructor } from '../../emote-matcher-constructor.js';
 import type { TwitchClipsMeiliSearch } from '../../twitch-clips-meili-search.js';
-import type { TwitchApi } from '../../api/twitch-api.js';
 import type { AddedEmotesDatabase } from '../../api/added-emotes-database.js';
 
 export async function newGuild(
   guildId: string,
-  broadcasterName: string,
-  personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints>,
-  twitchApi: Readonly<TwitchApi> | undefined,
+  broadcasterName: string | undefined,
+  twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined,
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
-  twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined
-): Promise<Readonly<Guild>> {
+  personalEmoteMatcherConstructor: Readonly<PersonalEmoteMatcherConstructor>
+): Promise<Readonly<Guild> | undefined> {
   addedEmotesDatabase.createTable(guildId);
-  const emoteMatcher = newEmoteMatcher(guildId, personalEmoteEndpoints, twitchApi, addedEmotesDatabase);
-  const twitchClipsMeiliSearchIndex = twitchClipsMeiliSearch?.getOrCreateIndex(guildId);
+
+  const emoteMatcher = (async (): Promise<Readonly<EmoteMatcher> | undefined> => {
+    const refreshBTTVAndFFZPersonalEmotes_ = personalEmoteMatcherConstructor.refreshBTTVAndFFZPersonalEmotes();
+    const refreshAddedEmotes_ = personalEmoteMatcherConstructor.refreshAddedEmotes();
+
+    await refreshBTTVAndFFZPersonalEmotes_;
+    await refreshAddedEmotes_;
+    return await personalEmoteMatcherConstructor.constructEmoteMatcher();
+  })();
+
+  const twitchClipsMeiliSearchIndex =
+    broadcasterName !== undefined ? twitchClipsMeiliSearch?.getOrCreateIndex(guildId) : undefined;
+
+  const emoteMatcher_ = await emoteMatcher;
+  if (emoteMatcher_ === undefined) return undefined;
 
   return new Guild(
     guildId,
     broadcasterName,
-    personalEmoteEndpoints,
-    await emoteMatcher,
-    await twitchClipsMeiliSearchIndex
+    await twitchClipsMeiliSearchIndex,
+    emoteMatcher_,
+    personalEmoteMatcherConstructor
   );
 }
