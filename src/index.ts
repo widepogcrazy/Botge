@@ -33,6 +33,8 @@ import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
+import { promises } from 'node:dns';
+import { updateCommands } from './update-commands-docker.js';
 
 //dotenv
 dotenv.config();
@@ -56,6 +58,15 @@ async function ensureDirTmp(): Promise<void> {
 
 const ensureDirTmp_ = ensureDirTmp();
 await ensureDir(DATABASE_DIR);
+
+const commandUpdate = (async function (): Promise<void> {
+  if (process.argv.length < 3) {
+    console.log('No commands lock file provided, skipping commands update.');
+    return;
+  }
+
+  await updateCommands(process.argv[2]);
+})();
 
 const bot = await (async (): Promise<Readonly<Bot>> => {
   const client: Client = new Client({ intents: [] });
@@ -191,4 +202,5 @@ scheduleJob('12 */12 * * *', () => {
 
 bot.registerHandlers();
 await ensureDirTmp_;
+await commandUpdate;
 await bot.start(DISCORD_TOKEN);

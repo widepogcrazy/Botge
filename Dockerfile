@@ -29,4 +29,4 @@ USER node
 VOLUME ["/app/tmp"]
 VOLUME ["/app/data"]
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/index.js", "/app/data/command.json"]
