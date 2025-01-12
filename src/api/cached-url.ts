@@ -1,6 +1,6 @@
 // each pattern should have one and only one capturing group. usually just the entirety of path.
 const rules: readonly (readonly [Readonly<RegExp>, string])[] = [
-  [new RegExp(/https:\/\/cdn.7tv.app(.*)/), '/7tv'],
+  // [new RegExp(/https:\/\/cdn.7tv.app(.*)/), '/7tv'],
   [new RegExp(/https:\/\/cdn.betterttv.net(.*)/), '/bttv'],
   [new RegExp(/https:\/\/cdn.frankerfacez.com(.*)/), '/ffz']
 ];
