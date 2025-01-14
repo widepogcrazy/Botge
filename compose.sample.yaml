@@ -4,7 +4,7 @@ services:
     ports:
         - 7700:7700
     environment:
-        - MEILI_MASTER_KEY=itmightbea24hourstreamtoday
+        - MEILI_MASTER_KEY=SAMPLEMASTERKEY
     volumes:
         - ./meili_data:/meili_data
     healthcheck:

@@ -1,10 +1,8 @@
 import type { v2 } from '@google-cloud/translate';
-import type { Client } from 'discord.js';
+import { Events, type Client } from 'discord.js';
 
 import type { ReadonlyOpenAI } from './types.js';
 import type { Guild } from './guild.js';
-import type { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
-import { PersonalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { addEmoteHandlerSevenTVNotInSet } from './command/add-emote.js';
 import { emoteHandler } from './command/emote.js';
 import { helpHandler } from './command/help.js';
@@ -23,7 +21,6 @@ export class Bot {
   readonly #openai: ReadonlyOpenAI | undefined;
   readonly #translate: v2.Translate | undefined;
   readonly #twitchApi: Readonly<TwitchApi> | undefined;
-  readonly #twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined;
   readonly #addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
   readonly #cachedUrl: Readonly<CachedUrl>;
   readonly #guilds: Readonly<Guild>[];
@@ -33,7 +30,6 @@ export class Bot {
     openai: ReadonlyOpenAI | undefined,
     translate: v2.Translate | undefined,
     twitchApi: Readonly<TwitchApi> | undefined,
-    twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
     cachedUrl: Readonly<CachedUrl>,
     guilds: readonly Readonly<Guild>[]
@@ -42,49 +38,28 @@ export class Bot {
     this.#openai = openai;
     this.#translate = translate;
     this.#twitchApi = twitchApi;
-    this.#twitchClipsMeiliSearch = twitchClipsMeiliSearch;
     this.#addedEmotesDatabase = addedEmotesDatabase;
     this.#cachedUrl = cachedUrl;
     this.#guilds = [...guilds];
   }
 
-  public refreshBTTVAndFFZPersonalEmotes(): void {
-    this.#guilds.forEach((guild) => {
-      guild.refreshBTTVAndFFZPersonalEmotes();
-    });
+  public get guilds(): readonly Readonly<Guild>[] {
+    return this.#guilds;
   }
-
-  public refreshEmotes(): void {
-    this.#guilds.forEach((guild) => {
-      void guild.refreshEmoteMatcher();
-    });
+  public get twitchApi(): Readonly<TwitchApi> | undefined {
+    return this.#twitchApi;
   }
-
-  public refreshClips(): void {
-    this.#guilds.forEach((guild) => {
-      void guild.refreshClips(this.#twitchApi);
-    });
-  }
-
-  public closeDatabase(): void {
-    try {
-      this.#addedEmotesDatabase.close();
-    } catch (err) {
-      console.log(`Error at closeDatabase: ${err instanceof Error ? err : 'error'}`);
-    }
-  }
-
-  public validateTwitchAccessToken(): void {
-    void this.#twitchApi?.validateAccessToken();
+  public get addedEmotesDatabase(): Readonly<AddedEmotesDatabase> {
+    return this.#addedEmotesDatabase;
   }
 
   public registerHandlers(): void {
-    this.#client.on('ready', () => {
+    this.#client.on(Events.ClientReady, () => {
       console.log(`Logged in as ${this.#client.user?.tag ?? ''}!`);
     });
 
     //interaction
-    this.#client.on('interactionCreate', async (interaction) => {
+    this.#client.on(Events.InteractionCreate, async (interaction) => {
       //interaction not
       if (!interaction.isChatInputCommand()) return;
 
@@ -92,26 +67,19 @@ export class Bot {
       if (guildId === null || user.bot) return;
 
       const guild =
-        this.#guilds.find((guild_) => guild_.id === guildId) ??
-        (await (async (): Promise<Readonly<Guild> | undefined> => {
-          const newGuild_ = await newGuild(
-            guildId,
+        this.#guilds.find((guild_) => guild_.ids.some((id) => id === guildId)) ??
+        (await (async (): Promise<Readonly<Guild>> => {
+          const newGuildWithoutPersonalEmotes_ = await newGuild(
+            [guildId],
             undefined,
-            this.#twitchClipsMeiliSearch,
+            undefined,
             this.#addedEmotesDatabase,
-            new PersonalEmoteMatcherConstructor(guildId, undefined)
+            undefined
           );
+          this.#guilds.push(newGuildWithoutPersonalEmotes_);
 
-          if (newGuild_ !== undefined) {
-            this.#guilds.push(newGuild_);
-          }
-          return newGuild_;
+          return newGuildWithoutPersonalEmotes_;
         })());
-
-      if (guild === undefined) {
-        void interaction.reply('something went wrong. please try again later.');
-        return;
-      }
       const { emoteMatcher, twitchClipsMeiliSearchIndex } = guild;
 
       //interaction emote

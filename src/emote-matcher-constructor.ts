@@ -62,107 +62,51 @@ export class GlobalEmoteMatcherConstructor {
   }
 
   public async refreshGlobalEmotes(): Promise<void> {
-    const sevenTVGlobal = (async (): Promise<SevenTVEmotes | undefined> => {
-      try {
-        return (await fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.sevenTV)) as SevenTVEmotes;
-      } catch (error: unknown) {
-        console.error(`Error fetching sevenTVGlobal: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
-    const bttvGlobal = (async (): Promise<readonly BTTVEmote[] | undefined> => {
-      try {
-        return (await fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.bttv)) as readonly BTTVEmote[];
-      } catch (error: unknown) {
-        console.error(`Error fetching bttvGlobal: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
-    const ffzGlobal = (async (): Promise<FFZGlobalEmotes | undefined> => {
-      try {
-        return (await fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.ffz)) as FFZGlobalEmotes;
-      } catch (error: unknown) {
-        console.error(`Error fetching ffzGlobal: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
+    const sevenTVGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.sevenTV) as Promise<SevenTVEmotes>;
+    const bttvGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.bttv) as Promise<readonly BTTVEmote[]>;
+    const ffzGlobal = fetchAndJson(GLOBAL_EMOTE_ENDPOINTS.ffz) as Promise<FFZGlobalEmotes>;
     const twitchGlobal = this.#twitchApi?.emotesGlobal();
 
-    //keep the old value if the new value is undefined
-    this.#sevenTVGlobal = (await sevenTVGlobal) ?? this.#sevenTVGlobal;
-    this.#bttvGlobal = (await bttvGlobal) ?? this.#bttvGlobal;
-    this.#ffzGlobal = (await ffzGlobal) ?? this.#ffzGlobal;
-    this.#twitchGlobal = (await twitchGlobal) ?? this.#twitchGlobal;
+    this.#sevenTVGlobal = await sevenTVGlobal;
+    this.#bttvGlobal = await bttvGlobal;
+    this.#ffzGlobal = await ffzGlobal;
+    this.#twitchGlobal = await twitchGlobal;
   }
 }
 
 export class PersonalEmoteMatcherConstructor {
-  readonly #guildId: string;
+  readonly #guildIds: readonly string[];
   readonly #personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined;
   #sevenTVPersonal: SevenTVEmotes | undefined = undefined;
   #bttvPersonal: BTTVPersonalEmotes | undefined = undefined;
   #ffzPersonal: FFZPersonalEmotes | undefined = undefined;
-  #addedEmotes: readonly SevenTVEmoteNotInSet[] | undefined = undefined;
-  #bttvAndFFZPersonalEmotesAssigned = false;
-  #addedEmotesAssigned = false;
+  #addedEmotes: SevenTVEmoteNotInSet[] | undefined = undefined;
 
-  public constructor(guildId: string, personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined) {
-    this.#guildId = guildId;
+  private constructor(
+    guildIds: readonly string[],
+    personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined
+  ) {
+    this.#guildIds = guildIds;
     this.#personalEmoteEndpoints = personalEmoteEndpoints;
   }
 
-  public async refreshBTTVAndFFZPersonalEmotes(): Promise<void> {
-    const bttvPersonal = (async (): Promise<BTTVPersonalEmotes | undefined> => {
-      try {
-        return this.#personalEmoteEndpoints?.bttv !== undefined
-          ? ((await fetchAndJson(this.#personalEmoteEndpoints.bttv)) as BTTVPersonalEmotes)
-          : undefined;
-      } catch (error: unknown) {
-        console.error(`Error fetching bttvPersonal: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
-    const ffzPersonal = (async (): Promise<FFZPersonalEmotes | undefined> => {
-      try {
-        return this.#personalEmoteEndpoints?.ffz !== undefined
-          ? ((await fetchAndJson(this.#personalEmoteEndpoints.ffz)) as FFZPersonalEmotes)
-          : undefined;
-      } catch (error: unknown) {
-        console.error(`Error fetching ffzPersonal: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
+  public static async create(
+    guildIds: readonly string[],
+    personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined
+  ): Promise<Readonly<PersonalEmoteMatcherConstructor>> {
+    const personalEmoteMatcherConstructor = new PersonalEmoteMatcherConstructor(guildIds, personalEmoteEndpoints);
 
-    this.#bttvPersonal = (await bttvPersonal) ?? this.#bttvPersonal;
-    this.#ffzPersonal = (await ffzPersonal) ?? this.#ffzPersonal;
-    this.#bttvAndFFZPersonalEmotesAssigned = true;
+    const refreshBTTVAndFFZPersonalEmotes_ = personalEmoteMatcherConstructor.refreshBTTVAndFFZPersonalEmotes();
+    const refreshAddedEmotes_ = personalEmoteMatcherConstructor.#refreshAddedEmotes();
+
+    await refreshBTTVAndFFZPersonalEmotes_;
+    await refreshAddedEmotes_;
+    return personalEmoteMatcherConstructor;
   }
 
-  public async refreshAddedEmotes(): Promise<void> {
+  public async constructEmoteMatcher(): Promise<Readonly<EmoteMatcher>> {
     const globalEmoteMatcherConstructor = GlobalEmoteMatcherConstructor.instance;
 
-    const addedEmotes = (async (): Promise<readonly SevenTVEmoteNotInSet[] | undefined> => {
-      try {
-        return await Promise.all(
-          globalEmoteMatcherConstructor.addedEmotesDatabase
-            .getAll(this.#guildId)
-            .map(async (addedEmote) => fetchAndJson(addedEmote.url)) as readonly Promise<SevenTVEmoteNotInSet>[]
-        );
-      } catch (error: unknown) {
-        console.error(`Error fetching addedEmotes: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
-
-    this.#addedEmotes = (await addedEmotes) ?? this.#addedEmotes;
-    this.#addedEmotesAssigned = true;
-  }
-
-  public async constructEmoteMatcher(): Promise<Readonly<EmoteMatcher> | undefined> {
-    if (!this.#bttvAndFFZPersonalEmotesAssigned || !this.#addedEmotesAssigned)
-      throw new Error('BTTV and FFZ personal emotes or Added Emotes are not assigned.');
-
-    const globalEmoteMatcherConstructor = GlobalEmoteMatcherConstructor.instance;
     if (
       globalEmoteMatcherConstructor.sevenTVGlobal === undefined ||
       globalEmoteMatcherConstructor.bttvGlobal === undefined ||
@@ -170,18 +114,11 @@ export class PersonalEmoteMatcherConstructor {
     )
       throw new Error('Global emotes not assigned.');
 
-    const sevenTVPersonal = (async (): Promise<SevenTVEmotes | undefined> => {
-      try {
-        return this.#personalEmoteEndpoints?.sevenTV !== undefined
-          ? ((await fetchAndJson(this.#personalEmoteEndpoints.sevenTV)) as SevenTVEmotes)
-          : undefined;
-      } catch (error: unknown) {
-        console.error(`Error fetching sevenTVPersonal: ${error instanceof Error ? error : 'error'}`);
-        return undefined;
-      }
-    })();
-
-    this.#sevenTVPersonal = (await sevenTVPersonal) ?? this.#sevenTVPersonal;
+    const sevenTVPersonal =
+      this.#personalEmoteEndpoints?.sevenTV !== undefined
+        ? (fetchAndJson(this.#personalEmoteEndpoints.sevenTV) as Promise<SevenTVEmotes>)
+        : undefined;
+    this.#sevenTVPersonal = await sevenTVPersonal;
 
     return new EmoteMatcher(
       globalEmoteMatcherConstructor.sevenTVGlobal,
@@ -193,5 +130,40 @@ export class PersonalEmoteMatcherConstructor {
       this.#ffzPersonal,
       this.#addedEmotes
     );
+  }
+
+  public async refreshBTTVAndFFZPersonalEmotes(): Promise<void> {
+    if (this.#personalEmoteEndpoints === undefined) return;
+
+    const bttvPersonal =
+      this.#personalEmoteEndpoints.bttv !== undefined
+        ? (fetchAndJson(this.#personalEmoteEndpoints.bttv) as Promise<BTTVPersonalEmotes>)
+        : undefined;
+    const ffzPersonal =
+      this.#personalEmoteEndpoints.ffz !== undefined
+        ? (fetchAndJson(this.#personalEmoteEndpoints.ffz) as Promise<FFZPersonalEmotes>)
+        : undefined;
+
+    this.#bttvPersonal = await bttvPersonal;
+    this.#ffzPersonal = await ffzPersonal;
+  }
+
+  public addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet: SevenTVEmoteNotInSet): void {
+    this.#addedEmotes?.push(sevenTVEmoteNotInSet);
+  }
+
+  async #refreshAddedEmotes(): Promise<void> {
+    const globalEmoteMatcherConstructor = GlobalEmoteMatcherConstructor.instance;
+
+    const addedEmotes = globalEmoteMatcherConstructor.addedEmotesDatabase.getAll(this.#guildIds);
+    const sevenTVEmoteNotInSets = (await Promise.all(
+      addedEmotes.map(async (addedEmote) => fetchAndJson(addedEmote.url))
+    )) as SevenTVEmoteNotInSet[];
+    sevenTVEmoteNotInSets.forEach((sevenTVEmoteNotInSet, index) => {
+      const { alias } = addedEmotes[index];
+      if (alias !== undefined) sevenTVEmoteNotInSet.name = alias;
+    });
+
+    this.#addedEmotes = sevenTVEmoteNotInSets;
   }
 }

@@ -175,15 +175,14 @@ class SuffixTree {
   }
 
   #getOrAddTree(char: string): SuffixTree | undefined {
-    if (!this.#paths.has(char)) {
-      this.#paths.set(char, new SuffixTree());
-    }
+    if (!this.#paths.has(char)) this.#paths.set(char, new SuffixTree());
     return this.#paths.get(char);
   }
 }
 
 export class EmoteMatcher {
   readonly #root: Readonly<SuffixTree>;
+  readonly #priority: number;
 
   public constructor(
     sevenGlobal: SevenTVEmotes,
@@ -232,7 +231,8 @@ export class EmoteMatcher {
 
       this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), priority);
     }
-    //no need for priority-- here
+
+    this.#priority = priority;
   }
 
   public matchSingle(query: string): AssetInfo | undefined {
@@ -253,6 +253,6 @@ export class EmoteMatcher {
   }
 
   public addSevenTVEmoteNotInSetSuffix(emote: SevenTVEmoteNotInSet): void {
-    this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), 0);
+    this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), this.#priority);
   }
 }

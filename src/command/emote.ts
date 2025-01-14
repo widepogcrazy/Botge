@@ -5,10 +5,10 @@ import { rm } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 
-import { GUILD_ID_CUTEDOG } from '../guild.js';
+import { GUILD_ID_CUTEDOG } from '../guilds.js';
 import { downloadAsset } from '../utils/download-asset.js';
 import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/size-change.js';
-import { urlToAssetInfo } from '../utils/url-to-asset.js';
+import { parseToken } from '../utils/parse-token.js';
 import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
 import type { EmoteMatcher } from '../emote-matcher.js';
@@ -157,14 +157,14 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
       const matchMulti_ = em.matchMulti(tokens);
 
       const assetsWithUndefined: readonly (AssetInfo | string | undefined)[] = await Promise.all(
-        matchMulti_.map(async (asset, i) =>
-          asset !== undefined
+        matchMulti_.map(async (match, i) =>
+          match !== undefined
             ? fullSize
-              ? assetSizeChange(asset, maxPlatformSize(asset.platform))
+              ? assetSizeChange(match, maxPlatformSize(match.platform))
               : size !== undefined
-                ? assetSizeChange(asset, size)
-                : asset
-            : urlToAssetInfo(tokens[i], fullSize)
+                ? assetSizeChange(match, size)
+                : match
+            : parseToken(tokens[i], fullSize)
         )
       );
       const assets: readonly (AssetInfo | string)[] = assetsWithUndefined.filter((asset) => asset !== undefined);
@@ -275,6 +275,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
               return;
             }
             await defer;
+
             await interaction.editReply({ content: 'gif creation failed' });
             void rm(outdir, { recursive: true });
 

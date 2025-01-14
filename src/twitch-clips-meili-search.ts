@@ -2,8 +2,8 @@ import type { MeiliSearch, EnqueuedTask, Index } from 'meilisearch';
 
 const INDEX_NAME = 'twitchClips';
 
-function getIndexName(guildId: string): string {
-  return `${INDEX_NAME}_${guildId}`;
+function getIndexName(guildIds: readonly string[]): string {
+  return `${INDEX_NAME}_${guildIds.join('_')}`;
 }
 
 export class TwitchClipsMeiliSearch {
@@ -13,8 +13,8 @@ export class TwitchClipsMeiliSearch {
     this.#meiliSearch = meiliSearch;
   }
 
-  public async getOrCreateIndex(guildId: string): Promise<Index | undefined> {
-    const indexName = getIndexName(guildId);
+  public async getOrCreateIndex(guildIds: readonly string[]): Promise<Index | undefined> {
+    const indexName = getIndexName(guildIds);
 
     const createIndexEnqueuedTask: Readonly<EnqueuedTask> = await this.#meiliSearch.createIndex(indexName, {
       primaryKey: 'id'
@@ -22,9 +22,5 @@ export class TwitchClipsMeiliSearch {
     await this.#meiliSearch.waitForTask(createIndexEnqueuedTask.taskUid);
 
     return await this.#meiliSearch.getIndex(indexName);
-  }
-
-  public deleteOldTwitchClipsIndex(): void {
-    void this.#meiliSearch.deleteIndex(INDEX_NAME);
   }
 }

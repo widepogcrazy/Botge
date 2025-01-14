@@ -19,16 +19,17 @@ import MeiliSearch from 'meilisearch';
 
 import type { ReadonlyOpenAI } from './types.js';
 import { Bot } from './bot.js';
+import type { Guild } from './guild.js';
 import {
   GUILD_ID_CUTEDOG,
   GUILD_ID_ELLY,
   BROADCASTER_NAME_CUTEDOG,
   BROADCASTER_NAME_ELLY,
-  type Guild
-} from './guild.js';
+  GUILD_ID_CUTEDOG2
+} from './guilds.js';
 import { DATABASE_DIR, DATABASE_ENDPOINTS, PERSONAL_EMOTE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
 import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
-import { GlobalEmoteMatcherConstructor, PersonalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
+import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
@@ -38,14 +39,16 @@ import { updateCommands } from './update-commands-docker.js';
 
 //dotenv
 dotenv.config();
-const DISCORD_TOKEN: string | undefined = process.env.DISCORD_TOKEN;
-const OPENAI_API_KEY: string | undefined = process.env.OPENAI_API_KEY;
-//const CREDENTIALS: string | undefined = process.env.CREDENTIALS;
-const TWITCH_CLIENT_ID: string | undefined = process.env.TWITCH_CLIENT_ID;
-const TWITCH_SECRET: string | undefined = process.env.TWITCH_SECRET;
-const MEILISEARCH_HOST: string | undefined = process.env.MEILISEARCH_HOST;
-const MEILISEARCH_API_KEY: string | undefined = process.env.MEILISEARCH_API_KEY;
-const LOCAL_CACHE_BASE: string | undefined = process.env.LOCAL_CACHE_BASE;
+const {
+  DISCORD_TOKEN,
+  OPENAI_API_KEY,
+  TWITCH_CLIENT_ID,
+  TWITCH_SECRET,
+  MEILISEARCH_HOST,
+  MEILISEARCH_API_KEY,
+  LOCAL_CACHE_BASE
+} = process.env;
+//const CREDENTIALS = process.env.CREDENTIALS;
 
 async function ensureDirTmp(): Promise<void> {
   await ensureDir(TMP_DIR);
@@ -99,73 +102,63 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILISEARCH_API_KEY }))
       : undefined;
 
-  //delete old index if it exists
-  twitchClipsMeiliSearch?.deleteOldTwitchClipsIndex();
-
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
 
   const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
   await GlobalEmoteMatcherConstructor.createInstance(await twitchApi, addedEmotesDatabase);
 
-  const guilds: readonly Promise<Readonly<Guild> | undefined>[] = [
+  const guilds: readonly Promise<Readonly<Guild>>[] = [
     newGuild(
-      GUILD_ID_CUTEDOG,
+      [GUILD_ID_CUTEDOG, GUILD_ID_CUTEDOG2],
       BROADCASTER_NAME_CUTEDOG,
       twitchClipsMeiliSearch,
       addedEmotesDatabase,
-      new PersonalEmoteMatcherConstructor(GUILD_ID_CUTEDOG, PERSONAL_EMOTE_ENDPOINTS.cutedog)
+      PERSONAL_EMOTE_ENDPOINTS.cutedog
     ),
     newGuild(
-      GUILD_ID_ELLY,
+      [GUILD_ID_ELLY],
       BROADCASTER_NAME_ELLY,
       twitchClipsMeiliSearch,
       addedEmotesDatabase,
-      new PersonalEmoteMatcherConstructor(GUILD_ID_ELLY, PERSONAL_EMOTE_ENDPOINTS.elly)
+      PERSONAL_EMOTE_ENDPOINTS.elly
     )
   ];
 
-  const guilds_ = await Promise.all(guilds);
-
-  if (guilds_.some((guild) => guild === undefined)) {
-    throw new Error('Error at creating guilds.');
-  }
-
-  return new Bot(
-    client,
-    openai,
-    undefined,
-    await twitchApi,
-    twitchClipsMeiliSearch,
-    addedEmotesDatabase,
-    cachedUrl,
-    guilds_.filter((guild) => guild !== undefined) as readonly Readonly<Guild>[]
-  );
+  return new Bot(client, openai, undefined, await twitchApi, addedEmotesDatabase, cachedUrl, await Promise.all(guilds));
 })();
+
+function closeDatabase(): void {
+  try {
+    bot.addedEmotesDatabase.close();
+  } catch (err) {
+    console.log(`Error at closeDatabase: ${err instanceof Error ? err : 'error'}`);
+  }
+}
 
 process.on('exit', (): void => {
   console.log('exiting');
-  bot.closeDatabase();
+  closeDatabase();
 });
 
 process.on('SIGINT', (): void => {
   console.log('received SIGINT');
-  bot.closeDatabase();
+  closeDatabase();
 });
 
 process.on('SIGTERM', (): void => {
   console.log('received SIGTERM');
-  bot.closeDatabase();
+  closeDatabase();
 });
 
 process.on('uncaughtException', (err: Readonly<Error>): void => {
   console.log(`uncaughtException: ${err instanceof Error ? err : 'error'}`);
-  bot.closeDatabase();
+  closeDatabase();
 });
 
 process.on('unhandledRejection', (err): void => {
   console.log(`unhandledRejection: ${err instanceof Error ? err : 'error'}`);
-  bot.closeDatabase();
+  closeDatabase();
 });
 
 // update every 20 minutes 0th second
@@ -173,7 +166,9 @@ scheduleJob('0 */20 * * * *', () => {
   try {
     console.log('Emote cache refreshing');
 
-    bot.refreshEmotes();
+    bot.guilds.forEach((guild) => {
+      void guild.refreshEmoteMatcher();
+    });
   } catch (error: unknown) {
     console.log(`refreshEmotes() failed, emotes might be stale: ${error instanceof Error ? error : 'error'}`);
   }
@@ -182,22 +177,42 @@ scheduleJob('0 */20 * * * *', () => {
 // update every hour, in the 54th minute 0th second
 // this is because of the 300 second timeout of fetch + 1 minute, so twitch api is validated before use
 scheduleJob('0 54 * * * *', () => {
-  bot.validateTwitchAccessToken();
+  try {
+    void bot.twitchApi?.validateAccessToken();
+  } catch (error: unknown) {
+    console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error : 'error'}`);
+  }
 });
 
 // update every 2 hours
 scheduleJob('0 */2 * * *', () => {
-  bot.refreshClips();
+  try {
+    bot.guilds.forEach((guild) => {
+      void guild.refreshClips(bot.twitchApi);
+    });
+  } catch (error: unknown) {
+    console.log(`refreshClips() failed: ${error instanceof Error ? error : 'error'}`);
+  }
 });
 
 // update every 6 hours in the 6th minute
 scheduleJob('6 */6 * * *', () => {
-  bot.refreshBTTVAndFFZPersonalEmotes();
+  try {
+    bot.guilds.forEach((guild) => {
+      void guild.personalEmoteMatcherConstructor.refreshBTTVAndFFZPersonalEmotes();
+    });
+  } catch (error: unknown) {
+    console.log(`refreshBTTVAndFFZPersonalEmotes() failed: ${error instanceof Error ? error : 'error'}`);
+  }
 });
 
 // update every 12 hours in the 12th minute
 scheduleJob('12 */12 * * *', () => {
-  void GlobalEmoteMatcherConstructor.instance.refreshGlobalEmotes();
+  try {
+    void GlobalEmoteMatcherConstructor.instance.refreshGlobalEmotes();
+  } catch (error: unknown) {
+    console.log(`refreshBTTVAndFFZPersonalEmotes() failed: ${error instanceof Error ? error : 'error'}`);
+  }
 });
 
 bot.registerHandlers();

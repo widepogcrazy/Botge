@@ -1,6 +1,6 @@
 import type { CommandInteraction } from 'discord.js';
 
-import { sevenTVUrlToSevenNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
+import { sevenTVUrlToSevenTVNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
 import type { AddedEmote, SevenTVEmoteNotInSet } from '../types.js';
 import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
 import type { AddedEmotesDatabase } from '../api/added-emotes-database.js';
@@ -14,9 +14,11 @@ export function addEmoteHandlerSevenTVNotInSet(
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const text = String(interaction.options.get('text')?.value);
+      const url = String(interaction.options.get('url')?.value);
+      const aliasOption = interaction.options.get('alias')?.value;
+      const alias = aliasOption !== undefined ? String(aliasOption) : undefined;
 
-      const sevenTVUrlToSevenNotInSet_ = await sevenTVUrlToSevenNotInSet(text);
+      const sevenTVUrlToSevenNotInSet_ = await sevenTVUrlToSevenTVNotInSet(url);
       if (sevenTVUrlToSevenNotInSet_ === undefined) {
         await defer;
         await interaction.editReply('invalid url');
@@ -24,29 +26,35 @@ export function addEmoteHandlerSevenTVNotInSet(
         return;
       }
 
-      if (guild.emoteMatcher.matchSingleExact(sevenTVUrlToSevenNotInSet_.name)) {
+      if (guild.emoteMatcher.matchSingleExact(alias ?? sevenTVUrlToSevenNotInSet_.name)) {
         await defer;
         await interaction.editReply('theres already an emote with the same name');
 
         return;
       }
 
-      const emoteId = text.split(SPLITTER).at(-1);
-      if (emoteId === undefined) {
-        //this shouldnt happen
+      const emoteId = url.split(SPLITTER).at(-1);
+      const addedEmote: AddedEmote = { url: `${CDN_ENDPOINTS.sevenTVNotInSet}${SPLITTER}${emoteId}`, alias: alias };
+      const addedEmotes = addedEmotesDatabase.getAll(guild.ids);
+      if (addedEmotes.some((addedEmote_) => addedEmote_.url === addedEmote.url)) {
         await defer;
-        await interaction.editReply('something went wrong');
+        await interaction.editReply('theres already an emote with the same url');
 
         return;
       }
-      const addedEmote: AddedEmote = { url: `${CDN_ENDPOINTS.sevenTVNotInSet}${SPLITTER}${emoteId}` };
-      addedEmotesDatabase.insert(addedEmote, guild.id);
-      const addedEmoteFetched = (await fetchAndJson(addedEmote.url)) as SevenTVEmoteNotInSet;
 
-      guild.addSevenTVEmoteNotInSet(addedEmoteFetched);
+      addedEmotesDatabase.insert(addedEmote, guild.ids);
+
+      const sevenTVEmoteNotInSet = (await fetchAndJson(addedEmote.url)) as SevenTVEmoteNotInSet;
+      if (alias !== undefined) sevenTVEmoteNotInSet.name = alias;
+
+      guild.personalEmoteMatcherConstructor.addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet);
+      guild.emoteMatcher.addSevenTVEmoteNotInSetSuffix(sevenTVEmoteNotInSet);
 
       await defer;
-      await interaction.editReply(`added emote ${sevenTVUrlToSevenNotInSet_.name}`);
+      await interaction.editReply(
+        `added emote ${sevenTVUrlToSevenNotInSet_.name}${alias !== undefined ? ` with alias ${alias}` : ''}`
+      );
 
       return;
     } catch (error) {

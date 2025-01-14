@@ -1,5 +1,5 @@
 import { sevenTVNotInSetToAsset } from './emote-to-asset.js';
-import { sevenTVUrlToSevenNotInSet } from './platform-url-to-api-url.js';
+import { sevenTVUrlToSevenTVNotInSet } from './platform-url-to-api-url.js';
 import type { AssetInfo } from '../types.js';
 import { Platform } from '../enums.js';
 
@@ -14,17 +14,11 @@ export function emoteSizeChange(url: string, size: number, platform: Platform): 
     if (platform === Platform.sevenInSet || platform === Platform.sevenNotInSet) {
       return url.replace('/2x', `/${size}x`);
     } else if (platform === Platform.bttv) {
-      if (size < 4) {
-        return url.replace('/2x', `/${size}x`);
-      }
+      if (size < 4) return url.replace('/2x', `/${size}x`);
     } else if (platform === Platform.ffz) {
-      if (size !== 3) {
-        return url.slice(0, -1) + `${size}`;
-      }
+      if (size !== 3) return url.slice(0, -1) + `${size}`;
     } else {
-      if (size < 4) {
-        return url.replace('/2.0', `/${size}.0`);
-      }
+      if (size < 4) return url.replace('/2.0', `/${size}.0`);
     }
   }
 
@@ -37,7 +31,7 @@ export async function assetSizeChange(asset: AssetInfo, size: number): Promise<A
   if (platform === Platform.sevenInSet || platform === Platform.sevenNotInSet) {
     const emoteId = url.split('/').at(-2);
     const sevenUrl = `https://7tv.app/emotes/${emoteId}`;
-    const sevenUrlToSevenNotInSet_ = await sevenTVUrlToSevenNotInSet(sevenUrl);
+    const sevenUrlToSevenNotInSet_ = await sevenTVUrlToSevenTVNotInSet(sevenUrl);
     const sevenNotInSetToAsset_ =
       sevenUrlToSevenNotInSet_ !== undefined ? sevenTVNotInSetToAsset(sevenUrlToSevenNotInSet_, size) : undefined;
 

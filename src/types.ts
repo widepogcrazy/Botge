@@ -5,9 +5,22 @@ import type { Hit } from 'meilisearch';
 
 import type { Platform } from './enums.js';
 
+import type {
+  SlashCommandOptionsOnlyBuilder,
+  SlashCommandStringOption,
+  SlashCommandBooleanOption,
+  SlashCommandAttachmentOption,
+  SlashCommandIntegerOption
+} from 'discord.js';
+
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 export type ReadonlyHit = DeepReadonly<Hit>;
 export type ReadonlyRegExpExecArray = DeepReadonly<RegExpExecArray>;
+export type ReadonlySlashCommandStringOption = DeepReadonly<SlashCommandStringOption>;
+export type ReadonlySlashCommandBooleanOption = DeepReadonly<SlashCommandBooleanOption>;
+export type ReadonlySlashCommandAttachmentOption = DeepReadonly<SlashCommandAttachmentOption>;
+export type ReadonlySlashCommandIntegerOption = DeepReadonly<SlashCommandIntegerOption>;
+export type ReadonlySlashCommandOptionsOnlyBuilder = DeepReadonly<SlashCommandOptionsOnlyBuilder>;
 
 export type SevenTVEmoteFile = {
   readonly name: string;
@@ -28,7 +41,7 @@ export type SevenTVEmoteInSet = {
   };
 };
 export type SevenTVEmoteNotInSet = {
-  readonly name: string;
+  name: string;
   readonly flags: number;
   readonly animated: boolean;
   readonly host: {
@@ -116,6 +129,7 @@ export type TwitchUsers = {
 
 export type AddedEmote = {
   readonly url: string;
+  readonly alias?: string;
 };
 
 export type AssetInfo = {
