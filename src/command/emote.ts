@@ -188,7 +188,7 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
       const maxWidth = fullSize ? getMaxWidth(downloadedAssets, maxHeight) : MAXWIDTH;
 
       const elements: HstackElement[] = [];
-      (() : void => {
+      ((): void => {
         // at least 2
         let boundary = 0;
         let i = 0;
