@@ -28,7 +28,7 @@ export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): As
   };
 }
 
-export function sevenTVNotInSetToAsset(emote: SevenTVEmoteNotInSet, size?: number): AssetInfo {
+export function sevenTVNotInSetToAsset(emote: Readonly<SevenTVEmoteNotInSet>, size?: number): AssetInfo {
   const { name, flags, host, animated } = emote;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);

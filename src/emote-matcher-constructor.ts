@@ -148,7 +148,7 @@ export class PersonalEmoteMatcherConstructor {
     this.#ffzPersonal = await ffzPersonal;
   }
 
-  public addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet: SevenTVEmoteNotInSet): void {
+  public addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet: Readonly<SevenTVEmoteNotInSet>): void {
     this.#addedEmotes?.push(sevenTVEmoteNotInSet);
   }
 
@@ -159,6 +159,7 @@ export class PersonalEmoteMatcherConstructor {
     const sevenTVEmoteNotInSets = (await Promise.all(
       addedEmotes.map(async (addedEmote) => fetchAndJson(addedEmote.url))
     )) as SevenTVEmoteNotInSet[];
+
     sevenTVEmoteNotInSets.forEach((sevenTVEmoteNotInSet, index) => {
       const { alias } = addedEmotes[index];
       if (alias !== undefined) sevenTVEmoteNotInSet.name = alias;

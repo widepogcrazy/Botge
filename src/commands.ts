@@ -11,7 +11,7 @@ import type {
 const emote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('emote')
   .setDescription('replies with a gif/png. precise lower/upper case not needed for uniquely named emotes')
-  .addStringOption((option) =>
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option
       .setName('name')
       .setDescription('the emote(s) name(s). works even if this input is a substring of the emotes original name')

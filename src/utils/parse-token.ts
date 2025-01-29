@@ -14,7 +14,6 @@ function parseEmoji(emoji: string): string | undefined {
     .replace('"', '')
     .replace('"', '')
     .replace('/>', '');
-  console.log(parsedEmoji);
 
   if (parsedEmoji === emoji) return undefined;
   return parsedEmoji;
@@ -31,13 +30,17 @@ export async function parseToken(url: string, highestSize: boolean): Promise<Ass
 
   if (sevenTVNotInSetToAsset_ !== undefined) return sevenTVNotInSetToAsset_;
 
-  const parseEmoji_ = parseEmoji(url);
-  if (parseEmoji_ !== undefined) return parseEmoji_;
-
   try {
     new URL(url);
     return url;
   } catch {
+    try {
+      const parseEmoji_ = parseEmoji(url);
+      if (parseEmoji_ !== undefined) return parseEmoji_;
+    } catch {
+      return undefined;
+    }
+
     return undefined;
   }
 }

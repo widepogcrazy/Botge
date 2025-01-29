@@ -1,21 +1,18 @@
 import dotenv from 'dotenv';
 import process from 'node:process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 import { REST, Routes } from 'discord.js';
 
 import { commands } from './commands.js';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 dotenv.config();
 
-const APP_ID: string | undefined = process.env.APP_ID;
-const DISCORD_TOKEN: string | undefined = process.env.DISCORD_TOKEN;
+const { APP_ID, DISCORD_TOKEN } = process.env;
 
 export async function updateCommands(lockFilePath: string): Promise<void> {
-  const currentCommandsJson: string = (function (): string {
-    if (!existsSync(lockFilePath)) {
-      return '';
-    }
+  const currentCommandsJson: string = ((): string => {
+    if (!existsSync(lockFilePath)) return '';
     return readFileSync(lockFilePath, 'utf8');
   })();
   const newCommandsJson = JSON.stringify(commands);
@@ -32,7 +29,7 @@ export async function updateCommands(lockFilePath: string): Promise<void> {
     return;
   }
 
-  const rest: Readonly<REST> = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
+  const rest: Readonly<REST> = new REST().setToken(DISCORD_TOKEN);
   await rest.put(Routes.applicationCommands(APP_ID), { body: commands });
   writeFileSync(lockFilePath, newCommandsJson, { encoding: 'utf8', flag: 'w+' });
   console.log('Discord commands updated.');

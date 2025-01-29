@@ -43,7 +43,7 @@ services:
 
       # MeiliSearch
       - MEILISEARCH_HOST=http://meilisearch:7700
-      - MEILISEARCH_API_KEY=itmightbea24hourstreamtoday
+      - MEILISEARCH_API_KEY=SAMPLEMASTERKEY
 
       # nginx
       - LOCAL_CACHE_BASE=http://nginx:80

@@ -192,7 +192,7 @@ export class EmoteMatcher {
     sevenPersonal: SevenTVEmotes | undefined,
     bttvPersonal: BTTVPersonalEmotes | undefined,
     ffzPersonal: FFZPersonalEmotes | undefined,
-    sevenNotInSet: readonly SevenTVEmoteNotInSet[] | undefined
+    sevenNotInSet: readonly Readonly<SevenTVEmoteNotInSet>[] | undefined
   ) {
     this.#root = new SuffixTree();
     let priority = arguments.length;
@@ -252,7 +252,7 @@ export class EmoteMatcher {
     return queries.map((q) => this.#root.query(q));
   }
 
-  public addSevenTVEmoteNotInSetSuffix(emote: SevenTVEmoteNotInSet): void {
+  public addSevenTVEmoteNotInSetSuffix(emote: Readonly<SevenTVEmoteNotInSet>): void {
     this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), this.#priority);
   }
 }

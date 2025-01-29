@@ -110,32 +110,33 @@ class OverlayElement implements HstackElement {
   }
 }
 
-export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
+export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     const outdir = join(TMP_DIR, String(interaction.id));
+
     try {
       const tokens: readonly string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
-      const sizeOptions = interaction.options.get('size')?.value;
-      const size = sizeOptions !== undefined ? Number(sizeOptions) : undefined;
+      const size = ((): number | undefined => {
+        const sizeOptions = interaction.options.get('size')?.value;
+        return sizeOptions !== undefined ? Number(sizeOptions) : undefined;
+      })();
       const fullSize = Boolean(interaction.options.get('fullsize')?.value);
       const stretch = Boolean(interaction.options.get('stretch')?.value);
       const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
       if (tokens.length === 1) {
         const [token] = tokens;
-        const match = em.matchSingle(token);
+        const match = emoteMatcher.matchSingle(token);
 
         if (match === undefined) {
+          await defer;
           try {
             new URL(token);
-            await defer;
             await interaction.editReply('posting link through Botge wtf');
           } catch {
-            await defer;
             await interaction.editReply(emoteNotFoundReply);
           }
-
           return;
         }
 
@@ -154,18 +155,18 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
       //dir sync only if multiple emotes
       ensureDirSync(outdir);
 
-      const matchMulti_ = em.matchMulti(tokens);
-
       const assetsWithUndefined: readonly (AssetInfo | string | undefined)[] = await Promise.all(
-        matchMulti_.map(async (match, i) =>
-          match !== undefined
-            ? fullSize
-              ? assetSizeChange(match, maxPlatformSize(match.platform))
-              : size !== undefined
-                ? assetSizeChange(match, size)
-                : match
-            : parseToken(tokens[i], fullSize)
-        )
+        emoteMatcher
+          .matchMulti(tokens)
+          .map(async (match, i) =>
+            match !== undefined
+              ? fullSize
+                ? assetSizeChange(match, maxPlatformSize(match.platform))
+                : size !== undefined
+                  ? assetSizeChange(match, size)
+                  : match
+              : parseToken(tokens[i], fullSize)
+          )
       );
       const assets: readonly (AssetInfo | string)[] = assetsWithUndefined.filter((asset) => asset !== undefined);
 
@@ -178,46 +179,56 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
       const downloadedAssets: readonly DownloadedAsset[] = (
         await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i, cachedUrl)))
       ).filter((downloadedAsset) => downloadedAsset !== undefined);
-      if (downloadedAssets.length !== assets.length) {
-        throw new Error(DOWNLOAD_ASSET_ERROR_MESSAGE);
-      }
+      if (downloadedAssets.length !== assets.length) throw new Error(DOWNLOAD_ASSET_ERROR_MESSAGE);
 
-      const maxHeight_ = Math.max(...downloadedAssets.map((asset) => asset.height));
-      const maxHeight = fullSize ? (maxHeight_ % 2 === 0 ? maxHeight_ : maxHeight_ + 1) : MAXHEIGHT;
+      const maxHeight = ((): number => {
+        const maxHeight_ = Math.max(...downloadedAssets.map((asset) => asset.height));
+        return fullSize ? (maxHeight_ % 2 === 0 ? maxHeight_ : maxHeight_ + 1) : MAXHEIGHT;
+      })();
       const maxWidth = fullSize ? getMaxWidth(downloadedAssets, maxHeight) : MAXWIDTH;
 
-      // at least 2
-      let boundary = 0;
-      let i = 0;
       const elements: HstackElement[] = [];
-      for (; i < downloadedAssets.length; i++) {
-        const asset = assets[i];
-        if ((typeof asset === 'object' && !asset.zeroWidth) || typeof asset === 'string') {
-          // new group
-          if (i === boundary + 1) {
-            // single element
-            elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
-            boundary = i;
-          } else if (i > boundary) {
-            // at least 2
-            elements.push(
-              new OverlayElement(boundary, downloadedAssets.slice(boundary, i), fullSize, stretch, maxWidth, maxHeight)
-            );
-            boundary = i;
+      (() : void => {
+        // at least 2
+        let boundary = 0;
+        let i = 0;
+        for (; i < downloadedAssets.length; i++) {
+          const asset = assets[i];
+
+          if ((typeof asset === 'object' && !asset.zeroWidth) || typeof asset === 'string') {
+            // new group
+            if (i === boundary + 1) {
+              // single element
+              elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
+              boundary = i;
+            } else if (i > boundary) {
+              // at least 2
+              elements.push(
+                new OverlayElement(
+                  boundary,
+                  downloadedAssets.slice(boundary, i),
+                  fullSize,
+                  stretch,
+                  maxWidth,
+                  maxHeight
+                )
+              );
+              boundary = i;
+            }
           }
         }
-      }
 
-      // don't forget last one
-      if (i === boundary + 1) {
-        // single element
-        elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
-      } else if (i > boundary) {
-        // at least 2
-        elements.push(
-          new OverlayElement(boundary, downloadedAssets.slice(boundary, i), fullSize, stretch, maxWidth, maxHeight)
-        );
-      }
+        // don't forget last one
+        if (i === boundary + 1) {
+          // single element
+          elements.push(new SimpleElement(boundary, downloadedAssets[boundary], maxWidth, maxHeight));
+        } else if (i > boundary) {
+          // at least 2
+          elements.push(
+            new OverlayElement(boundary, downloadedAssets.slice(boundary, i), fullSize, stretch, maxWidth, maxHeight)
+          );
+        }
+      })();
 
       const maxDuration = Math.max(...downloadedAssets.map((layer) => layer.duration));
       const animated = downloadedAssets.some((asset) => asset.animated);
@@ -231,6 +242,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
           args.push('-t');
           args.push(`${maxDuration}`);
         }
+
         args.push('-i');
         args.push(asset.filename);
       });
@@ -246,9 +258,7 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
         filter.push(`[o0]scale`); // only to point the output stream
       }
 
-      if (animated) {
-        filter.push(',split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse');
-      }
+      if (animated) filter.push(',split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse');
       args.push(filter.join(''));
 
       args.push('-y');
@@ -264,24 +274,15 @@ export function emoteHandler(em: Readonly<EmoteMatcher>, cachedUrl: Readonly<Cac
 
       ffmpeg.on(
         'close',
-        (function () {
+        (() => {
           //Here you can get the exit code of the script
           return async function (code: number): Promise<void> {
-            if (code === 0) {
-              await defer;
-              await interaction.editReply({ files: [outfile] });
-              void rm(outdir, { recursive: true });
-
-              return;
-            }
             await defer;
-
-            await interaction.editReply({ content: 'gif creation failed' });
+            if (code === 0) await interaction.editReply({ files: [outfile] });
+            else await interaction.editReply('gif creation failed');
             void rm(outdir, { recursive: true });
-
-            return;
           };
-        })() // closure to keep |interaction|
+        })()
       );
 
       await defer;

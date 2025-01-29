@@ -15,7 +15,7 @@ import { join } from 'node:path';
 //import type { JWTInput } from 'google-auth-library';
 import OpenAI from 'openai';
 import { Client } from 'discord.js';
-import MeiliSearch from 'meilisearch';
+import { MeiliSearch } from 'meilisearch';
 
 import type { ReadonlyOpenAI } from './types.js';
 import { Bot } from './bot.js';
@@ -34,7 +34,6 @@ import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
-import { promises } from 'node:dns';
 import { updateCommands } from './update-commands-docker.js';
 
 //dotenv
