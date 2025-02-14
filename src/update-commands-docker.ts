@@ -30,6 +30,7 @@ export async function updateCommands(lockFilePath: string): Promise<void> {
   }
 
   const rest: Readonly<REST> = new REST().setToken(DISCORD_TOKEN);
+  await rest.put(Routes.applicationCommands(APP_ID), { body: [] });
   await rest.put(Routes.applicationCommands(APP_ID), { body: commands });
   writeFileSync(lockFilePath, newCommandsJson, { encoding: 'utf8', flag: 'w+' });
   console.log('Discord commands updated.');
