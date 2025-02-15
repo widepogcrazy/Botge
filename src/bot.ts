@@ -11,9 +11,12 @@ import { shortestuniquesubstringsHandler } from './command/shortest-unique-subst
 import { translateHandler } from './command/translate.js';
 import { transientHandler } from './command/transient.js';
 import { clipHandler } from './command/clip.js';
+import { findTheEmojiHandler } from './command/find-the-emoji.js';
+import { pingMeHandler } from './command/pingme.js';
 import type { CachedUrl } from './api/cached-url.js';
 import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
+import type { PingsDatabase } from './api/ping-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 
 export class Bot {
@@ -22,6 +25,7 @@ export class Bot {
   readonly #translate: v2.Translate | undefined;
   readonly #twitchApi: Readonly<TwitchApi> | undefined;
   readonly #addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
+  readonly #pingsDatabase: Readonly<PingsDatabase>;
   readonly #cachedUrl: Readonly<CachedUrl>;
   readonly #guilds: Readonly<Guild>[];
 
@@ -31,6 +35,7 @@ export class Bot {
     translate: v2.Translate | undefined,
     twitchApi: Readonly<TwitchApi> | undefined,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
+    pingsDatabase: Readonly<PingsDatabase>,
     cachedUrl: Readonly<CachedUrl>,
     guilds: readonly Readonly<Guild>[]
   ) {
@@ -39,8 +44,13 @@ export class Bot {
     this.#translate = translate;
     this.#twitchApi = twitchApi;
     this.#addedEmotesDatabase = addedEmotesDatabase;
+    this.#pingsDatabase = pingsDatabase;
     this.#cachedUrl = cachedUrl;
     this.#guilds = [...guilds];
+  }
+
+  public get client(): Readonly<Client> {
+    return this.#client;
   }
 
   public get guilds(): readonly Readonly<Guild>[] {
@@ -51,6 +61,10 @@ export class Bot {
   }
   public get addedEmotesDatabase(): Readonly<AddedEmotesDatabase> {
     return this.#addedEmotesDatabase;
+  }
+
+  public get pingsDatabase(): Readonly<PingsDatabase> {
+    return this.#pingsDatabase;
   }
 
   public registerHandlers(): void {
@@ -123,6 +137,16 @@ export class Bot {
 
       if (interaction.commandName === 'help') {
         void helpHandler()(interaction);
+        return;
+      }
+
+      if (interaction.commandName === 'findtheemoji') {
+        void findTheEmojiHandler()(interaction);
+        return;
+      }
+
+      if (interaction.commandName === 'pingme') {
+        void pingMeHandler(this.#pingsDatabase)(interaction, this.#client);
         return;
       }
 

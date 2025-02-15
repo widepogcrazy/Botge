@@ -10,7 +10,8 @@ import type {
   SlashCommandStringOption,
   SlashCommandBooleanOption,
   SlashCommandAttachmentOption,
-  SlashCommandIntegerOption
+  SlashCommandIntegerOption,
+  GuildEmoji
 } from 'discord.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
@@ -21,6 +22,7 @@ export type ReadonlySlashCommandBooleanOption = DeepReadonly<SlashCommandBoolean
 export type ReadonlySlashCommandAttachmentOption = DeepReadonly<SlashCommandAttachmentOption>;
 export type ReadonlySlashCommandIntegerOption = DeepReadonly<SlashCommandIntegerOption>;
 export type ReadonlySlashCommandOptionsOnlyBuilder = DeepReadonly<SlashCommandOptionsOnlyBuilder>;
+export type ReadonlyGuildEmoji = DeepReadonly<GuildEmoji>;
 
 export type SevenTVEmoteFile = {
   readonly name: string;
@@ -129,7 +131,16 @@ export type TwitchUsers = {
 
 export type AddedEmote = {
   readonly url: string;
-  readonly alias?: string;
+  readonly alias: string | null;
+};
+
+export type Ping = {
+  readonly time: number;
+  readonly hours: number | null;
+  readonly minutes: number | null;
+  readonly userId: string;
+  readonly channelId: string;
+  readonly message: string | null;
 };
 
 export type AssetInfo = {

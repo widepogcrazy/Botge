@@ -82,6 +82,32 @@ const help: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('help')
   .setDescription('links an image with helpful directions to adding the bot.');
 
+const findTheEmoji: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('findtheemoji')
+  .setDescription('generates a find the emoji grid, where each grid element is in a spoiler tag.')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option
+      .setName('emoji')
+      .setDescription('the emoji to find, by default its a random server emoji.')
+      .setRequired(false)
+  )
+  .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
+    option.setName('size').setDescription('the size of the grid, by default its 3x3.').setRequired(false)
+  );
+
+const pingMe: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('pingme')
+  .setDescription('pings you after the specified time. the hours and minutes get added together')
+  .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
+    option.setName('hours').setDescription('the hours to wait before pinging you').setRequired(false)
+  )
+  .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
+    option.setName('minutes').setDescription('the minutes to wait before pinging you').setRequired(false)
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('message').setDescription('the message to attach to the ping').setRequired(false)
+  );
+
 export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommandsJSONBody>[] = [
   emote.toJSON(),
   clip.toJSON(),
@@ -90,5 +116,7 @@ export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommands
   translate.toJSON(),
   shortestuniquesubstrings.toJSON(),
   transient.toJSON(),
-  help.toJSON()
+  help.toJSON(),
+  findTheEmoji.toJSON(),
+  pingMe.toJSON()
 ];

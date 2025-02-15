@@ -16,7 +16,7 @@ export function addEmoteHandlerSevenTVNotInSet(
     try {
       const url = String(interaction.options.get('url')?.value);
       const aliasOption = interaction.options.get('alias')?.value;
-      const alias = aliasOption !== undefined ? String(aliasOption) : undefined;
+      const alias = aliasOption !== undefined ? String(aliasOption) : null;
 
       const sevenTVUrlToSevenNotInSet_ = await sevenTVUrlToSevenTVNotInSet(url);
       if (sevenTVUrlToSevenNotInSet_ === undefined) {
@@ -46,14 +46,14 @@ export function addEmoteHandlerSevenTVNotInSet(
       addedEmotesDatabase.insert(addedEmote, guild.ids);
 
       const sevenTVEmoteNotInSet = (await fetchAndJson(addedEmote.url)) as SevenTVEmoteNotInSet;
-      if (alias !== undefined) sevenTVEmoteNotInSet.name = alias;
+      if (alias !== null) sevenTVEmoteNotInSet.name = alias;
 
       guild.personalEmoteMatcherConstructor.addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet);
       guild.emoteMatcher.addSevenTVEmoteNotInSetSuffix(sevenTVEmoteNotInSet);
 
       await defer;
       await interaction.editReply(
-        `added emote ${sevenTVUrlToSevenNotInSet_.name}${alias !== undefined ? ` with alias ${alias}` : ''}`
+        `added emote ${sevenTVUrlToSevenNotInSet_.name}${alias !== null ? ` with alias ${alias}` : ''}`
       );
 
       return;

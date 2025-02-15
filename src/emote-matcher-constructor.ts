@@ -162,7 +162,7 @@ export class PersonalEmoteMatcherConstructor {
 
     sevenTVEmoteNotInSets.forEach((sevenTVEmoteNotInSet, index) => {
       const { alias } = addedEmotes[index];
-      if (alias !== undefined) sevenTVEmoteNotInSet.name = alias;
+      if (alias !== null) sevenTVEmoteNotInSet.name = alias;
     });
 
     this.#addedEmotes = sevenTVEmoteNotInSets;

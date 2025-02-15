@@ -19,27 +19,27 @@
     "@google-cloud/translate": "^8.5.0",
     "@twemoji/api": "^15.1.0",
     "better-sqlite3": "^11.8.1",
-    "discord.js": "^14.17.3",
+    "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.3.0",
     "google-auth-library": "^9.15.1",
     "meilisearch": "^0.48.2",
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
-    "openai": "^4.80.1"
+    "openai": "^4.85.1"
   },
   "type": "module",
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
+    "@eslint/js": "^9.20.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/fs-extra": "^11.0.4",
     "@types/node-schedule": "^2.1.7",
-    "eslint": "^9.19.0",
-    "globals": "^15.14.0",
+    "eslint": "^9.20.1",
+    "globals": "^15.15.0",
     "husky": "^9.1.7",
-    "prettier": "^3.4.2",
+    "prettier": "^3.5.1",
     "ts-essentials": "^10.0.4",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.22.0"
+    "typescript-eslint": "^8.24.0"
   }
 }

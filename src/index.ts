@@ -32,9 +32,11 @@ import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
 import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
+import { PingsDatabase } from './api/ping-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
+import { registerPings } from './utils/ping/register-pings.js';
 
 //dotenv
 dotenv.config();
@@ -102,6 +104,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       : undefined;
 
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
+  const pingsDatabase: Readonly<PingsDatabase> = new PingsDatabase(DATABASE_ENDPOINTS.pings);
 
   const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
@@ -124,12 +127,22 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     )
   ];
 
-  return new Bot(client, openai, undefined, await twitchApi, addedEmotesDatabase, cachedUrl, await Promise.all(guilds));
+  return new Bot(
+    client,
+    openai,
+    undefined,
+    await twitchApi,
+    addedEmotesDatabase,
+    pingsDatabase,
+    cachedUrl,
+    await Promise.all(guilds)
+  );
 })();
 
 function closeDatabase(): void {
   try {
     bot.addedEmotesDatabase.close();
+    bot.pingsDatabase.close();
   } catch (err) {
     console.log(`Error at closeDatabase: ${err instanceof Error ? err : 'error'}`);
   }
@@ -218,3 +231,4 @@ bot.registerHandlers();
 await ensureDirTmp_;
 await commandUpdate;
 await bot.start(DISCORD_TOKEN);
+void registerPings(bot.client, bot.pingsDatabase);

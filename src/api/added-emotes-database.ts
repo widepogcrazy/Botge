@@ -22,10 +22,10 @@ export class AddedEmotesDatabase {
   }
 
   public getAll(guildIds: readonly string[]): readonly AddedEmote[] {
-    const select = this.#database.prepare(`SELECT url FROM ${getTableName(guildIds)}`);
-    const urls = select.all() as readonly AddedEmote[];
+    const select = this.#database.prepare(`SELECT url,alias FROM ${getTableName(guildIds)}`);
+    const addedEmotes = select.all() as readonly AddedEmote[];
 
-    return urls;
+    return addedEmotes;
   }
 
   public createTable(guildIds: readonly string[]): void {

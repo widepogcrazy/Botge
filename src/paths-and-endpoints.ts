@@ -16,7 +16,8 @@ export class PersonalEmoteEndpoints {
 }
 
 export const DATABASE_ENDPOINTS = {
-  addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`
+  addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`,
+  pings: `${DATABASE_DIR}/pings.sqlite`
 };
 
 export const CDN_ENDPOINTS = {

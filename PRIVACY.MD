@@ -1,20 +1,16 @@
 # Privacy Policy
 
-## Introduction
-
-Our application, Botge, does not collect, store, or share any personal data from its users.
-
 ## Data Collection
 
-We do not collect any personal data or information from users. The only data we collect is `guildId`, which are necessary for the bot's functionality. Please note that `guildId` are not considered personal user data.
+The only data we collect is `guild`, `channelId`, `user` and the guild's emojis which are necessary for the bot's functionality. `guild` is solely used for recognizing if the bot is in a server, collecting the server's emojis and storing the guild's ID. `channelId` is solely used for recognizing if the channel is a text channel and for the ability to send messages to that channel. Please note that these are not considered personal user data, except `user`, which is solely used for recognizing if the user is a bot and storing the user's ID for a limited time, otherwise it is not processed.
 
 ## Data Storage
 
-The only data we store are `guildId`. No other data is collected or stored. All interactions with the bot, aside from `guildIds`, are transient and are not logged or saved.
+The only data we store are `guildId`, `channelId` and `userId`, from which `channelId` and `userId` are only stored for the duration necessary for the `pingme` command to function correctly. No other data is collected or stored. All interactions with the bot, aside from `guildIds`, are transient and are not logged or saved.
 
 ## Data Sharing
 
-As we do not collect or store any personal data, we do not share any personal data with third parties. The `guildId` are used solely for the bot's functionality and are not shared with any third parties.
+We do not share any personal data with third parties. The mentioned are used solely for the bot's functionality and are not shared with any third parties.
 
 ## Changes to This Policy
 
