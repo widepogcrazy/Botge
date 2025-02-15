@@ -1,6 +1,6 @@
 # Botge
 
-Botge is a Discord bot that provides functionalities inspired by the [Twitch](https://www.twitch.tv) chat experience, including emote handling, [Twitch](https://www.twitch.tv) clip searching and other functionalities that enchance the Discord experience like [Google Cloud Translation](https://cloud.google.com/translate) and interacting with [OpenAI's](https://openai.com) GPT models.
+Botge is a Discord bot that provides functionalities inspired by the [Twitch](https://www.twitch.tv) chat experience, including emote handling, [Twitch](https://www.twitch.tv) clip searching and other functionalities that enchance the Discord experience like [Google Cloud Translation](https://cloud.google.com/translate)(**Currently broken.**) and interacting with [OpenAI's](https://openai.com) GPT models.
 
 Currently only two channels are supported.
 
@@ -14,6 +14,8 @@ It fetches global emotes and channel specific emotes(if specified) from those pl
 - **ChatGPT Integration**: Interact with OpenAI's GPT models for generating responses.
 - **Translation**: Translate text to English using Google Cloud Translate. **Currently broken.**
 - **Transient Messages**: Send messages that auto-delete after a specified duration.
+- **Find the emoji**: Generates a x by x grid, where each grid element is a random non-animated server emoji and is in spoiler tag, with only a single occurence of the the specified emoji.
+- **Ping Me**: Pings you after the specified time, optionally with a message.
 - **Help**: Send a message on how to add the bot.
 
 ## Usage

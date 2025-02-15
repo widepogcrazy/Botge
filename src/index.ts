@@ -165,12 +165,10 @@ process.on('SIGTERM', (): void => {
 
 process.on('uncaughtException', (err: Readonly<Error>): void => {
   console.log(`uncaughtException: ${err instanceof Error ? err : 'error'}`);
-  closeDatabase();
 });
 
 process.on('unhandledRejection', (err): void => {
   console.log(`unhandledRejection: ${err instanceof Error ? err : 'error'}`);
-  closeDatabase();
 });
 
 // update every 20 minutes 0th second

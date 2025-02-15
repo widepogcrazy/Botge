@@ -1,7 +1,7 @@
 import type { CommandInteraction } from 'discord.js';
 import type { ReadonlyGuildEmoji } from '../types.js';
 
-const DEFAULTSIZE = 3;
+const DEFAULTSIZE = 5;
 
 export function findTheEmojiHandler() {
   return async (interaction: CommandInteraction): Promise<void> => {
