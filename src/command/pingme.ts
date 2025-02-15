@@ -83,8 +83,9 @@ export function pingMeHandler(pingsDataBase: Readonly<PingsDatabase>) {
         pingsDataBase.delete(ping);
       });
 
+      const messageMessagePart = message !== undefined ? ` with message: ${message}` : '';
       await defer;
-      await interaction.editReply('The ping has been registered.');
+      await interaction.editReply(`The ping has been registered${messageMessagePart}!`);
     } catch (error) {
       console.log(`Error at pingMe --> ${error instanceof Error ? error : 'error'}`);
 
