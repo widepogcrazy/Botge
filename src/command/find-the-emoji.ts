@@ -35,9 +35,9 @@ export function findTheEmojiHandler() {
 
       const emojis = await (await guild.fetch()).emojis.fetch();
 
-      const emojiArray: readonly string[] = Array.from(emojis.entries()).map(
-        (emoji: readonly [string, ReadonlyGuildEmoji]) => `<:${emoji[1].name}:${emoji[0]}>`
-      );
+      const emojiArray: readonly string[] = Array.from(emojis.entries())
+        .filter((emoji: readonly [string, ReadonlyGuildEmoji]) => emoji[1].animated === false)
+        .map((emoji: readonly [string, ReadonlyGuildEmoji]) => `<:${emoji[1].name}:${emoji[0]}>`);
       if (emojiArray.length < 2) {
         await defer;
         await interaction.editReply('Must have at least 2 emojis in the server.');
