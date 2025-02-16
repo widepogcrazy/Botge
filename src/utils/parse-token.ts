@@ -46,8 +46,7 @@ var letter_to_id: Map<string, string> = new Map([
 ]);
 
 function parseSingleLetterOrNumber(token: string): string | undefined {
-  const base = 'https://cdn.jsdelivr.net/gh/jdecked/twemoji/assets/72x72';
-  return twemoji.base + '72x72' + '/' + letter_to_id.get('token') + '.png';
+  return twemoji.base + '72x72' + '/' + letter_to_id.get(token) + '.png';
 }
 
 function parseEmoji(emoji: string): string | undefined {
