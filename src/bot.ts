@@ -3,7 +3,6 @@ import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import type { Guild } from './guild.js';
 import { addEmoteHandlerSevenTVNotInSet } from './command/add-emote.js';
 import { emoteHandler } from './command/emote.js';
-import { helpHandler } from './command/help.js';
 import { chatgptHandler } from './command/openai.js';
 import { shortestuniquesubstringsHandler } from './command/shortest-unique-substrings.js';
 import { translateHandler } from './command/translate.js';
@@ -47,7 +46,7 @@ export class Bot {
     this.#guilds = [...guilds];
   }
 
-  public get client(): Readonly<Client> {
+  public get client(): Client {
     return this.#client;
   }
 
@@ -123,21 +122,13 @@ export class Bot {
       }
 
       if (interaction.commandName === 'translate') {
-        if (this.#translator !== undefined) {
-          await translateHandler(this.#translator)(interaction);
-        } else {
-          await interaction.reply('Translate command is currently not available.');
-        }
+        if (this.#translator !== undefined) void translateHandler(this.#translator)(interaction);
+        else void interaction.reply('Translate command is currently not available.');
         return;
       }
 
       if (interaction.commandName === 'transient') {
         void transientHandler()(interaction);
-        return;
-      }
-
-      if (interaction.commandName === 'help') {
-        void helpHandler()(interaction);
         return;
       }
 
@@ -147,7 +138,7 @@ export class Bot {
       }
 
       if (interaction.commandName === 'pingme') {
-        void pingMeHandler(this.#pingsDatabase)(interaction, this.#client);
+        void pingMeHandler(this.#pingsDatabase, this.#client)(interaction);
         return;
       }
 

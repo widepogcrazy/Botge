@@ -2,7 +2,7 @@ import type { DeepReadonly } from 'ts-essentials';
 
 import type OpenAI from 'openai';
 import type { Hit } from 'meilisearch';
-import * as deepl from 'deepl-node';
+import type { Translator } from 'deepl-node';
 
 import type { Platform } from './enums.js';
 
@@ -11,12 +11,11 @@ import type {
   SlashCommandStringOption,
   SlashCommandBooleanOption,
   SlashCommandAttachmentOption,
-  SlashCommandIntegerOption,
-  GuildEmoji
+  SlashCommandIntegerOption
 } from 'discord.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
-export type ReadonlyTranslator = DeepReadonly<deepl.Translator>;
+export type ReadonlyTranslator = DeepReadonly<Translator>;
 export type ReadonlyHit = DeepReadonly<Hit>;
 export type ReadonlyRegExpExecArray = DeepReadonly<RegExpExecArray>;
 export type ReadonlySlashCommandStringOption = DeepReadonly<SlashCommandStringOption>;
@@ -24,7 +23,6 @@ export type ReadonlySlashCommandBooleanOption = DeepReadonly<SlashCommandBoolean
 export type ReadonlySlashCommandAttachmentOption = DeepReadonly<SlashCommandAttachmentOption>;
 export type ReadonlySlashCommandIntegerOption = DeepReadonly<SlashCommandIntegerOption>;
 export type ReadonlySlashCommandOptionsOnlyBuilder = DeepReadonly<SlashCommandOptionsOnlyBuilder>;
-export type ReadonlyGuildEmoji = DeepReadonly<GuildEmoji>;
 
 export type SevenTVEmoteFile = {
   readonly name: string;

@@ -11,6 +11,7 @@ import { ensureDir, type Dirent } from 'fs-extra';
 import { readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import OpenAI from 'openai';
+import { Translator } from 'deepl-node';
 import { Client } from 'discord.js';
 import { MeiliSearch } from 'meilisearch';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
@@ -33,7 +34,6 @@ import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
 import { registerPings } from './utils/ping/register-pings.js';
-import * as deepl from 'deepl-node';
 
 //dotenv
 dotenv.config();
@@ -77,7 +77,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
 
   const translator: ReadonlyTranslator | undefined =
-    DEEPL_API_KEY !== undefined ? new deepl.Translator(DEEPL_API_KEY) : undefined;
+    DEEPL_API_KEY !== undefined ? new Translator(DEEPL_API_KEY) : undefined;
 
   const twitchApi =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
@@ -129,8 +129,8 @@ function closeDatabase(): void {
   try {
     bot.addedEmotesDatabase.close();
     bot.pingsDatabase.close();
-  } catch (err) {
-    console.log(`Error at closeDatabase: ${err instanceof Error ? err : 'error'}`);
+  } catch (error) {
+    console.log(`Error at closeDatabase: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -149,12 +149,12 @@ process.on('SIGTERM', (): void => {
   closeDatabase();
 });
 
-process.on('uncaughtException', (err: Readonly<Error>): void => {
-  console.log(`uncaughtException: ${err instanceof Error ? err : 'error'}`);
+process.on('uncaughtException', (error: Readonly<Error>): void => {
+  console.log(`uncaughtException: ${error.message}`);
 });
 
-process.on('unhandledRejection', (err): void => {
-  console.log(`unhandledRejection: ${err instanceof Error ? err : 'error'}`);
+process.on('unhandledRejection', (error): void => {
+  console.log(`unhandledRejection: ${error instanceof Error ? error.message : String(error)}`);
 });
 
 // update every 20 minutes 0th second
@@ -165,8 +165,10 @@ scheduleJob('0 */20 * * * *', () => {
     bot.guilds.forEach((guild) => {
       void guild.refreshEmoteMatcher();
     });
-  } catch (error: unknown) {
-    console.log(`refreshEmotes() failed, emotes might be stale: ${error instanceof Error ? error : 'error'}`);
+  } catch (error) {
+    console.log(
+      `refreshEmotes() failed, emotes might be stale: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 });
 
@@ -175,8 +177,8 @@ scheduleJob('0 */20 * * * *', () => {
 scheduleJob('0 54 * * * *', () => {
   try {
     void bot.twitchApi?.validateAccessToken();
-  } catch (error: unknown) {
-    console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error : 'error'}`);
+  } catch (error) {
+    console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
 
@@ -186,8 +188,8 @@ scheduleJob('0 */2 * * *', () => {
     bot.guilds.forEach((guild) => {
       void guild.refreshClips(bot.twitchApi);
     });
-  } catch (error: unknown) {
-    console.log(`refreshClips() failed: ${error instanceof Error ? error : 'error'}`);
+  } catch (error) {
+    console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
 
@@ -197,8 +199,8 @@ scheduleJob('6 */6 * * *', () => {
     bot.guilds.forEach((guild) => {
       void guild.personalEmoteMatcherConstructor.refreshBTTVAndFFZPersonalEmotes();
     });
-  } catch (error: unknown) {
-    console.log(`refreshBTTVAndFFZPersonalEmotes() failed: ${error instanceof Error ? error : 'error'}`);
+  } catch (error) {
+    console.log(`refreshBTTVAndFFZPersonalEmotes() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
 
@@ -206,8 +208,8 @@ scheduleJob('6 */6 * * *', () => {
 scheduleJob('12 */12 * * *', () => {
   try {
     void GlobalEmoteMatcherConstructor.instance.refreshGlobalEmotes();
-  } catch (error: unknown) {
-    console.log(`refreshBTTVAndFFZPersonalEmotes() failed: ${error instanceof Error ? error : 'error'}`);
+  } catch (error) {
+    console.log(`refreshBTTVAndFFZPersonalEmotes() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
 

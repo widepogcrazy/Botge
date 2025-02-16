@@ -5,7 +5,7 @@ import type { Client, TextChannel } from 'discord.js';
 import { hoursAndMinutesToMiliseconds, getMessage, milisecondsToHoursAndMinutes } from './ping-utils.js';
 import type { PingsDatabase } from '../../api/ping-database.js';
 
-export async function registerPings(client: Readonly<Client>, pingsDataBase: Readonly<PingsDatabase>): Promise<void> {
+export async function registerPings(client: Client, pingsDataBase: Readonly<PingsDatabase>): Promise<void> {
   const pings = pingsDataBase.getAll();
 
   for (const ping of pings) {

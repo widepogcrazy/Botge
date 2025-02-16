@@ -249,7 +249,7 @@ export class EmoteMatcher {
 
   // returns undefined for unmatched
   public matchMulti(queries: readonly string[]): readonly (AssetInfo | undefined)[] {
-    return queries.map((q) => (q.length !== 1 ? this.#root.query(q) : undefined));
+    return queries.map((query) => (query.length !== 1 ? this.#root.query(query) : undefined));
   }
 
   public addSevenTVEmoteNotInSetSuffix(emote: Readonly<SevenTVEmoteNotInSet>): void {

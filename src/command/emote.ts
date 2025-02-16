@@ -286,8 +286,8 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
       );
 
       await defer;
-    } catch (error: unknown) {
-      console.log(`Error at emoteHandler --> ${error instanceof Error ? error : 'error'}`);
+    } catch (error) {
+      console.log(`Error at emoteHandler --> ${error instanceof Error ? error.message : String(error)}`);
       const editReplyMessage =
         error instanceof Error && error.message === DOWNLOAD_ASSET_ERROR_MESSAGE
           ? 'failed to download gif(s)/png(s)'

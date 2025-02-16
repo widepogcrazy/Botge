@@ -20,6 +20,6 @@ try {
   const rest: Readonly<REST> = new REST().setToken(DISCORD_TOKEN);
   await rest.put(Routes.applicationCommands(APP_ID), { body: commands });
   console.log('Discord commands updated.');
-} catch (error: unknown) {
-  console.error(`Error updating discord commands: ${error instanceof Error ? error : 'error'}`);
+} catch (error) {
+  console.error(`Error updating discord commands: ${error instanceof Error ? error.message : String(error)}`);
 }

@@ -6,7 +6,7 @@ import { sevenTVUrlToSevenTVNotInSet } from './platform-url-to-api-url.js';
 import type { AssetInfo } from '../types.js';
 import { Platform } from '../enums.js';
 
-var letter_to_id: Map<string, string> = new Map([
+const letter_to_id = new Map<string, string>([
   ['A', '1f1e6'],
   ['B', '1f1e7'],
   ['C', '1f1e8'],
@@ -46,7 +46,10 @@ var letter_to_id: Map<string, string> = new Map([
 ]);
 
 function parseSingleLetterOrNumber(token: string): string | undefined {
-  return twemoji.base + '72x72' + '/' + letter_to_id.get(token) + '.png';
+  const letter_to_id_ = letter_to_id.get(token);
+  if (letter_to_id_ === undefined) return undefined;
+
+  return twemoji.base + '72x72' + '/' + letter_to_id_ + '.png';
 }
 
 function parseEmoji(emoji: string): string | undefined {

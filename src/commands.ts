@@ -78,10 +78,6 @@ const transient: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilde
     option.setName('duration').setDescription('duration in seconds before deletion, default: 3').setRequired(false)
   );
 
-const help: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
-  .setName('help')
-  .setDescription('links an image with helpful directions to adding the bot.');
-
 const findTheEmoji: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('findtheemoji')
   .setDescription('generates a find the emoji grid, where each grid element is in a spoiler tag.')
@@ -116,7 +112,6 @@ export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommands
   translate.toJSON(),
   shortestuniquesubstrings.toJSON(),
   transient.toJSON(),
-  help.toJSON(),
   findTheEmoji.toJSON(),
   pingMe.toJSON()
 ];

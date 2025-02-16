@@ -83,6 +83,5 @@ export class Guild {
     }
 
     console.log(`Updated ${updated} clips.`);
-    return;
   }
 }

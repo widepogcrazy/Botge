@@ -82,7 +82,7 @@ export function shortestuniquesubstringsHandler(em: Readonly<EmoteMatcher>) {
       await interaction.editReply(message);
       return;
     } catch (error) {
-      console.log(`Error at shortestuniquesubstrings --> ${error instanceof Error ? error : 'error'}`);
+      console.log(`Error at shortestuniquesubstrings --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply('failed to provide shortest unique substrings.');

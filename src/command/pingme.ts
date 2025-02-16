@@ -4,10 +4,15 @@ import type { Client, CommandInteraction, TextChannel } from 'discord.js';
 
 import type { Ping } from '../types.js';
 import type { PingsDatabase } from '../api/ping-database.js';
-import { hoursAndMinutesToMiliseconds, getMessage } from '../utils/ping/ping-utils.js';
+import {
+  hoursAndMinutesToMiliseconds,
+  getMessage,
+  getTimeMessagePart,
+  getMessageMessagePart
+} from '../utils/ping/ping-utils.js';
 
-export function pingMeHandler(pingsDataBase: Readonly<PingsDatabase>) {
-  return async (interaction: CommandInteraction, client: Readonly<Client>): Promise<void> => {
+export function pingMeHandler(pingsDataBase: Readonly<PingsDatabase>, client: Client) {
+  return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const hours = ((): number | undefined => {
@@ -83,11 +88,12 @@ export function pingMeHandler(pingsDataBase: Readonly<PingsDatabase>) {
         pingsDataBase.delete(ping);
       });
 
-      const messageMessagePart = message !== undefined ? ` with message: ${message}` : '';
       await defer;
-      await interaction.editReply(`The ping has been registered${messageMessagePart}!`);
+      await interaction.editReply(
+        `The ping has been registered for ${getTimeMessagePart(hours, minutes)}${getMessageMessagePart(message)}`
+      );
     } catch (error) {
-      console.log(`Error at pingMe --> ${error instanceof Error ? error : 'error'}`);
+      console.log(`Error at pingMe --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to register the ping.');

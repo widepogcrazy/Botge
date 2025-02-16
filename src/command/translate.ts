@@ -1,13 +1,10 @@
 import type { CommandInteraction } from 'discord.js';
+
 import type { ReadonlyTranslator } from '../types.js';
 
 export function translateHandler(translator: ReadonlyTranslator) {
   return async (interaction: CommandInteraction): Promise<void> => {
-    if (interaction.replied || interaction.deferred) {
-      console.warn('Skipping reply: Interaction was already handled.');
-      return;
-    }
-    await interaction.deferReply();
+    const defer = interaction.deferReply();
     try {
       const text = String(interaction.options.get('text')?.value);
 
@@ -17,11 +14,12 @@ export function translateHandler(translator: ReadonlyTranslator) {
         formality: 'prefer_less'
       });
 
+      await defer;
       await interaction.editReply(result.text);
-      return;
-    } catch (error: any) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`Error at translate --> ${errorMessage}`);
+    } catch (error: unknown) {
+      console.error(`Error at translate --> ${error instanceof Error ? error.message : String(error)}`);
+
+      await defer;
       await interaction.editReply('Failed to translate.');
     }
   };

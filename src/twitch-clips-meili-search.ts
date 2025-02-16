@@ -9,7 +9,7 @@ function getIndexName(guildIds: readonly string[]): string {
 export class TwitchClipsMeiliSearch {
   readonly #meiliSearch: Readonly<MeiliSearch>;
 
-  public constructor(meiliSearch: Readonly<MeiliSearch>) {
+  public constructor(meiliSearch: MeiliSearch) {
     this.#meiliSearch = meiliSearch;
   }
 

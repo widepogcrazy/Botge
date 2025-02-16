@@ -18,15 +18,14 @@
   "dependencies": {
     "@twemoji/api": "^15.1.0",
     "better-sqlite3": "^11.8.1",
+    "deepl-node": "^1.16.0",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.3.0",
-    "google-auth-library": "^9.15.1",
     "meilisearch": "^0.48.2",
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
-    "openai": "^4.85.1",
-    "deepl-node": "^1.16.0"
+    "openai": "^4.85.1"
   },
   "type": "module",
   "devDependencies": {
