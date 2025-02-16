@@ -123,8 +123,11 @@ export class Bot {
       }
 
       if (interaction.commandName === 'translate') {
-        if (this.#translator !== undefined) void translateHandler(this.#translator)(interaction);
-        void interaction.reply('translate command is currently not available.');
+        if (this.#translator !== undefined) {
+          await translateHandler(this.#translator)(interaction);
+        } else {
+          await interaction.reply('Translate command is currently not available.');
+        }
         return;
       }
 

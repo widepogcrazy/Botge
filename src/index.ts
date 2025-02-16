@@ -33,7 +33,7 @@ import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
 import { registerPings } from './utils/ping/register-pings.js';
-import { Translator } from 'deepl-node';
+import * as deepl from 'deepl-node';
 
 //dotenv
 dotenv.config();
@@ -77,7 +77,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
 
   const translator: ReadonlyTranslator | undefined =
-    DEEPL_API_KEY !== undefined ? new Translator(DEEPL_API_KEY) : undefined;
+    DEEPL_API_KEY !== undefined ? new deepl.Translator(DEEPL_API_KEY) : undefined;
 
   const twitchApi =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
