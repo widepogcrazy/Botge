@@ -10,14 +10,10 @@ import { scheduleJob } from 'node-schedule';
 import { ensureDir, type Dirent } from 'fs-extra';
 import { readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-
-//import { v2 } from '@google-cloud/translate';
-//import type { JWTInput } from 'google-auth-library';
 import OpenAI from 'openai';
 import { Client } from 'discord.js';
 import { MeiliSearch } from 'meilisearch';
-
-import type { ReadonlyOpenAI } from './types.js';
+import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import { Bot } from './bot.js';
 import type { Guild } from './guild.js';
 import {
@@ -37,12 +33,14 @@ import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
 import { registerPings } from './utils/ping/register-pings.js';
+import { Translator } from 'deepl-node';
 
 //dotenv
 dotenv.config();
 const {
   DISCORD_TOKEN,
   OPENAI_API_KEY,
+  DEEPL_API_KEY,
   TWITCH_CLIENT_ID,
   TWITCH_SECRET,
   MEILISEARCH_HOST,
@@ -78,20 +76,8 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   const openai: ReadonlyOpenAI | undefined =
     OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
 
-  //translate currently not working
-  /*
-  const translate = (async (): Promise<v2.Translate | undefined> => {
-    const jsonCredentials =
-      CREDENTIALS !== undefined ? ((await JSON.parse(CREDENTIALS)) as Readonly<JWTInput>) : undefined;
-
-    return jsonCredentials
-      ? new v2.Translate({
-          credentials: jsonCredentials,
-          projectId: jsonCredentials.project_id
-        })
-      : undefined;
-  })();
-  */
+  const translator: ReadonlyTranslator | undefined =
+    DEEPL_API_KEY !== undefined ? new Translator(DEEPL_API_KEY) : undefined;
 
   const twitchApi =
     TWITCH_CLIENT_ID !== undefined && TWITCH_SECRET !== undefined
@@ -130,7 +116,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   return new Bot(
     client,
     openai,
-    undefined,
+    translator,
     await twitchApi,
     addedEmotesDatabase,
     pingsDatabase,

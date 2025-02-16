@@ -1,23 +1,23 @@
 import type { CommandInteraction } from 'discord.js';
-import type { v2 } from '@google-cloud/translate';
+import type { ReadonlyTranslator } from '../types.js';
 
-export function translateHandler(translate: v2.Translate) {
+export function translateHandler(translator: ReadonlyTranslator) {
   return async (interaction: CommandInteraction): Promise<void> => {
-    const defer = interaction.deferReply();
+    await interaction.deferReply();
+
     try {
       const text = String(interaction.options.get('text')?.value);
-      const [translatedText] = await translate.translate(text, 'en');
-      // const api_resp = resp[1];  // how to check error?
 
-      await defer;
-      await interaction.editReply(translatedText);
+      // Let DeepL auto-detect the source language by passing null
+      const result = await translator.translateText(text, null, 'en-US');
+
+      await interaction.editReply(result.text);
       return;
-    } catch (error) {
-      console.log(`Error at translate --> ${error instanceof Error ? error : 'error'}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Error at translate --> ${errorMessage}`);
 
-      await defer;
       await interaction.editReply('Failed to translate.');
-      return;
     }
   };
 }

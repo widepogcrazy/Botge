@@ -2,6 +2,7 @@ import type { DeepReadonly } from 'ts-essentials';
 
 import type OpenAI from 'openai';
 import type { Hit } from 'meilisearch';
+import type { Translator } from 'deepl-node';
 
 import type { Platform } from './enums.js';
 
@@ -15,6 +16,7 @@ import type {
 } from 'discord.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
+export type ReadonlyTranslator = DeepReadonly<Translator>;
 export type ReadonlyHit = DeepReadonly<Hit>;
 export type ReadonlyRegExpExecArray = DeepReadonly<RegExpExecArray>;
 export type ReadonlySlashCommandStringOption = DeepReadonly<SlashCommandStringOption>;

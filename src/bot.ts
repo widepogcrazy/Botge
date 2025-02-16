@@ -1,7 +1,5 @@
-import type { v2 } from '@google-cloud/translate';
 import { Events, type Client } from 'discord.js';
-
-import type { ReadonlyOpenAI } from './types.js';
+import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import type { Guild } from './guild.js';
 import { addEmoteHandlerSevenTVNotInSet } from './command/add-emote.js';
 import { emoteHandler } from './command/emote.js';
@@ -22,7 +20,7 @@ import { newGuild } from './utils/constructors/new-guild.js';
 export class Bot {
   readonly #client: Client;
   readonly #openai: ReadonlyOpenAI | undefined;
-  readonly #translate: v2.Translate | undefined;
+  readonly #translator: ReadonlyTranslator | undefined;
   readonly #twitchApi: Readonly<TwitchApi> | undefined;
   readonly #addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
   readonly #pingsDatabase: Readonly<PingsDatabase>;
@@ -32,7 +30,7 @@ export class Bot {
   public constructor(
     client: Client,
     openai: ReadonlyOpenAI | undefined,
-    translate: v2.Translate | undefined,
+    translator: ReadonlyTranslator | undefined,
     twitchApi: Readonly<TwitchApi> | undefined,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
     pingsDatabase: Readonly<PingsDatabase>,
@@ -41,7 +39,7 @@ export class Bot {
   ) {
     this.#client = client;
     this.#openai = openai;
-    this.#translate = translate;
+    this.#translator = translator;
     this.#twitchApi = twitchApi;
     this.#addedEmotesDatabase = addedEmotesDatabase;
     this.#pingsDatabase = pingsDatabase;
@@ -125,7 +123,7 @@ export class Bot {
       }
 
       if (interaction.commandName === 'translate') {
-        if (this.#translate !== undefined) void translateHandler(this.#translate)(interaction);
+        if (this.#translator !== undefined) void translateHandler(this.#translator)(interaction);
         void interaction.reply('translate command is currently not available.');
         return;
       }
