@@ -110,6 +110,10 @@ class OverlayElement implements HstackElement {
   }
 }
 
+function onlyUnique(value: string, index: number, array: readonly string[]): boolean {
+  return array.indexOf(value) === index;
+}
+
 export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
@@ -155,9 +159,20 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
       //dir sync only if multiple emotes
       ensureDirSync(outdir);
 
-      const assetsWithUndefined: readonly (AssetInfo | string | undefined)[] = await Promise.all(
+      const uniqueTokens: readonly string[] = tokens.filter(onlyUnique);
+      const tokenPairs = ((): readonly (readonly [string, number])[] => {
+        const tokenPairs_: (readonly [string, number])[] = [];
+
+        for (let i = 0; i < tokens.length; i++)
+          for (let j = 0; j < uniqueTokens.length; j++)
+            if (tokens[i] === uniqueTokens[j]) tokenPairs_.push([tokens[i], j]);
+
+        return tokenPairs_;
+      })();
+
+      const uniqueAssetsWithUndefined: readonly (AssetInfo | string | undefined)[] = await Promise.all(
         emoteMatcher
-          .matchMulti(tokens)
+          .matchMulti(uniqueTokens)
           .map(async (match, i) =>
             match !== undefined
               ? fullSize
@@ -165,20 +180,45 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
                 : size !== undefined
                   ? assetSizeChange(match, size)
                   : match
-              : parseToken(tokens[i], fullSize)
+              : parseToken(uniqueTokens[i], fullSize)
           )
       );
-      const assets: readonly (AssetInfo | string)[] = assetsWithUndefined.filter((asset) => asset !== undefined);
+      const uniqueAssets: readonly (AssetInfo | string)[] = uniqueAssetsWithUndefined.filter(
+        (asset) => asset !== undefined
+      );
 
-      if (assetsWithUndefined.some((asset) => asset === undefined)) {
+      if (uniqueAssets.length !== uniqueAssetsWithUndefined.length) {
         await defer;
         await interaction.editReply(emoteNotFoundReply);
         return;
       }
 
-      const downloadedAssets: readonly DownloadedAsset[] = (
-        await Promise.all(assets.map(async (asset, i) => downloadAsset(outdir, asset, i, cachedUrl)))
-      ).filter((downloadedAsset) => downloadedAsset !== undefined);
+      const assets = ((): readonly (AssetInfo | string)[] => {
+        const assets_: (AssetInfo | string)[] = [];
+
+        for (let i = 0; i < tokenPairs.length; i++) {
+          for (let j = 0; j < uniqueAssets.length; j++) {
+            if (tokenPairs[i][1] === j) assets_.push(uniqueAssets[j]);
+          }
+        }
+
+        return assets_;
+      })();
+
+      const downloadedAssets = await (async (): Promise<readonly DownloadedAsset[]> => {
+        const downloadedAssets_: readonly DownloadedAsset[] = (
+          await Promise.all(uniqueAssets.map(async (asset, i) => downloadAsset(outdir, asset, i, cachedUrl)))
+        ).filter((downloadedAsset) => downloadedAsset !== undefined);
+        const downloadedAssets2_: DownloadedAsset[] = [];
+
+        for (let i = 0; i < tokenPairs.length; i++) {
+          for (let j = 0; j < downloadedAssets_.length; j++) {
+            if (tokenPairs[i][1] === j) downloadedAssets2_.push(downloadedAssets_[j]);
+          }
+        }
+
+        return downloadedAssets2_;
+      })();
       if (downloadedAssets.length !== assets.length) throw new Error(DOWNLOAD_ASSET_ERROR_MESSAGE);
 
       const maxHeight = ((): number => {
@@ -244,11 +284,9 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         }
 
         args.push('-i');
-        if (asset.filename.startsWith('http://') || asset.filename.startsWith('https://')) {
+        if (asset.filename.startsWith('http://') || asset.filename.startsWith('https://'))
           args.push('cache:' + asset.filename);
-        } else {
-          args.push(asset.filename);
-        }
+        else args.push(asset.filename);
       });
 
       args.push('-filter_complex');

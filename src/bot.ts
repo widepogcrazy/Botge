@@ -10,6 +10,7 @@ import { transientHandler } from './command/transient.js';
 import { clipHandler } from './command/clip.js';
 import { findTheEmojiHandler } from './command/find-the-emoji.js';
 import { pingMeHandler } from './command/pingme.js';
+import { assignEmoteSetsHandler } from './command/assing-emote-sets.js';
 import type { CachedUrl } from './api/cached-url.js';
 import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
@@ -139,6 +140,11 @@ export class Bot {
 
       if (interaction.commandName === 'pingme') {
         void pingMeHandler(this.#pingsDatabase, this.#client)(interaction);
+        return;
+      }
+
+      if (interaction.commandName === 'assignemotesets') {
+        void assignEmoteSetsHandler()(interaction);
         return;
       }
 
