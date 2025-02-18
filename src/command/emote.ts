@@ -244,7 +244,11 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         }
 
         args.push('-i');
-        args.push(asset.filename);
+        if (asset.filename.startsWith('http://') || asset.filename.startsWith('https://')) {
+          args.push('cache:' + asset.filename);
+        } else {
+          args.push(asset.filename);
+        }
       });
 
       args.push('-filter_complex');

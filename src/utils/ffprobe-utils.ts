@@ -27,6 +27,9 @@ export async function getDimension(filename: string): Promise<readonly [number, 
 }
 
 export async function getDuration(filename: string): Promise<number | undefined> {
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    filename = 'cache:' + filename;
+  }
   return new Promise((resolve) => {
     exec(
       `ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 "${filename}"`,
