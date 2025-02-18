@@ -262,14 +262,23 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         filter.push(`[o0]scale`); // only to point the output stream
       }
 
-      if (animated) filter.push(',split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse');
+      // if (animated) filter.push(',split=2[stacked][palette];[palette]palettegen[p];[stacked][p]paletteuse');
       args.push(filter.join(''));
+
+      args.push('-c:v');
+      if (animated) {
+        args.push('libwebp_anim');
+        args.push('-loop');
+        args.push('0');
+      } else {
+        args.push('libwebp');
+      }
 
       args.push('-y');
       args.push('-fs');
       args.push('25M');
 
-      const outfile = join(outdir, animated ? 'output.gif' : 'output.png');
+      const outfile = join(outdir, 'output.webp');
       args.push(outfile);
 
       const ffmpeg = spawn('ffmpeg', args);
