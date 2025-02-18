@@ -90,7 +90,6 @@ export function findTheEmojiHandler() {
 
       await defer;
       await interaction.editReply(reply);
-      throw Error('This is a test error');
     } catch (error) {
       console.log(`Error at findTheEmoji --> ${error instanceof Error ? error.message : String(error)}`);
 
