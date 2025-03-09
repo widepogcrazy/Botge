@@ -12,13 +12,9 @@ export function milisecondsToHoursAndMinutes(miliseconds: number): string {
 }
 
 export function getTimeMessagePart(hours: number | undefined, minutes: number | undefined): string {
-  if (hours !== undefined && minutes !== undefined) {
-    return `${hours} hours and ${minutes} minutes`;
-  } else if (hours !== undefined) {
-    return `${hours} hours`;
-  } else {
-    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
-  }
+  if (hours !== undefined && minutes !== undefined) return `${hours} hours and ${minutes} minutes`;
+  else if (hours !== undefined) return `${hours} hours`;
+  else return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
 }
 
 export function getMessageMessagePart(message: string | undefined): string {

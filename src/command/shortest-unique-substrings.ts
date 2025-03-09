@@ -1,13 +1,12 @@
 import type { CommandInteraction } from 'discord.js';
 
-import type { AssetInfo } from '../types.js';
 import type { EmoteMatcher } from '../emote-matcher.js';
 
 function getAllSubstrings(str: string): readonly string[] {
   const result: string[] = [];
 
   for (let i = 0; i < str.length; i++) {
-    for (let j: number = i + 1; j < str.length + 1; j++) {
+    for (let j = i + 1; j < str.length + 1; j++) {
       result.push(str.slice(i, j));
     }
   }
@@ -19,11 +18,9 @@ function getShortestUniqueSubstrings(
   em: Readonly<EmoteMatcher>,
   text: string
 ): readonly [string | undefined, readonly string[] | undefined] {
-  const matchSingle_: AssetInfo | undefined = em.matchSingle(text);
-  if (!matchSingle_) {
-    return [undefined, undefined];
-  }
-  const original: string = matchSingle_.name;
+  const matchSingle_ = em.matchSingle(text);
+  if (!matchSingle_) return [undefined, undefined];
+  const original = matchSingle_.name;
 
   const allSubstrings: readonly string[] = getAllSubstrings(original);
   const allSubstringUniqueness: readonly (boolean | undefined)[] = allSubstrings.map((substring) =>
@@ -37,7 +34,7 @@ function getShortestUniqueSubstrings(
     })
     .filter((s) => s !== undefined);
 
-  const shortestUniqueSubstringLength: number | undefined =
+  const shortestUniqueSubstringLength =
     uniqueSubstrings.length !== 0 ? uniqueSubstrings.reduce((a, b) => (a.length < b.length ? a : b)).length : undefined;
 
   const shortestUniqueSubstrings: readonly string[] | undefined =
@@ -58,35 +55,27 @@ export function shortestuniquesubstringsHandler(em: Readonly<EmoteMatcher>) {
 
       let message = '';
       getShortestUniqueSubstrings_.forEach((i: readonly [string | undefined, readonly string[] | undefined], j) => {
-        const original: string | undefined = i[0];
-        const shortestUniqueSubstrings: readonly string[] | undefined = i[1];
+        const [original, shortestUniqueSubstrings] = i;
         if (original === undefined) {
           message += `Could not find emote '${text[j]}'.\n`;
           return;
         }
 
-        if (shortestUniqueSubstrings) {
-          if (shortestUniqueSubstrings.length === 1) {
-            message += `${original}: ${shortestUniqueSubstrings[0]}\n`;
-          } else {
-            message += `${original}: ${shortestUniqueSubstrings.join(', ')}\n`;
-          }
+        if (shortestUniqueSubstrings !== undefined) {
+          if (shortestUniqueSubstrings.length === 1) message += `${original}: ${shortestUniqueSubstrings[0]}\n`;
+          else message += `${original}: ${shortestUniqueSubstrings.join(', ')}\n`;
         } else {
           message += `${original}: -\n`;
         }
       });
 
-      message = message.trim();
-
       await defer;
-      await interaction.editReply(message);
-      return;
+      await interaction.editReply(message.trim());
     } catch (error) {
       console.log(`Error at shortestuniquesubstrings --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply('failed to provide shortest unique substrings.');
-      return;
     }
   };
 }

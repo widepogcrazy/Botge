@@ -28,23 +28,23 @@ function getMaxWidth(layers: readonly DownloadedAsset[], scaleToHeight: number):
 
 class SimpleElement implements HstackElement {
   public readonly id: number;
-  private readonly animated: boolean;
-  private readonly asset: DownloadedAsset;
-  private readonly width: number;
-  private readonly heigth: number;
+  readonly #asset: DownloadedAsset;
+  readonly #width: number;
+  readonly #heigth: number;
+  readonly #animated: boolean;
 
   public constructor(id: number, asset: DownloadedAsset, width: number, height: number) {
     this.id = id;
-    this.asset = asset;
-    this.width = width;
-    this.heigth = height;
-    this.animated = this.asset.animated;
+    this.#asset = asset;
+    this.#width = width;
+    this.#heigth = height;
+    this.#animated = this.#asset.animated;
   }
 
   public filterString(): string {
-    let filterString = `[${this.id}:v]scale=${this.width}:${this.heigth}:force_original_aspect_ratio=decrease,pad=h=${this.heigth}:x=-1:y=-1:color=black@0.0`;
+    let filterString = `[${this.id}:v]scale=${this.#width}:${this.#heigth}:force_original_aspect_ratio=decrease,pad=h=${this.#heigth}:x=-1:y=-1:color=black@0.0`;
 
-    if (this.animated) filterString += `,fps=${DEFAULTFPS}`;
+    if (this.#animated) filterString += `,fps=${DEFAULTFPS}`;
     filterString += `[o${this.id}];`;
 
     return filterString;
@@ -53,11 +53,11 @@ class SimpleElement implements HstackElement {
 
 class OverlayElement implements HstackElement {
   public readonly id: number;
-  private readonly layers: readonly DownloadedAsset[];
-  private readonly fullSize: boolean;
-  private readonly stretch: boolean;
-  private readonly height: number;
-  private readonly width: number;
+  readonly #layers: readonly DownloadedAsset[];
+  readonly #fullSize: boolean;
+  readonly #stretch: boolean;
+  readonly #height: number;
+  readonly #width: number;
 
   public constructor(
     id: number,
@@ -68,12 +68,12 @@ class OverlayElement implements HstackElement {
     height: number
   ) {
     this.id = id;
-    this.layers = layers;
-    this.fullSize = fullSize;
-    this.stretch = stretch;
+    this.#layers = layers;
+    this.#fullSize = fullSize;
+    this.#stretch = stretch;
 
-    this.height = height;
-    this.width = width !== MAXWIDTH ? width : Math.min(getMaxWidth(this.layers, this.height), MAXWIDTH);
+    this.#height = height;
+    this.#width = width !== MAXWIDTH ? width : Math.min(getMaxWidth(this.#layers, this.#height), MAXWIDTH);
   }
 
   public filterString(): string {
@@ -82,24 +82,24 @@ class OverlayElement implements HstackElement {
     let { id } = this;
     let layerId = 0;
     // first layer, pad the canvas
-    segments.push(`[${this.id}]scale=${this.width}:${this.height}:force_original_aspect_ratio=decrease`);
+    segments.push(`[${this.id}]scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`);
 
-    if (this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
+    if (this.#layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
 
     //if (this.stretch) segments.push(`,pad=${this.width}:${this.height}:-1:-1:color=black@0.0[o${this.id}];`);
-    segments.push(`,pad=${this.width}:${this.height}:-1:-1:color=black@0.0[o${this.id}];`);
+    segments.push(`,pad=${this.#width}:${this.#height}:-1:-1:color=black@0.0[o${this.id}];`);
 
     id++;
     layerId++;
 
     // other layers
-    this.layers.slice(1).forEach(() => {
-      const segmentWidth = this.stretch ? this.width : this.fullSize ? this.layers[layerId].width : -1;
-      const segmentHeight = this.stretch ? this.height : this.fullSize ? this.layers[layerId].height : MAXHEIGHT;
+    this.#layers.slice(1).forEach(() => {
+      const segmentWidth = this.#stretch ? this.#width : this.#fullSize ? this.#layers[layerId].width : -1;
+      const segmentHeight = this.#stretch ? this.#height : this.#fullSize ? this.#layers[layerId].height : MAXHEIGHT;
 
       segments.push(`[${id}]scale=${segmentWidth}:${segmentHeight}`);
 
-      if (this.layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
+      if (this.#layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
       segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
 
       id++;
@@ -163,9 +163,8 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
       const tokenPairs = ((): readonly (readonly [string, number])[] => {
         const tokenPairs_: (readonly [string, number])[] = [];
 
-        for (let i = 0; i < tokens.length; i++)
-          for (let j = 0; j < uniqueTokens.length; j++)
-            if (tokens[i] === uniqueTokens[j]) tokenPairs_.push([tokens[i], j]);
+        for (const i of tokens.keys())
+          for (const j of uniqueTokens.keys()) if (tokens[i] === uniqueTokens[j]) tokenPairs_.push([tokens[i], j]);
 
         return tokenPairs_;
       })();
@@ -196,8 +195,8 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
       const assets = ((): readonly (AssetInfo | string)[] => {
         const assets_: (AssetInfo | string)[] = [];
 
-        for (let i = 0; i < tokenPairs.length; i++) {
-          for (let j = 0; j < uniqueAssets.length; j++) {
+        for (const i of tokenPairs.keys()) {
+          for (const j of uniqueAssets.keys()) {
             if (tokenPairs[i][1] === j) assets_.push(uniqueAssets[j]);
           }
         }
@@ -211,8 +210,8 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         ).filter((downloadedAsset) => downloadedAsset !== undefined);
         const downloadedAssets2_: DownloadedAsset[] = [];
 
-        for (let i = 0; i < tokenPairs.length; i++) {
-          for (let j = 0; j < downloadedAssets_.length; j++) {
+        for (const i of tokenPairs.keys()) {
+          for (const j of downloadedAssets_.keys()) {
             if (tokenPairs[i][1] === j) downloadedAssets2_.push(downloadedAssets_[j]);
           }
         }

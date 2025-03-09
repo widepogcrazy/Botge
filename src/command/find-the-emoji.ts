@@ -1,18 +1,18 @@
 import type { CommandInteraction, GuildEmoji } from 'discord.js';
 
-const DEFAULTSIZE = 5;
+const DEFAULT_SIZE = 5;
 
 export function findTheEmojiHandler() {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const emojige = ((): string | undefined => {
+      const emoji = ((): string | undefined => {
         const emojiOptions = interaction.options.get('emoji')?.value;
         return emojiOptions !== undefined ? String(emojiOptions).trim() : undefined;
       })();
       const size = ((): number => {
         const sizeOptions = interaction.options.get('size')?.value;
-        return sizeOptions !== undefined ? Number(sizeOptions) : DEFAULTSIZE;
+        return sizeOptions !== undefined ? Number(sizeOptions) : DEFAULT_SIZE;
       })();
 
       if (size < 3) {
@@ -33,21 +33,21 @@ export function findTheEmojiHandler() {
       }
 
       const emojiArray: readonly string[] = Array.from((await (await guild.fetch()).emojis.fetch()).entries())
-        .filter((emoji: readonly [string, GuildEmoji]) => emoji[1].animated === false)
-        .map((emoji: readonly [string, GuildEmoji]) => `<:${emoji[1].name}:${emoji[0]}>`);
+        .filter((emoji_: readonly [string, GuildEmoji]) => emoji_[1].animated === false)
+        .map((emoji_: readonly [string, GuildEmoji]) => `<:${emoji_[1].name}:${emoji_[0]}>`);
 
       if (emojiArray.length < 2) {
         await defer;
         await interaction.editReply('Must have at least 2 non-animated emojis in the server.');
         return;
       }
-      if (emojige !== undefined && !emojiArray.some((emoji) => emoji === emojige)) {
+      if (emoji !== undefined && !emojiArray.some((emoji_) => emoji === emoji_)) {
         await defer;
         await interaction.editReply('Emoji must be from this server.');
         return;
       }
 
-      const findTheEmoji = emojige ?? emojiArray[Math.floor(Math.random() * emojiArray.length)];
+      const findTheEmoji = emoji ?? emojiArray[Math.floor(Math.random() * emojiArray.length)];
 
       const alignment = ((): string => {
         switch (size) {

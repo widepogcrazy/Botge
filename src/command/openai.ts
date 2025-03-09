@@ -8,7 +8,7 @@ export function chatgptHandler(openai: ReadonlyOpenAI) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const text = String(interaction.options.get('text')?.value);
+      const text = String(interaction.options.get('text')?.value).trim();
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',

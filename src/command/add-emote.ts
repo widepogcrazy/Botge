@@ -14,9 +14,11 @@ export function addEmoteHandlerSevenTVNotInSet(
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const url = String(interaction.options.get('url')?.value);
-      const aliasOption = interaction.options.get('alias')?.value;
-      const alias = aliasOption !== undefined ? String(aliasOption) : null;
+      const url = String(interaction.options.get('url')?.value).trim();
+      const alias = ((): string | null => {
+        const aliasOptions = interaction.options.get('alias')?.value;
+        return aliasOptions !== undefined ? String(aliasOptions).trim() : null;
+      })();
 
       const sevenTVUrlToSevenNotInSet_ = await sevenTVUrlToSevenTVNotInSet(url);
       if (sevenTVUrlToSevenNotInSet_ === undefined) {
@@ -55,8 +57,6 @@ export function addEmoteHandlerSevenTVNotInSet(
       await interaction.editReply(
         `added emote ${sevenTVUrlToSevenNotInSet_.name}${alias !== null ? ` with alias ${alias}` : ''}`
       );
-
-      return;
     } catch (error) {
       console.log(
         `Error at addEmoteHandlerSevenNotInSet --> ${error instanceof Error ? error.message : String(error)}`
@@ -64,8 +64,6 @@ export function addEmoteHandlerSevenTVNotInSet(
 
       await defer;
       await interaction.editReply('failed to add emote');
-
-      return;
     }
   };
 }

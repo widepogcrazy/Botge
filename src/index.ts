@@ -19,10 +19,10 @@ import { Bot } from './bot.js';
 import type { Guild } from './guild.js';
 import {
   GUILD_ID_CUTEDOG,
+  GUILD_ID_CUTEDOG2,
   GUILD_ID_ELLY,
   BROADCASTER_NAME_CUTEDOG,
-  BROADCASTER_NAME_ELLY,
-  GUILD_ID_CUTEDOG2
+  BROADCASTER_NAME_ELLY
 } from './guilds.js';
 import { DATABASE_DIR, DATABASE_ENDPOINTS, PERSONAL_EMOTE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
 import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';

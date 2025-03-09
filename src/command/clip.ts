@@ -16,13 +16,11 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index) {
 
       await defer;
       await interaction.editReply(reply);
-      return;
     } catch (error) {
       console.log(`Error at clipHandler --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply('failed to get clip.');
-      return;
     }
   };
 }

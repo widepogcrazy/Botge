@@ -6,7 +6,7 @@ export function translateHandler(translator: ReadonlyTranslator) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
-      const text = String(interaction.options.get('text')?.value);
+      const text = String(interaction.options.get('text')?.value).trim();
 
       // Let DeepL auto-detect the source language by passing null
       const result = await translator.translateText(text, null, 'en-US', {

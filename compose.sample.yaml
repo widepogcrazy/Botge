@@ -2,11 +2,11 @@ services:
   meilisearch:
     image: getmeili/meilisearch:v1.11
     ports:
-        - 7700:7700
+      - 7700:7700
     environment:
-        - MEILI_MASTER_KEY=SAMPLEMASTERKEY
+      - MEILI_MASTER_KEY=SAMPLEMASTERKEY
     volumes:
-        - ./meili_data:/meili_data
+      - ./meili_data:/meili_data
     healthcheck:
       test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
       retries: 3
@@ -24,7 +24,7 @@ services:
     # use this and delete the image field above to build and run image locally
     # `docker compose up --build`
     # build:
-      # context: .
+    # context: .
     environment:
       - NODE_ENV=production
       # discord

@@ -76,23 +76,20 @@ export class GlobalEmoteMatcherConstructor {
 
 export class PersonalEmoteMatcherConstructor {
   readonly #guildIds: readonly string[];
-  readonly #personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined;
+  readonly #personalEmoteEndpoints: PersonalEmoteEndpoints | undefined;
   #sevenTVPersonal: SevenTVEmotes | undefined = undefined;
   #bttvPersonal: BTTVPersonalEmotes | undefined = undefined;
   #ffzPersonal: FFZPersonalEmotes | undefined = undefined;
   #addedEmotes: SevenTVEmoteNotInSet[] | undefined = undefined;
 
-  private constructor(
-    guildIds: readonly string[],
-    personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined
-  ) {
+  private constructor(guildIds: readonly string[], personalEmoteEndpoints: PersonalEmoteEndpoints | undefined) {
     this.#guildIds = guildIds;
     this.#personalEmoteEndpoints = personalEmoteEndpoints;
   }
 
   public static async create(
     guildIds: readonly string[],
-    personalEmoteEndpoints: Readonly<PersonalEmoteEndpoints> | undefined
+    personalEmoteEndpoints: PersonalEmoteEndpoints | undefined
   ): Promise<Readonly<PersonalEmoteMatcherConstructor>> {
     const personalEmoteMatcherConstructor = new PersonalEmoteMatcherConstructor(guildIds, personalEmoteEndpoints);
 
