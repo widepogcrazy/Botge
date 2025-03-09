@@ -145,11 +145,13 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         }
 
         const { url, platform } = match;
-        const reply = fullSize
-          ? emoteSizeChange(url, maxPlatformSize(platform), platform)
-          : size !== undefined
-            ? emoteSizeChange(url, size, platform)
-            : url;
+        const reply = (
+          fullSize
+            ? emoteSizeChange(url, maxPlatformSize(platform), platform)
+            : size !== undefined
+              ? emoteSizeChange(url, size, platform)
+              : url
+        ).replace('.gif', '.webp');
 
         await defer;
         await interaction.editReply(reply);
