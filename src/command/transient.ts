@@ -28,6 +28,7 @@ export function transientHandler() {
       await interaction.editReply(reply);
 
       await sleep(duration);
+      await interaction.editReply({ content: 'biboo' });
       await interaction.deleteReply();
     } catch (error: unknown) {
       console.log(`Error at transientHandler --> ${error instanceof Error ? error.message : String(error)}`);
