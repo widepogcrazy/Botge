@@ -84,10 +84,10 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       ? newTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
 
-  const twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined =
-    MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
-      ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILISEARCH_API_KEY }))
-      : undefined;
+  const twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined = undefined;
+    // MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
+    //   ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILISEARCH_API_KEY }))
+    //   : undefined;
 
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
   const pingsDatabase: Readonly<PingsDatabase> = new PingsDatabase(DATABASE_ENDPOINTS.pings);
