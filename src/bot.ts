@@ -16,6 +16,7 @@ import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import type { PingsDatabase } from './api/ping-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
+import { steamHandler } from './command/steam.js';
 
 export class Bot {
   readonly #client: Client;
@@ -140,6 +141,11 @@ export class Bot {
 
       if (interaction.commandName === 'pingme') {
         void pingMeHandler(this.#pingsDatabase, this.#client)(interaction);
+        return;
+      }
+
+      if (interaction.commandName === 'poe2') {
+        void steamHandler('Path of Exile 2', '2694490')(interaction);
         return;
       }
 

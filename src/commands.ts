@@ -104,6 +104,10 @@ const pingMe: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
     option.setName('message').setDescription('the message to attach to the ping').setRequired(false)
   );
 
+const poe2: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('poe2')
+  .setDescription('Get poe2 steam stats');
+
 const assignEmoteSets: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('assignemotesets')
   .setDescription(
@@ -119,5 +123,6 @@ export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommands
   shortestuniquesubstrings.toJSON(),
   transient.toJSON(),
   findTheEmoji.toJSON(),
-  pingMe.toJSON()
+  pingMe.toJSON(),
+  poe2.toJSON()
 ];
