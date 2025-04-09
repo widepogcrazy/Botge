@@ -57,24 +57,22 @@ export function steamHandler(gameName: string, gameId: string) {
         if (percent <= 69) return '(Mixed)';
         return '(Mostly Positive)';
       }
-      
-      
+
       const recentPercent = parseInt(recentMatch[1], 10);
       const allPercent = parseInt(allMatch[1], 10);
-      
+
       const recentColor = getColor(recentPercent);
       const allColor = getColor(allPercent);
       const reset = '\u001b[0m';
       const recentLabel = getReviewLabel(recentPercent);
       const allLabel = getReviewLabel(allPercent);
 
-
       let replyText: string =
-       '```ansi\n' +
-       `RECENT: ${recentColor}${recentPercent}% ${recentLabel}${reset} Positive reviews (${recentMatch[2]})\n` +
-       `OVERALL: ${allColor}${allPercent}% ${allLabel}${reset} Positive reviews (${allMatch[2]})\n` +
-       `PLAYERS ONLINE RIGHT NOW: \u001b[32m${numberWithCommas(playerCount)}${reset}\n` +
-       '```';
+        '```ansi\n' +
+        `RECENT: ${recentColor}${recentPercent}% ${recentLabel}${reset} Positive reviews (${recentMatch[2]})\n` +
+        `OVERALL: ${allColor}${allPercent}% ${allLabel}${reset} Positive reviews (${allMatch[2]})\n` +
+        `PLAYERS ONLINE RIGHT NOW: \u001b[32m${numberWithCommas(playerCount)}${reset}\n` +
+        '```';
 
       await defer;
       await interaction.editReply(replyText);
