@@ -69,9 +69,9 @@ export function steamHandler(gameName: string, gameId: string) {
 
       let replyText: string =
         '```ansi\n' +
-        `RECENT REVIEWS: ${recentColor}${recentPercent}% ${recentLabel}${reset} (${recentMatch[2]})\n` +
-        `ALL REVIEWS: ${allColor}${allPercent}% ${allLabel}${reset} (${allMatch[2]})\n` +
-        `PLAYERS RIGHT NOW: \u001b[32m${numberWithCommas(playerCount)}${reset}\n` +
+        `RECENT REVIEWS: \u001b[1m${recentColor}${recentPercent}% ${recentLabel}\u001b[0m ${reset} (${recentMatch[2]})\n` +
+        `ALL REVIEWS: \u001b[1m${allColor}${allPercent}% ${allLabel}\u001b[0m ${reset} (${allMatch[2]})\n` +
+        `PLAYERS RIGHT NOW: \u001b[1m\u001b[32m${numberWithCommas(playerCount)}\u001b[0m\n` + // Player count bold and green
         '```\n' +
         "-# Disclaimer: This CuteDog_ server is filled with a bunch of sad man-children who would rather waste time bot-checking a game's Steam rating than actually getting better at the game itself.";
 
