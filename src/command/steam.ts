@@ -3,12 +3,26 @@ import type { CommandInteraction } from 'discord.js';
 const RecentReviewRegex = /([0-9]+)% of the ([0-9,]+) user reviews in the last 30 days are positive\./;
 const AllReviewRegex = /([0-9]+)% of the ([0-9,]+) user reviews for this game are positive\./;
 
-function numberWithCommas(x: number) {
+function numberWithCommas(x: number): string {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-export function steamHandler(gameName: string, gameId: string) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+function getColor(percent: number): string {
+  if (percent <= 39)
+    return '\u001b[31m'; //This is red color Hehe
+  else if (percent <= 69)
+    return '\u001b[33m'; //This is yellow Eww
+  else return '\u001b[34m'; //This is blue xdd
+}
+
+function getReviewLabel(percent: number): string {
+  if (percent <= 39) return '(Mostly Negative)';
+  else if (percent <= 69) return '(Mixed)';
+  else return '(Mostly Positive)';
+}
+
+export function steamHandler(gameId: string) {
+  return async function (interaction: CommandInteraction): Promise<void> {
     const defer = interaction.deferReply();
     try {
       const store = fetch(`https://store.steampowered.com/app/${gameId}`, {
@@ -19,7 +33,7 @@ export function steamHandler(gameName: string, gameId: string) {
         }
       });
 
-      const GetNumberOfCurrentPlayers = await fetch(
+      const GetNumberOfCurrentPlayers = fetch(
         `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${gameId}`,
         {
           headers: {
@@ -30,33 +44,18 @@ export function steamHandler(gameName: string, gameId: string) {
         }
       );
 
-      let storeResponse = await store;
-      let currentPlayerResponse = await GetNumberOfCurrentPlayers;
+      const storeResponse = await store;
+      const currentPlayerResponse = await GetNumberOfCurrentPlayers;
 
-      if (!storeResponse.ok || !currentPlayerResponse.ok) {
-        return;
-      }
+      if (!storeResponse.ok || !currentPlayerResponse.ok) return;
 
       const html = await storeResponse.text();
       const recentMatch = RecentReviewRegex.exec(html);
       const allMatch = AllReviewRegex.exec(html);
       const playerCount: number = (await currentPlayerResponse.json()).response.player_count;
 
-      if (!recentMatch || recentMatch.length < 3 || !allMatch || allMatch.length < 3) {
-        return;
-      }
-
-      function getColor(percent: number): string {
-        if (percent <= 39) return '\u001b[31m'; //This is red color Hehe
-        if (percent <= 69) return '\u001b[33m'; //This is yellow Eww
-        return '\u001b[34m'; //This is blue xdd
-      }
-
-      function getReviewLabel(percent: number): string {
-        if (percent <= 39) return '(Mostly Negative)';
-        if (percent <= 69) return '(Mixed)';
-        return '(Mostly Positive)';
-      }
+      if (recentMatch === null || allMatch === null) return;
+      if (recentMatch.length < 3 || allMatch.length < 3) return;
 
       const recentPercent = parseInt(recentMatch[1], 10);
       const allPercent = parseInt(allMatch[1], 10);
@@ -67,7 +66,7 @@ export function steamHandler(gameName: string, gameId: string) {
       const recentLabel = getReviewLabel(recentPercent);
       const allLabel = getReviewLabel(allPercent);
 
-      let replyText: string =
+      const replyText =
         '```ansi\n' +
         `RECENT REVIEWS: \u001b[1m${recentColor}${recentPercent}% ${recentLabel}\u001b[0m ${reset} (${recentMatch[2]})\n` +
         `ALL REVIEWS: \u001b[1m${allColor}${allPercent}% ${allLabel}\u001b[0m ${reset} (${allMatch[2]})\n` +

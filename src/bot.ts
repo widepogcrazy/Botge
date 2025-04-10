@@ -145,7 +145,7 @@ export class Bot {
       }
 
       if (interaction.commandName === 'poe2') {
-        void steamHandler('Path of Exile 2', '2694490')(interaction);
+        void steamHandler('2694490')(interaction);
         return;
       }
 

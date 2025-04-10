@@ -227,6 +227,7 @@ export class EmoteMatcher {
       //there may be a case where an emote was added with /addemote
       //and afterwards added to the channel
       //or it was added to 7tv global emotes
+      if (emote.error !== null) continue;
       if (this.matchSingleExact(emote.name)) continue;
 
       this.#root.addAllSuffix(sevenTVNotInSetToAsset(emote), priority);

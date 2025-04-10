@@ -108,11 +108,13 @@ const poe2: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('poe2')
   .setDescription('Get poe2 steam stats');
 
+/*
 const assignEmoteSets: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('assignemotesets')
   .setDescription(
     'outputs a modal, where you can input emote set urls to assign to the server(only for administrators)'
   );
+*/
 
 export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommandsJSONBody>[] = [
   emote.toJSON(),

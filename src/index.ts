@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import OpenAI from 'openai';
 import { Translator } from 'deepl-node';
 import { Client } from 'discord.js';
-import { MeiliSearch } from 'meilisearch';
+//import { MeiliSearch } from 'meilisearch';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import { Bot } from './bot.js';
 import type { Guild } from './guild.js';
@@ -25,7 +25,7 @@ import {
   BROADCASTER_NAME_ELLY
 } from './guilds.js';
 import { DATABASE_DIR, DATABASE_ENDPOINTS, PERSONAL_EMOTE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
-import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
+import type { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
 import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
@@ -43,8 +43,8 @@ const {
   DEEPL_API_KEY,
   TWITCH_CLIENT_ID,
   TWITCH_SECRET,
-  MEILISEARCH_HOST,
-  MEILISEARCH_API_KEY,
+  //MEILISEARCH_HOST,
+  //MEILISEARCH_API_KEY,
   LOCAL_CACHE_BASE
 } = process.env;
 //const CREDENTIALS = process.env.CREDENTIALS;
