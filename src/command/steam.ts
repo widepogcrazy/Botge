@@ -68,11 +68,13 @@ export function steamHandler(gameName: string, gameId: string) {
       const allLabel = getReviewLabel(allPercent);
 
       let replyText: string =
-        '```ansi\n' +
-        `RECENT: ${recentColor}${recentPercent}% ${recentLabel}${reset} Positive reviews (${recentMatch[2]})\n` +
-        `OVERALL: ${allColor}${allPercent}% ${allLabel}${reset} Positive reviews (${allMatch[2]})\n` +
-        `PLAYERS ONLINE RIGHT NOW: \u001b[32m${numberWithCommas(playerCount)}${reset}\n` +
-        '```';
+      '```ansi\n' +
+      `RECENT REVIEWS: ${recentColor}${recentPercent}% ${recentLabel}${reset} (${recentMatch[2]})\n` +
+      `ALL REVIEWS: ${allColor}${allPercent}% ${allLabel}${reset} (${allMatch[2]})\n` +
+      `PLAYERS RIGHT NOW: \u001b[32m${numberWithCommas(playerCount)}${reset}\n` +
+      '```\n' +
+      '-# Disclaimer: This CuteDog_ server is filled with a bunch of sad man-children who would rather waste time bot-checking a game\'s Steam rating than actually getting better at the game itself.';
+
 
       await defer;
       await interaction.editReply(replyText);
