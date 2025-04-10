@@ -50,7 +50,7 @@ export type SevenTVEmoteNotInSet = {
     readonly url: string;
     readonly files: readonly SevenTVEmoteFile[];
   };
-  readonly error: string | null;
+  readonly error: string | undefined;
 };
 export type BTTVEmote = {
   readonly id: string;
