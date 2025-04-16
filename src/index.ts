@@ -47,7 +47,6 @@ const {
   MEILISEARCH_API_KEY,
   LOCAL_CACHE_BASE
 } = process.env;
-//const CREDENTIALS = process.env.CREDENTIALS;
 
 async function ensureDirTmp(): Promise<void> {
   await ensureDir(TMP_DIR);
@@ -181,14 +180,6 @@ scheduleJob('0 54 * * * *', () => {
     console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
-
-try {
-  bot.guilds.forEach((guild) => {
-    void guild.refreshClips(bot.twitchApi);
-  });
-} catch (error) {
-  console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
-}
 
 // update every 2 hours
 scheduleJob('0 */2 * * *', () => {

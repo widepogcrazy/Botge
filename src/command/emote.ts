@@ -30,23 +30,24 @@ class SimpleElement implements HstackElement {
   public readonly id: number;
   readonly #asset: DownloadedAsset;
   readonly #width: number;
-  readonly #heigth: number;
+  readonly #height: number;
   readonly #animated: boolean;
 
   public constructor(id: number, asset: DownloadedAsset, width: number, height: number) {
     this.id = id;
     this.#asset = asset;
     this.#width = width;
-    this.#heigth = height;
+    this.#height = height;
     this.#animated = this.#asset.animated;
   }
 
   public filterString(): string {
-    let filterString = `[${this.id}:v]scale=${this.#width}:${this.#heigth}:force_original_aspect_ratio=decrease,pad=h=${this.#heigth}:x=-1:y=-1:color=black@0.0`;
+    let filterString = `[${this.id}:v]`;
 
+    filterString += `pad=h=${this.#height}:x=-1:y=-1:color=black@0.0,scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`;
     if (this.#animated) filterString += `,fps=${DEFAULTFPS}`;
-    filterString += `[o${this.id}];`;
 
+    filterString += `[o${this.id}];`;
     return filterString;
   }
 }
@@ -82,12 +83,13 @@ class OverlayElement implements HstackElement {
     let { id } = this;
     let layerId = 0;
     // first layer, pad the canvas
-    segments.push(`[${this.id}]scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`);
+    segments.push(`[${this.id}]`);
 
+    segments.push(`scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`);
+    segments.push(`,pad=${this.#width}:${this.#height}:-1:-1:color=black@0.0`);
     if (this.#layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
 
-    //if (this.stretch) segments.push(`,pad=${this.width}:${this.height}:-1:-1:color=black@0.0[o${this.id}];`);
-    segments.push(`,pad=${this.#width}:${this.#height}:-1:-1:color=black@0.0[o${this.id}];`);
+    segments.push(`[o${this.id}];`);
 
     id++;
     layerId++;
@@ -97,10 +99,14 @@ class OverlayElement implements HstackElement {
       const segmentWidth = this.#stretch ? this.#width : this.#fullSize ? this.#layers[layerId].width : -1;
       const segmentHeight = this.#stretch ? this.#height : this.#fullSize ? this.#layers[layerId].height : MAXHEIGHT;
 
-      segments.push(`[${id}]scale=${segmentWidth}:${segmentHeight}`);
+      segments.push(`[${id}]`);
 
+      segments.push(`scale=${segmentWidth}:${segmentHeight}`);
       if (this.#layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
-      segments.push(`[v${id}];[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
+
+      segments.push(`[v${id}];`);
+
+      segments.push(`[o${this.id}][v${id}]overlay=(W-w)/2:(H-h)/2[o${this.id}];`);
 
       id++;
       layerId++;

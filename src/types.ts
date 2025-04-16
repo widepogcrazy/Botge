@@ -180,3 +180,9 @@ export type HstackElement = {
   readonly id: number;
   readonly filterString: () => string;
 };
+
+export type NumberOfCurrentPlayers = {
+  readonly response: {
+    readonly player_count: number;
+  };
+};
