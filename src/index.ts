@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import OpenAI from 'openai';
 import { Translator } from 'deepl-node';
 import { Client } from 'discord.js';
-//import { MeiliSearch } from 'meilisearch';
+import { MeiliSearch } from 'meilisearch';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import { Bot } from './bot.js';
 import type { Guild } from './guild.js';
@@ -25,7 +25,7 @@ import {
   BROADCASTER_NAME_ELLY
 } from './guilds.js';
 import { DATABASE_DIR, DATABASE_ENDPOINTS, PERSONAL_EMOTE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
-import type { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
+import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
 import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
@@ -43,8 +43,8 @@ const {
   DEEPL_API_KEY,
   TWITCH_CLIENT_ID,
   TWITCH_SECRET,
-  //MEILISEARCH_HOST,
-  //MEILISEARCH_API_KEY,
+  MEILISEARCH_HOST,
+  MEILISEARCH_API_KEY,
   LOCAL_CACHE_BASE
 } = process.env;
 //const CREDENTIALS = process.env.CREDENTIALS;
@@ -84,10 +84,10 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       ? newTwitchApi(TWITCH_CLIENT_ID, TWITCH_SECRET)
       : undefined;
 
-  const twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined = undefined;
-  // MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
-  //   ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILISEARCH_API_KEY }))
-  //   : undefined;
+  const twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined =
+    MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
+      ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILISEARCH_API_KEY }))
+      : undefined;
 
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
   const pingsDatabase: Readonly<PingsDatabase> = new PingsDatabase(DATABASE_ENDPOINTS.pings);
@@ -181,6 +181,14 @@ scheduleJob('0 54 * * * *', () => {
     console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
+
+try {
+  bot.guilds.forEach((guild) => {
+    void guild.refreshClips(bot.twitchApi);
+  });
+} catch (error) {
+  console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
+}
 
 // update every 2 hours
 scheduleJob('0 */2 * * *', () => {

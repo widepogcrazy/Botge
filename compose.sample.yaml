@@ -1,10 +1,13 @@
 services:
   meilisearch:
-    image: getmeili/meilisearch:v1.11
+    image: getmeili/meilisearch:latest
     ports:
       - 7700:7700
     environment:
       - MEILI_MASTER_KEY=SAMPLEMASTERKEY
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_EXPERIMENTAL_REDUCE_INDEXING_MEMORY_USAGE
+      - MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
     volumes:
       - ./meili_data:/meili_data
     healthcheck:

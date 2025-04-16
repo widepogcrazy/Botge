@@ -1,4 +1,4 @@
-import type { MeiliSearch, EnqueuedTask, Index } from 'meilisearch';
+import type { MeiliSearch, Index } from 'meilisearch';
 
 const INDEX_NAME = 'twitchClips';
 
@@ -16,11 +16,13 @@ export class TwitchClipsMeiliSearch {
   public async getOrCreateIndex(guildIds: readonly string[]): Promise<Index | undefined> {
     const indexName = getIndexName(guildIds);
 
-    const createIndexEnqueuedTask: Readonly<EnqueuedTask> = await this.#meiliSearch.createIndex(indexName, {
-      primaryKey: 'id'
-    });
-    await this.#meiliSearch.waitForTask(createIndexEnqueuedTask.taskUid);
+    await this.#meiliSearch
+      .createIndex(indexName, {
+        primaryKey: 'id'
+      })
+      .waitTask();
 
-    return await this.#meiliSearch.getIndex(indexName);
+    const index = await this.#meiliSearch.getIndex(indexName);
+    return index;
   }
 }
