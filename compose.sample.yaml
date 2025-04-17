@@ -1,13 +1,12 @@
 services:
   meilisearch:
-    image: getmeili/meilisearch:latest
+    image: getmeili/meilisearch:1.14.0
     ports:
       - 7700:7700
     environment:
       - MEILI_MASTER_KEY=SAMPLEMASTERKEY
       - MEILI_NO_ANALYTICS=true
       - MEILI_EXPERIMENTAL_REDUCE_INDEXING_MEMORY_USAGE
-      - MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
     volumes:
       - ./meili_data:/meili_data
     healthcheck:
@@ -17,7 +16,7 @@ services:
 
   nginx:
     restart: always
-    image: nginx:1-alpine
+    image: nginx:1.27.5-alpine
     volumes:
       - ./nginx/cache:/var/www/cache:rw
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
