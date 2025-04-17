@@ -65,7 +65,7 @@ export function steamHandler(gameId: string, guildIds: readonly string[]) {
       const playerCount = ((await (await numberOfCurrentPlayers).json()) as NumberOfCurrentPlayers).response
         .player_count;
 
-      if (recentReviewsMatch === null) throw new Error('null recentReviewsMatch or allReviewsMatch');
+      if (recentReviewsMatch === null) throw new Error('null recentReviewsMatch');
       if (allReviewsMatch === null) throw new Error('null allReviewsMatch');
       if (recentReviewsMatch.length < 3) throw new Error('recentReviewsMatch.length < 3');
       if (allReviewsMatch.length < 3) throw new Error('allReviewsMatch.length < 3');

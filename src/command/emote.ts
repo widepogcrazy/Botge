@@ -44,7 +44,8 @@ class SimpleElement implements HstackElement {
   public filterString(): string {
     let filterString = `[${this.id}:v]`;
 
-    filterString += `pad=h=${this.#height}:x=-1:y=-1:color=black@0.0,scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`;
+    if (this.#height > this.#asset.height) filterString += `pad=h=${this.#height}:x=-1:y=-1:color=black@0.0,`;
+    filterString += `scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`;
     if (this.#animated) filterString += `,fps=${DEFAULTFPS}`;
 
     filterString += `[o${this.id}];`;
@@ -79,14 +80,20 @@ class OverlayElement implements HstackElement {
 
   public filterString(): string {
     const segments: string[] = [];
-
     let { id } = this;
     let layerId = 0;
-    // first layer, pad the canvas
+
     segments.push(`[${this.id}]`);
 
+    //pad second because scale doesnt keep transparency
     segments.push(`scale=${this.#width}:${this.#height}:force_original_aspect_ratio=decrease`);
-    segments.push(`,pad=${this.#width}:${this.#height}:-1:-1:color=black@0.0`);
+    if (this.#height > this.#layers[layerId].height && this.#width > this.#layers[layerId].width)
+      segments.push(`,pad=${this.#width}:${this.#height}:x=-1:y=-1:color=black@0.0`);
+    else if (this.#height > this.#layers[layerId].height)
+      segments.push(`,pad=h=${this.#height}:x=-1:y=-1:color=black@0.0`);
+    else if (this.#width > this.#layers[layerId].width)
+      segments.push(`,pad=w=${this.#width}:x=-1:y=-1:color=black@0.0`);
+
     if (this.#layers[layerId].animated) segments.push(`,fps=${DEFAULTFPS}`);
 
     segments.push(`[o${this.id}];`);
