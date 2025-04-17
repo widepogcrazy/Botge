@@ -49,6 +49,9 @@ services:
 
       # nginx
       - LOCAL_CACHE_BASE=http://nginx:80
+
+      # clips, comment out if not needed
+      - UPDATE_CLIPS_ON_STARTUP=true
     volumes:
       - ./tmp:/app/tmp
       - ./data:/app/data

@@ -45,7 +45,8 @@ const {
   TWITCH_SECRET,
   MEILISEARCH_HOST,
   MEILISEARCH_API_KEY,
-  LOCAL_CACHE_BASE
+  LOCAL_CACHE_BASE,
+  UPDATE_CLIPS_ON_STARTUP
 } = process.env;
 
 async function ensureDirTmp(): Promise<void> {
@@ -180,6 +181,16 @@ scheduleJob('0 54 * * * *', () => {
     console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
+
+if (UPDATE_CLIPS_ON_STARTUP === 'true') {
+  try {
+    bot.guilds.forEach((guild) => {
+      void guild.refreshClips(bot.twitchApi);
+    });
+  } catch (error) {
+    console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 // update every 2 hours
 scheduleJob('0 */2 * * *', () => {
