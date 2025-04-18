@@ -56,7 +56,7 @@ export class Guild {
       for (let i = 0; i < clipIds.length; i += increment) {
         const clips = await getClipsWithGameNameFromIds(twitchApi, clipIds.slice(i, i + increment));
 
-        void this.#twitchClipsMeiliSearchIndex.updateDocuments(clips);
+        await void this.#twitchClipsMeiliSearchIndex.updateDocuments(clips);
         updated += clips.length;
       }
     } else {
@@ -67,7 +67,7 @@ export class Guild {
       );
 
       let [clips, cursor] = getClipsWithGameNameFromBroadcasterName_;
-      void this.#twitchClipsMeiliSearchIndex.updateDocuments(clips);
+      await void this.#twitchClipsMeiliSearchIndex.updateDocuments(clips);
 
       for (let i = 0; i < 9 && cursor !== undefined; i++) {
         getClipsWithGameNameFromBroadcasterName_ = await getClipsWithGameNameFromBroadcasterName(
@@ -77,7 +77,7 @@ export class Guild {
         );
 
         [clips, cursor] = getClipsWithGameNameFromBroadcasterName_;
-        void this.#twitchClipsMeiliSearchIndex.updateDocuments(clips);
+        await void this.#twitchClipsMeiliSearchIndex.updateDocuments(clips);
         updated += clips.length;
       }
     }
