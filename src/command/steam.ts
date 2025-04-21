@@ -12,9 +12,12 @@ function getColor(percent: number): string {
 }
 
 function getReviewLabel(percent: number): string {
+  if (percent <= 19) return '(Overwhelmingly Negative)';
   if (percent <= 39) return '(Mostly Negative)';
-  else if (percent <= 69) return '(Mixed)';
-  else return '(Mostly Positive)';
+  if (percent <= 69) return '(Mixed)';
+  if (percent <= 79) return '(Mostly Positive)';
+  if (percent <= 94) return '(Very Positive)';
+  return '(Overwhelmingly Positive)';
 }
 
 function numberWithCommas(x: number): string {
