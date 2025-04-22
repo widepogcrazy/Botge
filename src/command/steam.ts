@@ -79,7 +79,7 @@ export function steamHandler(gameId: string, guildIds: readonly string[]) {
       const recentReviewsColor = getColor(recentReviewsPercent);
       const allReviewsColor = getColor(allReviewsPercent);
       const recentReviewsLabel = getReviewLabel(recentReviewsPercent);
-      const allReviewsLabel = getReviewLabel(recentReviewsPercent);
+      const allReviewsLabel = getReviewLabel(allReviewsPercent);
       const reset = '\u001b[0m';
 
       const replyText =
