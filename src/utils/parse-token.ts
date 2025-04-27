@@ -79,7 +79,7 @@ export async function parseToken(url: string, highestSize: boolean): Promise<Ass
   try {
     new URL(url);
     if (url.startsWith('https://tenor.com/view/') && !url.endsWith('.gif')) return url + '.gif';
-    return url;
+    else return url;
   } catch {
     try {
       const parseEmoji_ = parseEmoji(url);

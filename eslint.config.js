@@ -58,7 +58,7 @@ export default tseslint.config(
             { from: 'package', name: ['MeiliSearch', 'Index'], package: 'meilisearch' },
             {
               from: 'package',
-              name: ['Interaction', 'CommandInteraction', 'Client', 'GuildEmoji'],
+              name: ['Interaction', 'CommandInteraction', 'ModalSubmitInteraction', 'Client', 'GuildEmoji'],
               package: 'discord.js'
             }
           ]
@@ -90,7 +90,7 @@ export default tseslint.config(
       'no-unmodified-loop-condition': 'error',
       'no-unreachable-loop': 'error',
 
-      'no-use-before-define': 'error',
+      'no-use-before-define': 'off',
       'no-useless-assignment': 'error',
       'require-atomic-updates': 'error',
 

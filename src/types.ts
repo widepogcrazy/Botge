@@ -43,7 +43,7 @@ export type SevenTVEmoteInSet = {
   };
 };
 export type SevenTVEmoteNotInSet = {
-  name: string;
+  readonly name: string;
   readonly flags: number;
   readonly animated: boolean;
   readonly host: {

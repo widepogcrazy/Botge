@@ -18,6 +18,7 @@ const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
 const MAXHEIGHT = 64;
 const DOWNLOAD_ASSET_ERROR_MESSAGE = 'Failed to download asset(s).';
+const FAILED_TO_DOWNLOAD_OR_GET_EMOJI_MESSAGE = 'Failed to download or get emoji(s).';
 
 function getMaxWidth(layers: readonly DownloadedAsset[], scaleToHeight: number): number {
   const scaledWidth = layers.map((layer) => (layer.width / layer.height) * scaleToHeight);
@@ -184,7 +185,7 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         return tokenPairs_;
       })();
 
-      const uniqueAssetsWithUndefined: readonly (AssetInfo | string | undefined)[] = await Promise.all(
+      const uniqueAssetsWithNullAndUndefined: readonly (AssetInfo | string | null | undefined)[] = await Promise.all(
         emoteMatcher
           .matchMulti(uniqueTokens)
           .map(async (match, i) =>
@@ -194,18 +195,24 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
                 : size !== undefined
                   ? assetSizeChange(match, size)
                   : match
-              : parseToken(uniqueTokens[i], fullSize)
+              : parseToken(uniqueTokens[i], fullSize).catch(() => null)
           )
       );
-      const uniqueAssets: readonly (AssetInfo | string)[] = uniqueAssetsWithUndefined.filter(
-        (asset) => asset !== undefined
-      );
 
-      if (uniqueAssets.length !== uniqueAssetsWithUndefined.length) {
+      if (uniqueAssetsWithNullAndUndefined.some((asset) => asset === null)) {
+        await defer;
+        await interaction.editReply(FAILED_TO_DOWNLOAD_OR_GET_EMOJI_MESSAGE);
+        return;
+      }
+      if (uniqueAssetsWithNullAndUndefined.some((asset) => asset === undefined)) {
         await defer;
         await interaction.editReply(emoteNotFoundReply);
         return;
       }
+
+      const uniqueAssets: readonly (AssetInfo | string)[] = uniqueAssetsWithNullAndUndefined.filter(
+        (asset) => asset !== null && asset !== undefined
+      );
 
       const assets = ((): readonly (AssetInfo | string)[] => {
         const assets_: (AssetInfo | string)[] = [];
@@ -359,7 +366,7 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
           : 'gif creation failed.';
 
       await defer;
-      await interaction.editReply(editReplyMessage);
+      await interaction.editReply(editReplyMessage).catch(() => null);
       void rm(outdir, { recursive: true });
 
       return;

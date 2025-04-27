@@ -47,8 +47,12 @@ export function addEmoteHandlerSevenTVNotInSet(
 
       addedEmotesDatabase.insert(addedEmote, guild.ids);
 
-      const sevenTVEmoteNotInSet = (await fetchAndJson(addedEmote.url)) as SevenTVEmoteNotInSet;
-      if (alias !== null) sevenTVEmoteNotInSet.name = alias;
+      const sevenTVEmoteNotInSet = await (async (): Promise<SevenTVEmoteNotInSet> => {
+        const sevenTVEmoteNotInSet_ = (await fetchAndJson(addedEmote.url)) as SevenTVEmoteNotInSet;
+
+        if (alias !== null) return { ...sevenTVEmoteNotInSet_, name: alias };
+        else return sevenTVEmoteNotInSet_;
+      })();
 
       guild.personalEmoteMatcherConstructor.addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet);
       guild.emoteMatcher.addSevenTVEmoteNotInSetSuffix(sevenTVEmoteNotInSet);
