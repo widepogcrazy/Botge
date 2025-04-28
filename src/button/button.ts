@@ -48,16 +48,22 @@ export function buttonHandler(twitchClipMessageBuilders: TwitchClipMessageBuilde
           components: [row]
         });
       } else if (interaction.customId.includes(SEND_CLIP_LINK_BUTTON_CUSTOM_ID)) {
-        // only allow original sender to click buttons.
-        if (interaction.user.id !== twitchClipInteraction.user.id) return;
+        //only allow original clip command user to send link and delete, otherwise send ephemeral link.
+        if (interaction.user.id === twitchClipInteraction.user.id) {
+          await defer;
+          await interaction.followUp({
+            content: twitchClipMessageBuilder.currentUrl()
+          });
 
-        await defer;
-        await interaction.followUp({
-          content: twitchClipMessageBuilder.currentUrl()
-        });
-
-        await twitchClipInteraction.deleteReply();
-        twitchClipMessageBuilders.splice(twitchClipMessageBuilderIndex, 1);
+          await twitchClipInteraction.deleteReply();
+          twitchClipMessageBuilders.splice(twitchClipMessageBuilderIndex, 1);
+        } else {
+          await defer;
+          await interaction.followUp({
+            content: twitchClipMessageBuilder.currentUrl(),
+            flags: 'Ephemeral'
+          });
+        }
       } else {
         console.log(`unknown button click: ${customId}`);
       }
