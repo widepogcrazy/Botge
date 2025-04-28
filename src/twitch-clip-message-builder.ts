@@ -76,14 +76,8 @@ export class TwitchClipMessageBuilder {
     return this.#row;
   }
 
-  public first(): ReadonlyEmbedBuilder {
-    this.#currentClipCounter = 0;
-    return this.#currentEmbed();
-  }
-
-  public last(): ReadonlyEmbedBuilder {
-    this.#currentClipCounter = this.#twitchClips.length - 1;
-    return this.#currentEmbed();
+  public currentUrl(): string {
+    return this.#twitchClips[this.#currentClipCounter].url;
   }
 
   public previous(): ReadonlyEmbedBuilder {
@@ -96,8 +90,14 @@ export class TwitchClipMessageBuilder {
     return this.#currentEmbed();
   }
 
-  public currentUrl(): string {
-    return this.#twitchClips[this.#currentClipCounter].url;
+  public first(): ReadonlyEmbedBuilder {
+    this.#currentClipCounter = 0;
+    return this.#currentEmbed();
+  }
+
+  public last(): ReadonlyEmbedBuilder {
+    this.#currentClipCounter = this.#twitchClips.length - 1;
+    return this.#currentEmbed();
   }
 
   #currentEmbed(): ReadonlyEmbedBuilder {
@@ -105,7 +105,7 @@ export class TwitchClipMessageBuilder {
       this.#twitchClips[this.#currentClipCounter];
     const sortedByText = this.#sortedBy !== undefined ? `${this.#sortedBy} then views` : 'views';
 
-    const embed = new EmbedBuilder()
+    return new EmbedBuilder()
       .setColor('DarkButNotBlack')
       .setTitle(title)
       .setURL(url)
@@ -119,7 +119,5 @@ export class TwitchClipMessageBuilder {
       .setFooter({
         text: `${this.#currentClipCounter + 1}/${this.#twitchClips.length}. Sorted by ${sortedByText}.`
       });
-
-    return embed;
   }
 }

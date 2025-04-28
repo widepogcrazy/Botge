@@ -1,26 +1,23 @@
 import type { ButtonInteraction } from 'discord.js';
 import {
   getCounterFromButtonCustomId,
-  type TwitchClipMessageBuilder,
   PREVIOUS_BUTTON_CUSTOM_ID,
   NEXT_BUTTON_CUSTOM_ID,
   FIRST_BUTTON_CUSTOM_ID,
   LAST_BUTTON_CUSTOM_ID,
-  SEND_CLIP_LINK_BUTTON_CUSTOM_ID
+  SEND_CLIP_LINK_BUTTON_CUSTOM_ID,
+  type TwitchClipMessageBuilder
 } from '../twitch-clip-message-builder.js';
 
-export function buttonHandler(twitchClipMessageBuilders: readonly TwitchClipMessageBuilder[]) {
+export function buttonHandler(twitchClipMessageBuilders: TwitchClipMessageBuilder[]) {
   return async (interaction: ButtonInteraction): Promise<void> => {
     try {
-      if (interaction.message.interactionMetadata!.user.id !== interaction.user.id) {
-        // only allow original sender to click buttons.
-        return;
-      }
-      const twitchClipMessageBuilder = twitchClipMessageBuilders.find(
+      const twitchClipMessageBuilderIndex = twitchClipMessageBuilders.findIndex(
         (twitchClipMessageBuilder_) =>
           twitchClipMessageBuilder_.counter === getCounterFromButtonCustomId(interaction.customId)
       );
-      if (twitchClipMessageBuilder === undefined) return;
+      if (twitchClipMessageBuilderIndex === -1) return;
+      const twitchClipMessageBuilder = twitchClipMessageBuilders[twitchClipMessageBuilderIndex];
 
       const { customId } = interaction;
       const twitchClipInteraction = twitchClipMessageBuilder.interaction;
@@ -51,11 +48,16 @@ export function buttonHandler(twitchClipMessageBuilders: readonly TwitchClipMess
           components: [row]
         });
       } else if (interaction.customId.includes(SEND_CLIP_LINK_BUTTON_CUSTOM_ID)) {
+        // only allow original sender to click buttons.
+        if (interaction.user.id !== twitchClipInteraction.user.id) return;
+
         await defer;
         await interaction.followUp({
           content: twitchClipMessageBuilder.currentUrl()
         });
-        await interaction.message.delete();
+
+        await twitchClipInteraction.deleteReply();
+        twitchClipMessageBuilders.splice(twitchClipMessageBuilderIndex, 1);
       } else {
         console.log(`unknown button click: ${customId}`);
       }
