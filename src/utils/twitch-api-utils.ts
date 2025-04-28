@@ -16,21 +16,19 @@ export async function getTwitchAccessToken(clientId: string, clientSecret: strin
   return ((await resp.json()) as ClientCredentialsGrantFlow).access_token;
 }
 
-async function transformClipsGameIdFromIdToName(
+async function transformClipsGameIdFromIdToNameAndTransformCreatedAt(
   twitchApi: Readonly<TwitchApi>,
-  clips: TwitchClips
+  twitchClips: TwitchClips
 ): Promise<TwitchClip[]> {
-  const gameIds = new Set(clips.data.map((clip) => clip.game_id));
+  const gameIds = new Set(twitchClips.data.map((twitchClip) => twitchClip.game_id));
   const games = await twitchApi.games([...gameIds.keys()]);
 
-  return clips.data.map(({ id, url, creator_name, game_id, title }) => {
-    const gameName = games.data.find((game) => game.id === game_id)?.name;
+  return twitchClips.data.map((twitchClip) => {
+    const gameName = games.data.find((game) => game.id === twitchClip.game_id)?.name;
     return {
-      id,
-      url,
-      creator_name,
-      game_id: gameName ?? game_id,
-      title
+      ...twitchClip,
+      created_at: twitchClip.created_at.split('T')[0],
+      game_id: gameName ?? twitchClip.game_id
     } as TwitchClip;
   });
 }
@@ -42,7 +40,7 @@ export async function getClipsWithGameNameFromIds(
 ): Promise<TwitchClip[]> {
   const clips = await twitchApi.clipsFromIds(ids);
 
-  return transformClipsGameIdFromIdToName(twitchApi, clips);
+  return transformClipsGameIdFromIdToNameAndTransformCreatedAt(twitchApi, clips);
 }
 
 export async function getClipsWithGameNameFromBroadcasterName(
@@ -54,7 +52,10 @@ export async function getClipsWithGameNameFromBroadcasterName(
   const broadcasterId = users.data[0].id;
 
   const clips = await twitchApi.clipsFromBroadcasterId(broadcasterId, cursor);
-  const transformClipsGameIdFromIdToName_ = await transformClipsGameIdFromIdToName(twitchApi, clips);
+  const transformClipsGameIdFromIdToName_ = await transformClipsGameIdFromIdToNameAndTransformCreatedAt(
+    twitchApi,
+    clips
+  );
 
   return [transformClipsGameIdFromIdToName_, clips.pagination.cursor];
 }

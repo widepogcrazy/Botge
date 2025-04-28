@@ -157,7 +157,16 @@ process.on('unhandledRejection', (error): void => {
   console.log(`unhandledRejection: ${error instanceof Error ? error.message : String(error)}`);
 });
 
-// update every 20 minutes 0th second
+// update every 3th minutes 0th second
+scheduleJob('0 */3 * * * *', () => {
+  try {
+    bot.cleanUpTwitchClipMessageBuilders();
+  } catch (error) {
+    console.log(`cleanUpTwitchClipMessageBuilders() failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+});
+
+// update every 20th minutes 0th second
 scheduleJob('0 */20 * * * *', () => {
   try {
     console.log('Emote cache refreshing');

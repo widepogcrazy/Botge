@@ -31,7 +31,22 @@ const clip: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('clip')
   .setDescription('replies with clip url, if found.')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('text').setDescription('the clips name.').setRequired(true)
+    option.setName('title').setDescription('the clips name')
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('clipper').setDescription('the username of the clipper')
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('game').setDescription("the game's name")
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option
+      .setName('sortby')
+      .setDescription("sort by this. by default it's sorted by views")
+      .addChoices({ name: 'Created', value: 'created' })
+  )
+  .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
+    option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
   );
 
 const addemote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
@@ -63,6 +78,9 @@ const shortestuniquesubstrings: ReadonlySlashCommandOptionsOnlyBuilder = new Sla
   .setDescription('outputs the shortest unique substring(s) for the emote(s)')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option.setName('emotes').setDescription('emote or emotes separated by space').setRequired(true)
+  )
+  .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
+    option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
   );
 
 const transient: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()

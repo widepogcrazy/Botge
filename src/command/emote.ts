@@ -366,7 +366,7 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
           : 'gif creation failed.';
 
       await defer;
-      await interaction.editReply(editReplyMessage).catch(() => null);
+      await interaction.editReply(editReplyMessage);
       void rm(outdir, { recursive: true });
 
       return;

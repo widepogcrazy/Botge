@@ -11,7 +11,10 @@ import type {
   SlashCommandStringOption,
   SlashCommandBooleanOption,
   SlashCommandAttachmentOption,
-  SlashCommandIntegerOption
+  SlashCommandIntegerOption,
+  EmbedBuilder,
+  ActionRowBuilder,
+  MessageActionRowComponentBuilder
 } from 'discord.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
@@ -23,6 +26,10 @@ export type ReadonlySlashCommandBooleanOption = DeepReadonly<SlashCommandBoolean
 export type ReadonlySlashCommandAttachmentOption = DeepReadonly<SlashCommandAttachmentOption>;
 export type ReadonlySlashCommandIntegerOption = DeepReadonly<SlashCommandIntegerOption>;
 export type ReadonlySlashCommandOptionsOnlyBuilder = DeepReadonly<SlashCommandOptionsOnlyBuilder>;
+export type ReadonlyEmbedBuilder = DeepReadonly<EmbedBuilder>;
+export type ReadonlyActionRowBuilderMessageActionRowComponentBuilder = DeepReadonly<
+  ActionRowBuilder<MessageActionRowComponentBuilder>
+>;
 
 export type SevenTVEmoteFile = {
   readonly name: string;
@@ -108,6 +115,9 @@ export type TwitchClip = {
   readonly creator_name: string;
   readonly game_id: string;
   readonly title: string;
+  readonly view_count: number;
+  readonly created_at: string;
+  readonly thumbnail_url: string;
 };
 export type TwitchGame = {
   readonly id: string;

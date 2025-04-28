@@ -58,7 +58,14 @@ export default tseslint.config(
             { from: 'package', name: ['MeiliSearch', 'Index'], package: 'meilisearch' },
             {
               from: 'package',
-              name: ['Interaction', 'CommandInteraction', 'ModalSubmitInteraction', 'Client', 'GuildEmoji'],
+              name: [
+                'Interaction',
+                'CommandInteraction',
+                'ButtonInteraction',
+                'ModalSubmitInteraction',
+                'Client',
+                'GuildEmoji'
+              ],
               package: 'discord.js'
             }
           ]

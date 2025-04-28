@@ -11,12 +11,16 @@ import { clipHandler } from './command/clip.js';
 import { findTheEmojiHandler } from './command/find-the-emoji.js';
 import { pingMeHandler } from './command/pingme.js';
 import { assignEmoteSetsHandler } from './command/assing-emote-sets.js';
+import { steamHandler } from './command/steam.js';
+import { buttonHandler } from './button/button.js';
 import type { CachedUrl } from './api/cached-url.js';
 import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import type { PingsDatabase } from './api/ping-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
-import { steamHandler } from './command/steam.js';
+import type { TwitchClipMessageBuilder } from './twitch-clip-message-builder.js';
+
+export const CLEANUP_MINUTES = 5;
 
 export class Bot {
   readonly #client: Client;
@@ -27,6 +31,7 @@ export class Bot {
   readonly #pingsDatabase: Readonly<PingsDatabase>;
   readonly #cachedUrl: Readonly<CachedUrl>;
   readonly #guilds: Readonly<Guild>[];
+  readonly #twitchClipMessageBuilders: TwitchClipMessageBuilder[];
 
   public constructor(
     client: Client,
@@ -46,6 +51,7 @@ export class Bot {
     this.#pingsDatabase = pingsDatabase;
     this.#cachedUrl = cachedUrl;
     this.#guilds = [...guilds];
+    this.#twitchClipMessageBuilders = [];
   }
 
   public get client(): Client {
@@ -74,10 +80,15 @@ export class Bot {
     //interaction
     this.#client.on(Events.InteractionCreate, async (interaction) => {
       //interaction not
-      if (!interaction.isChatInputCommand()) return;
+      if (!interaction.isChatInputCommand() && !interaction.isButton()) return;
 
       const { guildId, user } = interaction;
       if (guildId === null || user.bot) return;
+
+      if (interaction.isButton()) {
+        void buttonHandler(this.#twitchClipMessageBuilders)(interaction);
+        return;
+      }
 
       const guild =
         this.#guilds.find((guild_) => guild_.ids.some((id) => id === guildId)) ??
@@ -102,7 +113,8 @@ export class Bot {
       }
 
       if (interaction.commandName === 'clip') {
-        if (twitchClipsMeiliSearchIndex !== undefined) void clipHandler(twitchClipsMeiliSearchIndex)(interaction);
+        if (twitchClipsMeiliSearchIndex !== undefined)
+          void clipHandler(twitchClipsMeiliSearchIndex, this.#twitchClipMessageBuilders)(interaction);
         else void interaction.reply('clip command is not available in this server.');
         return;
       }
@@ -154,9 +166,22 @@ export class Bot {
         return;
       }
 
-      void interaction.reply('command not found');
       return;
     });
+  }
+
+  public cleanUpTwitchClipMessageBuilders(): void {
+    const timeNow = Date.now();
+
+    for (const [index, twitchClipMessageBuilder] of this.#twitchClipMessageBuilders.entries()) {
+      const difference = timeNow - twitchClipMessageBuilder.interaction.createdAt.getTime();
+
+      if (difference > CLEANUP_MINUTES * 60000) {
+        this.#twitchClipMessageBuilders.splice(index, 1);
+        this.cleanUpTwitchClipMessageBuilders();
+        return;
+      }
+    }
   }
 
   public async start(discordToken: string | undefined): Promise<void> {

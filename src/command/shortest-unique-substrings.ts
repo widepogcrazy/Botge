@@ -47,7 +47,8 @@ function getShortestUniqueSubstrings(
 
 export function shortestuniquesubstringsHandler(em: Readonly<EmoteMatcher>) {
   return async (interaction: CommandInteraction): Promise<void> => {
-    const defer = interaction.deferReply();
+    const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
+    const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
     try {
       const text: readonly string[] = String(interaction.options.get('emotes')?.value).split(/\s+/);
       const getShortestUniqueSubstrings_: readonly (readonly [string | undefined, readonly string[] | undefined])[] =
