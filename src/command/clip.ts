@@ -35,7 +35,7 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index, twitchClipMessag
       const filter = ((): string => {
         const filter_: string[] = [];
         const clipperFilter = clipper !== undefined ? `creator_name = ${clipper}` : undefined;
-        const gameFilter = game !== undefined ? `game_id = \'${game}\'` : undefined;
+        const gameFilter = game !== undefined ? `game_id = "${game}"` : undefined;
 
         if (clipperFilter !== undefined) filter_.push(clipperFilter);
         if (gameFilter !== undefined) filter_.push(gameFilter);
@@ -46,9 +46,7 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index, twitchClipMessag
       })();
 
       const { maxTotalHits } = await twitchClipsMeiliSearchIndex.getPagination();
-      if (maxTotalHits === null || maxTotalHits === undefined) {
-        throw new Error('pagination max total hits not set');
-      }
+      if (maxTotalHits === null || maxTotalHits === undefined) throw new Error('pagination max total hits not set');
 
       const search = await twitchClipsMeiliSearchIndex.search(title ?? '', {
         filter: filter,
@@ -74,7 +72,7 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index, twitchClipMessag
         return;
       }
 
-      const twitchClipMessageBuilder = new TwitchClipMessageBuilder(interaction, hits, sortBy);
+      const twitchClipMessageBuilder = new TwitchClipMessageBuilder(interaction, hits, ephemeral, sortBy);
       twitchClipMessageBuilders.push(twitchClipMessageBuilder);
 
       await defer;

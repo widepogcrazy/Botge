@@ -13,12 +13,14 @@ import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
 import type { EmoteMatcher } from '../emote-matcher.js';
 import { TMP_DIR } from '../paths-and-endpoints.js';
+import { EmoteMessageBuilder } from '../emote-message-builder.js';
 
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
 const MAXHEIGHT = 64;
 const DOWNLOAD_ASSET_ERROR_MESSAGE = 'Failed to download asset(s).';
 const FAILED_TO_DOWNLOAD_OR_GET_EMOJI_MESSAGE = 'Failed to download or get emoji(s).';
+const SOMETHING_WENT_WRONG_REPLY_MESSAGE = 'Someting went wrong. Please try again later.';
 
 function getMaxWidth(layers: readonly DownloadedAsset[], scaleToHeight: number): number {
   const scaledWidth = layers.map((layer) => (layer.width / layer.height) * scaleToHeight);
@@ -128,20 +130,111 @@ function onlyUnique(value: string, index: number, array: readonly string[]): boo
   return array.indexOf(value) === index;
 }
 
-export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
+export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>) {
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
+    try {
+      const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
+
+      const emote = String(interaction.options.get('emote')?.value).trim();
+      const size = ((): number | undefined => {
+        const sizeOptions = interaction.options.get('size')?.value;
+        return sizeOptions !== undefined ? Number(sizeOptions) : undefined;
+      })();
+
+      const match = emoteMatcher.matchSingle(emote);
+
+      if (match === undefined) {
+        await defer;
+        try {
+          new URL(emote);
+          await interaction.editReply('posting link through Botge wtf');
+        } catch {
+          await interaction.editReply(emoteNotFoundReply);
+        }
+        return;
+      }
+
+      const { url, platform } = match;
+
+      await defer;
+      if (size !== undefined)
+        await interaction.editReply(emoteSizeChange(url, size, platform).replace('.gif', '.webp'));
+      else await interaction.editReply(url.replace('.gif', '.webp'));
+    } catch (error) {
+      console.log(`Error at emoteSingleHandler --> ${error instanceof Error ? error.message : String(error)}`);
+
+      await defer;
+      await interaction.editReply(SOMETHING_WENT_WRONG_REPLY_MESSAGE);
+    }
+  };
+}
+
+export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>, emoteMessageBuilders: EmoteMessageBuilder[]) {
+  return async (interaction: CommandInteraction): Promise<void> => {
+    const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
+    const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
+    try {
+      const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
+
+      const query = ((): string => {
+        const queryOptions = interaction.options.get('query')?.value;
+        return queryOptions !== undefined ? String(queryOptions).trim() : '';
+      })();
+
+      const matches = emoteMatcher.matchSingleArray(query, undefined, true);
+
+      if (matches === undefined || matches.length === 0) {
+        await defer;
+        try {
+          new URL(query);
+          await interaction.editReply('posting link through Botge wtf');
+        } catch {
+          await interaction.editReply(emoteNotFoundReply);
+        }
+        return;
+      }
+
+      const sortedMatches: readonly AssetInfo[] = await Promise.all(
+        [...matches].map((asset) => {
+          const transformedAsset = { ...asset, url: asset.url.replace('.gif', '.webp') };
+          return transformedAsset;
+        })
+      );
+
+      const emoteMessageBuilder = new EmoteMessageBuilder(interaction, sortedMatches, ephemeral);
+      emoteMessageBuilders.push(emoteMessageBuilder);
+
+      await defer;
+      await interaction.editReply({
+        embeds: [emoteMessageBuilder.first()],
+        components: [emoteMessageBuilder.row]
+      });
+    } catch (error) {
+      console.log(`Error at emoteListHandler --> ${error instanceof Error ? error.message : String(error)}`);
+
+      await defer;
+      await interaction.editReply(SOMETHING_WENT_WRONG_REPLY_MESSAGE);
+    }
+  };
+}
+
+export function emotesHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
+  return async (interaction: CommandInteraction): Promise<void> => {
+    const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
+    const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
     const outdir = join(TMP_DIR, String(interaction.id));
 
     try {
-      const tokens: readonly string[] = String(interaction.options.get('name')?.value).trim().split(/\s+/);
+      const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
+
+      const tokens: readonly string[] = String(interaction.options.get('emotes')?.value).trim().split(/\s+/);
       const size = ((): number | undefined => {
         const sizeOptions = interaction.options.get('size')?.value;
         return sizeOptions !== undefined ? Number(sizeOptions) : undefined;
       })();
       const fullSize = Boolean(interaction.options.get('fullsize')?.value);
       const stretch = Boolean(interaction.options.get('stretch')?.value);
-      const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
       if (tokens.length === 1) {
         const [token] = tokens;
@@ -357,9 +450,10 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
         })()
       );
 
-      await defer;
+      //???
+      //await defer;
     } catch (error) {
-      console.log(`Error at emoteHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at emoteCombinedHandler --> ${error instanceof Error ? error.message : String(error)}`);
       const editReplyMessage =
         error instanceof Error && error.message === DOWNLOAD_ASSET_ERROR_MESSAGE
           ? 'failed to download gif(s)/png(s)'
@@ -368,8 +462,6 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Re
       await defer;
       await interaction.editReply(editReplyMessage);
       void rm(outdir, { recursive: true });
-
-      return;
     }
   };
 }

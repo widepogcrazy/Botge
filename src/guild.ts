@@ -6,6 +6,7 @@ import type { PersonalEmoteMatcherConstructor } from './emote-matcher-constructo
 import type { TwitchApi } from './api/twitch-api.js';
 import { listCutedogClipIds } from './utils/list-cutedog-clip-ids.js';
 import { getClipsWithGameNameFromBroadcasterName, getClipsWithGameNameFromIds } from './utils/twitch-api-utils.js';
+import type { ReadonlyRecordAny, TwitchClip } from './types.js';
 
 export class Guild {
   public readonly ids: readonly string[];
@@ -13,6 +14,8 @@ export class Guild {
   #emoteMatcher: Readonly<EmoteMatcher>;
   readonly #twitchClipsMeiliSearchIndex: Index | undefined;
   readonly #personalEmoteMatcherConstructor: Readonly<PersonalEmoteMatcherConstructor>;
+  #uniqueCreatorNames: Set<string> | undefined;
+  #uniqueGameIds: Set<string> | undefined;
 
   public constructor(
     ids: readonly string[],
@@ -26,6 +29,8 @@ export class Guild {
     this.#twitchClipsMeiliSearchIndex = twitchClipsMeiliSearchIndex;
     this.#emoteMatcher = emoteMatcher;
     this.#personalEmoteMatcherConstructor = emoteMatcherConstructor;
+    this.#uniqueCreatorNames = new Set<string>();
+    this.#uniqueGameIds = new Set<string>();
   }
 
   public get emoteMatcher(): Readonly<EmoteMatcher> {
@@ -37,6 +42,12 @@ export class Guild {
   public get personalEmoteMatcherConstructor(): Readonly<PersonalEmoteMatcherConstructor> {
     return this.#personalEmoteMatcherConstructor;
   }
+  public get uniqueCreatorNames(): Readonly<Set<string>> | undefined {
+    return this.#uniqueCreatorNames;
+  }
+  public get uniqueGameIds(): Readonly<Set<string>> | undefined {
+    return this.#uniqueGameIds;
+  }
 
   public async refreshEmoteMatcher(): Promise<void> {
     this.#emoteMatcher = await this.#personalEmoteMatcherConstructor.constructEmoteMatcher();
@@ -46,6 +57,9 @@ export class Guild {
     if (this.#twitchClipsMeiliSearchIndex === undefined || twitchApi === undefined) return;
     if (this.#broadcasterName === undefined) return;
 
+    this.#uniqueCreatorNames = new Set<string>();
+    this.#uniqueGameIds = new Set<string>();
+
     let updated = 0;
 
     if (this.ids.some((id) => id === GUILD_ID_CUTEDOG)) {
@@ -54,7 +68,10 @@ export class Guild {
       const clipIds = await listCutedogClipIds();
 
       for (let i = 0; i < clipIds.length; i += increment) {
-        const clips = await getClipsWithGameNameFromIds(twitchApi, clipIds.slice(i, i + increment));
+        const clips = (await getClipsWithGameNameFromIds(twitchApi, clipIds.slice(i, i + increment))).map((clip) => {
+          if (clip.game_id === '') return { ...clip, game_id: 'N/A' };
+          else return clip;
+        });
 
         await this.#twitchClipsMeiliSearchIndex.updateDocuments(clips).waitTask();
         updated += clips.length;
@@ -67,7 +84,13 @@ export class Guild {
       );
 
       let [clips, cursor] = getClipsWithGameNameFromBroadcasterName_;
+      clips = clips.map((clip) => {
+        if (clip.game_id === '') return { ...clip, game_id: 'N/A' };
+        else return clip;
+      });
+
       await this.#twitchClipsMeiliSearchIndex.updateDocuments(clips).waitTask();
+      updated += clips.length;
 
       for (let i = 0; i < 9 && cursor !== undefined; i++) {
         getClipsWithGameNameFromBroadcasterName_ = await getClipsWithGameNameFromBroadcasterName(
@@ -77,11 +100,33 @@ export class Guild {
         );
 
         [clips, cursor] = getClipsWithGameNameFromBroadcasterName_;
+        clips = clips.map((clip) => {
+          if (clip.game_id === '') return { ...clip, game_id: 'N/A' };
+          else return clip;
+        });
+
         await this.#twitchClipsMeiliSearchIndex.updateDocuments(clips).waitTask();
         updated += clips.length;
       }
     }
 
+    await this.refreshUniqueCreatorNamesAndGameIds();
     console.log(`Updated ${updated} clips.`);
+  }
+
+  public async refreshUniqueCreatorNamesAndGameIds(): Promise<void> {
+    if (this.#twitchClipsMeiliSearchIndex === undefined) return;
+
+    const { maxTotalHits } = await this.#twitchClipsMeiliSearchIndex.getPagination();
+    if (maxTotalHits === null || maxTotalHits === undefined) throw new Error('pagination max total hits not set');
+
+    const clipsge: readonly TwitchClip[] = (
+      await this.#twitchClipsMeiliSearchIndex.getDocuments({ limit: maxTotalHits })
+    ).results
+      .map((record: ReadonlyRecordAny) => record as TwitchClip)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+    this.#uniqueCreatorNames = new Set(clipsge.map((clip) => clip.creator_name));
+    this.#uniqueGameIds = new Set(clipsge.map((clip) => clip.game_id));
   }
 }

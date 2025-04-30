@@ -13,7 +13,7 @@ import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
 const EMOTESIZE = 2;
 
 export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): AssetInfo {
-  const { name, flags, data } = emote;
+  const { name, flags, data, timestamp } = emote;
   const { host, animated } = data;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);
@@ -24,7 +24,8 @@ export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): As
     animated: animated,
     width: file?.width,
     height: file?.height,
-    platform: Platform.sevenInSet
+    platform: Platform.sevenInSet,
+    timestamp: timestamp
   };
 }
 
@@ -39,7 +40,8 @@ export function sevenTVNotInSetToAsset(emote: Readonly<SevenTVEmoteNotInSet>, si
     animated: animated,
     width: file?.width,
     height: file?.height,
-    platform: Platform.sevenNotInSet
+    platform: Platform.sevenNotInSet,
+    timestamp: undefined
   };
 }
 
@@ -53,7 +55,8 @@ export function bttvToAsset(emote: BTTVEmote): AssetInfo {
     animated: animated,
     width: undefined,
     height: undefined,
-    platform: Platform.bttv
+    platform: Platform.bttv,
+    timestamp: undefined
   };
 }
 
@@ -66,7 +69,8 @@ export function ffzToAsset(emote: FFZEmote): AssetInfo {
     animated: false,
     width: undefined,
     height: undefined,
-    platform: Platform.ffz
+    platform: Platform.ffz,
+    timestamp: undefined
   };
 }
 
@@ -82,6 +86,7 @@ export function twitchToAsset(emote: TwitchEmote): AssetInfo {
     animated: animated,
     width: undefined,
     height: undefined,
-    platform: Platform.twitch
+    platform: Platform.twitch,
+    timestamp: undefined
   };
 }

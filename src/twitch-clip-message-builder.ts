@@ -13,15 +13,16 @@ import type {
   ReadonlyActionRowBuilderMessageActionRowComponentBuilder
 } from './types.js';
 
-export const PREVIOUS_BUTTON_CUSTOM_ID = 'previousButton';
-export const NEXT_BUTTON_CUSTOM_ID = 'nextButton';
-export const FIRST_BUTTON_CUSTOM_ID = 'firstButton';
-export const LAST_BUTTON_CUSTOM_ID = 'lastButton';
-export const SEND_CLIP_LINK_BUTTON_CUSTOM_ID = 'sendClipLinkButton';
+export const PREVIOUS_BUTTON_CUSTOM_ID_CLIP = 'previousButtonClip';
+export const NEXT_BUTTON_CUSTOM_ID_CLIP = 'nextButtonClip';
+export const FIRST_BUTTON_CUSTOM_ID_CLIP = 'firstButtonClip';
+export const LAST_BUTTON_CUSTOM_ID_CLIP = 'lastButtonClip';
+export const SEND_LINK_BUTTON_CUSTOM_ID_CLIP = 'sendLinkButtonClip';
+export const SEND_LINK_FOR_YOURSELF_BUTTON_CUSTOM_ID_CLIP = 'sendLinkForYourselfButtonClip';
 
 const BUTTON_CUSTOM_ID_SPLITTER = '-';
 
-export function getCounterFromButtonCustomId(buttonCustomID: string): number {
+export function getCounterFromButtonCustomIdClip(buttonCustomID: string): number {
   return Number(buttonCustomID.split(BUTTON_CUSTOM_ID_SPLITTER)[1]);
 }
 
@@ -34,6 +35,7 @@ export class TwitchClipMessageBuilder {
   public readonly counter: number;
   public readonly interaction: CommandInteraction;
   readonly #twitchClips: readonly TwitchClip[];
+  readonly #ephemeral: boolean;
   readonly #row: ReadonlyActionRowBuilderMessageActionRowComponentBuilder;
   readonly #sortedBy: string | undefined;
   #currentClipCounter: number;
@@ -41,35 +43,41 @@ export class TwitchClipMessageBuilder {
   public constructor(
     interaction: CommandInteraction,
     twitchClips: readonly TwitchClip[],
+    ephemeral: boolean,
     sortedBy: string | undefined
   ) {
     this.counter = TwitchClipMessageBuilder.#counter++;
     this.interaction = interaction;
     this.#twitchClips = twitchClips;
+    this.#ephemeral = ephemeral;
     this.#row = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId(getButtonCustomId(PREVIOUS_BUTTON_CUSTOM_ID, this.counter))
+        .setCustomId(getButtonCustomId(PREVIOUS_BUTTON_CUSTOM_ID_CLIP, this.counter))
         .setLabel('Previous')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId(getButtonCustomId(NEXT_BUTTON_CUSTOM_ID, this.counter))
+        .setCustomId(getButtonCustomId(NEXT_BUTTON_CUSTOM_ID_CLIP, this.counter))
         .setLabel('Next')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId(getButtonCustomId(FIRST_BUTTON_CUSTOM_ID, this.counter))
+        .setCustomId(getButtonCustomId(FIRST_BUTTON_CUSTOM_ID_CLIP, this.counter))
         .setLabel('First')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
-        .setCustomId(getButtonCustomId(LAST_BUTTON_CUSTOM_ID, this.counter))
+        .setCustomId(getButtonCustomId(LAST_BUTTON_CUSTOM_ID_CLIP, this.counter))
         .setLabel('Last')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
-        .setCustomId(getButtonCustomId(SEND_CLIP_LINK_BUTTON_CUSTOM_ID, this.counter))
+        .setCustomId(getButtonCustomId(SEND_LINK_BUTTON_CUSTOM_ID_CLIP, this.counter))
         .setLabel('Send Clip Link')
         .setStyle(ButtonStyle.Primary)
     );
     this.#sortedBy = sortedBy;
     this.#currentClipCounter = 0;
+  }
+
+  public get ephemeral(): boolean {
+    return this.#ephemeral;
   }
 
   public get row(): ReadonlyActionRowBuilderMessageActionRowComponentBuilder {

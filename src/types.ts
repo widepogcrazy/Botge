@@ -1,7 +1,7 @@
 import type { DeepReadonly } from 'ts-essentials';
 
 import type OpenAI from 'openai';
-import type { Hit } from 'meilisearch';
+import type { Hit, RecordAny } from 'meilisearch';
 import type { Translator } from 'deepl-node';
 
 import type { Platform } from './enums.js';
@@ -20,6 +20,7 @@ import type {
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
 export type ReadonlyTranslator = DeepReadonly<Translator>;
 export type ReadonlyHit = DeepReadonly<Hit>;
+export type ReadonlyRecordAny = DeepReadonly<RecordAny>;
 export type ReadonlyRegExpExecArray = DeepReadonly<RegExpExecArray>;
 export type ReadonlySlashCommandStringOption = DeepReadonly<SlashCommandStringOption>;
 export type ReadonlySlashCommandBooleanOption = DeepReadonly<SlashCommandBooleanOption>;
@@ -41,6 +42,7 @@ export type SevenTVEmoteFile = {
 export type SevenTVEmoteInSet = {
   readonly name: string;
   readonly flags: number;
+  readonly timestamp: number;
   readonly data: {
     readonly animated: boolean;
     readonly host: {
@@ -162,6 +164,7 @@ export type AssetInfo = {
   readonly width: number | undefined;
   readonly height: number | undefined;
   readonly platform: Platform;
+  readonly timestamp: number | undefined;
 };
 
 export type DownloadedAsset = {

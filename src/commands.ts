@@ -10,15 +10,23 @@ import type {
 
 const emote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('emote')
-  .setDescription('replies with a gif/png. precise lower/upper case not needed for uniquely named emotes')
+  .setDescription('replies with a gif/png')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('emote').setDescription("the emote' name").setRequired(true).setAutocomplete(true)
+  )
+  .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
+    option.setName('size').setDescription("the emote's size").setAutocomplete(true)
+  );
+
+const emotes: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('emotes')
+  .setDescription('replies with a webp/png')
+  .setDescription('emote command for combined emote usage')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option
-      .setName('name')
-      .setDescription('the emote(s) name(s). works even if this input is a substring of the emotes original name')
+      .setName('emotes')
+      .setDescription('the emotes names. works even if this input is a substring of the emotes original name')
       .setRequired(true)
-  )
-  .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('size').setDescription('the emotes size(not required): 1, 2, 3 or 4')
   )
   .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
     option.setName('fullsize').setDescription('whether to use the full size of the input or not')
@@ -27,17 +35,27 @@ const emote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
     option.setName('stretch').setDescription('whether to stretch the zero-width emotes instead of centering them')
   );
 
+const emotelist: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('emotelist')
+  .setDescription('replies with a webp/png')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('query').setDescription('the query').setAutocomplete(false)
+  )
+  .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
+    option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
+  );
+
 const clip: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('clip')
   .setDescription('replies with clip url, if found.')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('title').setDescription('the clips name')
+    option.setName('title').setDescription('the clips name').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('clipper').setDescription('the username of the clipper')
+    option.setName('clipper').setDescription('the username of the clipper').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('game').setDescription("the game's name")
+    option.setName('game').setDescription("the game's name").setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option
@@ -77,7 +95,11 @@ const shortestuniquesubstrings: ReadonlySlashCommandOptionsOnlyBuilder = new Sla
   .setName('shortestuniquesubstrings')
   .setDescription('outputs the shortest unique substring(s) for the emote(s)')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('emotes').setDescription('emote or emotes separated by space').setRequired(true)
+    option
+      .setName('emotes')
+      .setDescription('emote or emotes separated by space')
+      .setRequired(true)
+      .setAutocomplete(true)
   )
   .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
     option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
@@ -136,6 +158,8 @@ const assignEmoteSets: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommand
 
 export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommandsJSONBody>[] = [
   emote.toJSON(),
+  emotes.toJSON(),
+  emotelist.toJSON(),
   clip.toJSON(),
   addemote.toJSON(),
   chatgpt.toJSON(),

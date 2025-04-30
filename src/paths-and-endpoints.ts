@@ -46,10 +46,5 @@ export const PERSONAL_EMOTE_ENDPOINTS = {
     'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
     'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
     'https://api.frankerfacez.com/v1/room/cutedog_'
-  ),
-  elly: new PersonalEmoteEndpoints(
-    'https://7tv.io/v3/emote-sets/01G0HG3YQG000BNDCWZMDRQP8E',
-    'https://api.betterttv.net/3/users/5bdc93fafd50d42c9708dd57',
-    undefined
   )
 };

@@ -17,13 +17,7 @@ import { MeiliSearch } from 'meilisearch';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import { Bot } from './bot.js';
 import type { Guild } from './guild.js';
-import {
-  GUILD_ID_CUTEDOG,
-  GUILD_ID_CUTEDOG2,
-  GUILD_ID_ELLY,
-  BROADCASTER_NAME_CUTEDOG,
-  BROADCASTER_NAME_ELLY
-} from './guilds.js';
+import { GUILD_ID_CUTEDOG, GUILD_ID_CUTEDOG2, BROADCASTER_NAME_CUTEDOG } from './guilds.js';
 import { DATABASE_DIR, DATABASE_ENDPOINTS, PERSONAL_EMOTE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
 import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
 import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
@@ -103,13 +97,6 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       twitchClipsMeiliSearch,
       addedEmotesDatabase,
       PERSONAL_EMOTE_ENDPOINTS.cutedog
-    ),
-    newGuild(
-      [GUILD_ID_ELLY],
-      BROADCASTER_NAME_ELLY,
-      twitchClipsMeiliSearch,
-      addedEmotesDatabase,
-      PERSONAL_EMOTE_ENDPOINTS.elly
     )
   ];
 
@@ -157,6 +144,22 @@ process.on('unhandledRejection', (error): void => {
   console.log(`unhandledRejection: ${error instanceof Error ? error.message : String(error)}`);
 });
 
+if (UPDATE_CLIPS_ON_STARTUP === 'true') {
+  try {
+    await Promise.all(bot.guilds.map(async (guild) => guild.refreshClips(bot.twitchApi)));
+  } catch (error) {
+    console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+} else {
+  try {
+    await Promise.all(bot.guilds.map((guild) => void guild.refreshUniqueCreatorNamesAndGameIds()));
+  } catch (error) {
+    console.log(
+      `refreshUniqueCreatorNamesAndGameIds() failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 // update every 3th minutes 0th second
 scheduleJob('0 */3 * * * *', () => {
   try {
@@ -190,16 +193,6 @@ scheduleJob('0 54 * * * *', () => {
     console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 });
-
-if (UPDATE_CLIPS_ON_STARTUP === 'true') {
-  try {
-    bot.guilds.forEach((guild) => {
-      void guild.refreshClips(bot.twitchApi);
-    });
-  } catch (error) {
-    console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
 
 // update every 2 hours
 scheduleJob('0 */2 * * *', () => {

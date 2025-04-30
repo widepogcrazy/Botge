@@ -1,5 +1,3 @@
 export const GUILD_ID_CUTEDOG = '251211223012474880';
 export const GUILD_ID_CUTEDOG2 = '981663968437358622';
-export const GUILD_ID_ELLY = '369977562308411402';
-export const BROADCASTER_NAME_CUTEDOG = 'Cutedog_';
-export const BROADCASTER_NAME_ELLY = 'Elly';
+export const BROADCASTER_NAME_CUTEDOG = 'CuteDog_';

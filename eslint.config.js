@@ -62,6 +62,7 @@ export default tseslint.config(
                 'Interaction',
                 'CommandInteraction',
                 'ButtonInteraction',
+                'AutocompleteInteraction',
                 'ModalSubmitInteraction',
                 'Client',
                 'GuildEmoji'

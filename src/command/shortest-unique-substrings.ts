@@ -14,7 +14,7 @@ function getAllSubstrings(str: string): readonly string[] {
   return result;
 }
 
-function getShortestUniqueSubstrings(
+export function getShortestUniqueSubstrings(
   em: Readonly<EmoteMatcher>,
   text: string
 ): readonly [string | undefined, readonly string[] | undefined] {

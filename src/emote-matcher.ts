@@ -53,6 +53,10 @@ class SuffixTree {
     return this._query(suffix.toLowerCase(), suffix);
   }
 
+  public queryArray(suffix: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
+    return this._queryArray(suffix.toLowerCase(), max, sort);
+  }
+
   public queryUnique(suffix: string, original: string): boolean {
     return this._queryUnique(suffix.toLowerCase(), original);
   }
@@ -68,23 +72,17 @@ class SuffixTree {
       this.#data = new EmoteNode(exact, priority, asset);
     } else {
       this.#data.uniquePath = false;
-      if (this.#data.exact && exact) {
+      if ((this.#data.exact && exact) || (!this.#data.exact && !exact)) {
         if (priority > this.#data.highestPriority) {
           this.#data.highestPriority = priority;
           this.#data.assets.unshift(asset);
         } else {
           this.#data.assets.push(asset);
         }
-      } else if (!this.#data.exact && !exact) {
-        if (priority > this.#data.highestPriority) {
-          this.#data.highestPriority = priority;
-          this.#data.assets = [asset];
-        }
       } else if (!this.#data.exact && exact) {
-        // replace
         this.#data.exact = exact;
         this.#data.highestPriority = priority;
-        this.#data.assets = [asset];
+        this.#data.assets.unshift(asset);
       }
     }
 
@@ -117,10 +115,45 @@ class SuffixTree {
     return this.#paths.get(nextChar)?._query(normalizedSuffix.slice(1), original);
   }
 
+  private _queryArray(normalizedSuffix: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
+    if (normalizedSuffix === '') {
+      const assets: AssetInfo[] = [];
+
+      for (const asset of this.#data?.assets ?? []) {
+        if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
+      }
+
+      const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this.#paths.entries();
+      let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
+
+      while (pathsMapIteratorNextValue !== undefined) {
+        const pathsMapIteratorNextAssets: readonly AssetInfo[] | undefined = pathsMapIteratorNextValue[1].#data?.assets;
+
+        for (const asset of pathsMapIteratorNextAssets ?? []) {
+          if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
+        }
+
+        pathsMapIteratorNextValue = pathsMapIterator.next().value;
+        continue;
+      }
+
+      //reached the end of the iteration, return
+      if (sort !== undefined && sort) {
+        assets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+      }
+
+      if (max !== undefined) return assets.slice(0, max);
+      else return assets;
+    }
+
+    const nextChar = normalizedSuffix.charAt(0);
+    if (!this.#paths.has(nextChar)) return undefined;
+    return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), max, sort);
+  }
+
   private _queryUnique(normalizedSuffix: string, original: string): boolean {
     if (normalizedSuffix === '') {
       if (this.#data === undefined) return false;
-      if (this.#data.assets.length !== 1) return false;
       const [asset] = this.#data.assets;
 
       if (this.#paths.size === 0) {
@@ -131,16 +164,14 @@ class SuffixTree {
         let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
 
         while (pathsMapIteratorNextValue !== undefined) {
-          const pathsMapIteratorNextAssets: readonly AssetInfo[] | undefined =
-            pathsMapIteratorNextValue[1].#data?.assets;
+          const pathsMapIteratorNext = pathsMapIteratorNextValue[1].#data;
 
-          if (pathsMapIteratorNextAssets === undefined) {
+          if (pathsMapIteratorNext?.assets === undefined) {
             pathsMapIteratorNextValue = pathsMapIterator.next().value;
             continue;
           }
 
-          if (pathsMapIteratorNextAssets.length !== 1) return false;
-          if (!this.#data.uniquePath) return false;
+          if (!pathsMapIteratorNext.uniquePath) return false;
           if (asset.name !== original) return false;
 
           pathsMapIteratorNextValue = pathsMapIterator.next().value;
@@ -238,6 +269,10 @@ export class EmoteMatcher {
 
   public matchSingle(query: string): AssetInfo | undefined {
     return this.#root.query(query);
+  }
+
+  public matchSingleArray(query: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
+    return this.#root.queryArray(query, max, sort);
   }
 
   public matchSingleUnique(query: string, original: string): boolean {

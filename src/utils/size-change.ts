@@ -9,6 +9,12 @@ export function maxPlatformSize(platform: Platform): number {
   return 4;
 }
 
+export function applicableSizes(platform: Platform | undefined): readonly number[] {
+  if (platform === Platform.bttv || platform === Platform.twitch) return [1, 2, 3];
+  else if (platform === Platform.ffz) return [1, 2, 4];
+  else return [1, 2, 3, 4];
+}
+
 export function emoteSizeChange(url: string, size: number, platform: Platform): string {
   if (size >= 1 && size <= 4) {
     if (platform === Platform.sevenInSet || platform === Platform.sevenNotInSet) {
