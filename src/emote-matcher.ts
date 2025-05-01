@@ -116,39 +116,38 @@ class SuffixTree {
   }
 
   private _queryArray(normalizedSuffix: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
-    if (normalizedSuffix === '') {
-      const assets: AssetInfo[] = [];
+    if (normalizedSuffix !== '') {
+      const nextChar = normalizedSuffix.charAt(0);
+      if (!this.#paths.has(nextChar)) return undefined;
+      return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), max, sort);
+    }
+    const assets: AssetInfo[] = [];
 
-      for (const asset of this.#data?.assets ?? []) {
+    for (const asset of this.#data?.assets ?? []) {
+      if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
+    }
+
+    const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this.#paths.entries();
+    let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
+
+    while (pathsMapIteratorNextValue !== undefined) {
+      const pathsMapIteratorNextAssets: readonly AssetInfo[] | undefined = pathsMapIteratorNextValue[1].#data?.assets;
+
+      for (const asset of pathsMapIteratorNextAssets ?? []) {
         if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
       }
 
-      const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this.#paths.entries();
-      let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
-
-      while (pathsMapIteratorNextValue !== undefined) {
-        const pathsMapIteratorNextAssets: readonly AssetInfo[] | undefined = pathsMapIteratorNextValue[1].#data?.assets;
-
-        for (const asset of pathsMapIteratorNextAssets ?? []) {
-          if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
-        }
-
-        pathsMapIteratorNextValue = pathsMapIterator.next().value;
-        continue;
-      }
-
-      //reached the end of the iteration, return
-      if (sort !== undefined && sort) {
-        assets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
-      }
-
-      if (max !== undefined) return assets.slice(0, max);
-      else return assets;
+      pathsMapIteratorNextValue = pathsMapIterator.next().value;
+      continue;
     }
 
-    const nextChar = normalizedSuffix.charAt(0);
-    if (!this.#paths.has(nextChar)) return undefined;
-    return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), max, sort);
+    //reached the end of the iteration, return
+    if (sort !== undefined && sort) {
+      assets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+    }
+
+    if (max !== undefined) return assets.slice(0, max);
+    else return assets;
   }
 
   private _queryUnique(normalizedSuffix: string, original: string): boolean {
