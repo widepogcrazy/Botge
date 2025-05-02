@@ -132,11 +132,16 @@ function onlyUnique(value: string, index: number, array: readonly string[]): boo
 
 export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>) {
   return async (interaction: CommandInteraction): Promise<void> => {
+    const emote = String(interaction.options.get('emote')?.value).trim();
+    if (emote.split(/\s+/).length > 1) {
+      await interaction.reply({ content: 'Please use /emotes for combined emotes.', flags: 'Ephemeral' });
+      return;
+    }
+
     const defer = interaction.deferReply();
     try {
       const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
-      const emote = String(interaction.options.get('emote')?.value).trim();
       const size = ((): number | undefined => {
         const sizeOptions = interaction.options.get('size')?.value;
         return sizeOptions !== undefined ? Number(sizeOptions) : undefined;

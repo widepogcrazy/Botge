@@ -53,8 +53,8 @@ class SuffixTree {
     return this._query(suffix.toLowerCase(), suffix);
   }
 
-  public queryArray(suffix: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
-    return this._queryArray(suffix.toLowerCase(), max, sort);
+  public queryArray(suffix: string, original: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
+    return this._queryArray(suffix.toLowerCase(), original, max, sort);
   }
 
   public queryUnique(suffix: string, original: string): boolean {
@@ -115,13 +115,18 @@ class SuffixTree {
     return this.#paths.get(nextChar)?._query(normalizedSuffix.slice(1), original);
   }
 
-  private _queryArray(normalizedSuffix: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
+  private _queryArray(
+    normalizedSuffix: string,
+    original: string,
+    max?: number,
+    sort?: boolean
+  ): readonly AssetInfo[] | undefined {
     if (normalizedSuffix !== '') {
       const nextChar = normalizedSuffix.charAt(0);
       if (!this.#paths.has(nextChar)) return undefined;
-      return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), max, sort);
+      return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), original, max, sort);
     }
-    const assets: AssetInfo[] = [];
+    let assets: AssetInfo[] = [];
 
     for (const asset of this.#data?.assets ?? []) {
       if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
@@ -143,7 +148,34 @@ class SuffixTree {
 
     //reached the end of the iteration, return
     if (sort !== undefined && sort) {
-      assets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+      const assetsTimestampNotUndefined = assets.filter((asset) => asset.timestamp !== undefined);
+      const assetsTimestampUndefined = assets.filter((asset) => asset.timestamp === undefined);
+
+      assetsTimestampNotUndefined.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+      assets = [...assetsTimestampNotUndefined, ...assetsTimestampUndefined];
+    }
+
+    if (original !== '') {
+      const exactCaseMatch = ((): AssetInfo | undefined => {
+        const exactCaseMatchIndex = assets.findIndex((asset) => asset.name === original);
+        return exactCaseMatchIndex !== -1 ? assets.splice(exactCaseMatchIndex, 1)[0] : undefined;
+      })();
+
+      const lowerCaseMatch = ((): AssetInfo | undefined => {
+        const lowerCaseMatchIndex = assets.findIndex((asset) => asset.name.toLowerCase() === original.toLowerCase());
+        return lowerCaseMatchIndex !== -1 ? assets.splice(lowerCaseMatchIndex, 1)[0] : undefined;
+      })();
+
+      const startsWithLowerCaseMatches: readonly AssetInfo[] = assets
+        .map((asset, index) => {
+          if (asset.name.toLowerCase().startsWith(original.toLowerCase())) return assets.splice(index, 1)[0];
+          return undefined;
+        })
+        .filter((startsWithLowerCaseMatch) => startsWithLowerCaseMatch !== undefined);
+
+      assets.unshift(...startsWithLowerCaseMatches);
+      if (lowerCaseMatch !== undefined) assets.unshift(lowerCaseMatch);
+      if (exactCaseMatch !== undefined) assets.unshift(exactCaseMatch);
     }
 
     if (max !== undefined) return assets.slice(0, max);
@@ -271,7 +303,7 @@ export class EmoteMatcher {
   }
 
   public matchSingleArray(query: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
-    return this.#root.queryArray(query, max, sort);
+    return this.#root.queryArray(query, query, max, sort);
   }
 
   public matchSingleUnique(query: string, original: string): boolean {
