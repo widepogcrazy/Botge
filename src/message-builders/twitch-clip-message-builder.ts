@@ -1,9 +1,19 @@
+import { config } from 'dotenv';
 import { EmbedBuilder, type CommandInteraction } from 'discord.js';
-
-import type { ReadonlyEmbedBuilder, TwitchClip } from '../types.js';
+import type {
+  TwitchClip,
+  TwitchClipMessageBuilderTransformFunctionReturnType,
+  ReadonlyEmbedBuilder
+} from '../types.js';
 import { BaseMessageBuilder } from './base.js';
 
-export class TwitchClipMessageBuilder extends BaseMessageBuilder<TwitchClip, ReadonlyEmbedBuilder> {
+config();
+const { EMBED_SERVER_HOST } = process.env;
+
+export class TwitchClipMessageBuilder extends BaseMessageBuilder<
+  TwitchClip,
+  TwitchClipMessageBuilderTransformFunctionReturnType
+> {
   public static readonly messageBuilderType = 'Clip';
   static #staticCounter = 0;
   readonly #sortedByText: string | undefined;
@@ -13,10 +23,24 @@ export class TwitchClipMessageBuilder extends BaseMessageBuilder<TwitchClip, Rea
     twitchClips: readonly TwitchClip[],
     sortedBy: string | undefined
   ) {
-    const transformFunction = (twitchClip: TwitchClip): ReadonlyEmbedBuilder => {
+    const transformFunctionWithEmbedServer = (
+      twitchClip: TwitchClip
+    ): TwitchClipMessageBuilderTransformFunctionReturnType => {
+      const { id } = twitchClip;
+      const content = `${EMBED_SERVER_HOST}${id}\n${this.currentIndex + 1}/${this.arrayLength}`;
+
+      return {
+        content: content,
+        components: [this.row]
+      } as TwitchClipMessageBuilderTransformFunctionReturnType;
+    };
+
+    const transformFunctionWithoutEmbedServer = (
+      twitchClip: TwitchClip
+    ): TwitchClipMessageBuilderTransformFunctionReturnType => {
       const { title, url, creator_name, game_id, view_count, created_at, thumbnail_url } = twitchClip;
 
-      return new EmbedBuilder()
+      const embed: ReadonlyEmbedBuilder = new EmbedBuilder()
         .setColor('DarkButNotBlack')
         .setTitle(title)
         .setURL(url)
@@ -30,6 +54,11 @@ export class TwitchClipMessageBuilder extends BaseMessageBuilder<TwitchClip, Rea
         .setFooter({
           text: `${this.currentIndex + 1}/${this.arrayLength}. Sorted by ${this.#sortedByText}.`
         });
+
+      return {
+        embeds: [embed],
+        components: [this.row]
+      } as TwitchClipMessageBuilderTransformFunctionReturnType;
     };
 
     super(
@@ -37,7 +66,7 @@ export class TwitchClipMessageBuilder extends BaseMessageBuilder<TwitchClip, Rea
       TwitchClipMessageBuilder.messageBuilderType,
       interaction,
       twitchClips,
-      transformFunction
+      EMBED_SERVER_HOST !== undefined ? transformFunctionWithEmbedServer : transformFunctionWithoutEmbedServer
     );
 
     this.#sortedByText = sortedBy !== undefined ? `${sortedBy} then views` : 'views';

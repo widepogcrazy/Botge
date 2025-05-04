@@ -207,14 +207,11 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
       );
 
       const emoteMessageBuilder = new EmoteMessageBuilder(interaction, sortedMatches);
-      const embed = emoteMessageBuilder.first();
+      const reply = emoteMessageBuilder.first();
       await defer;
 
-      if (embed === undefined) return undefined;
-      await interaction.editReply({
-        embeds: [embed],
-        components: [emoteMessageBuilder.row]
-      });
+      if (reply === undefined) return undefined;
+      await interaction.editReply(reply);
       return emoteMessageBuilder;
     } catch (error) {
       console.log(`Error at emoteListHandler --> ${error instanceof Error ? error.message : String(error)}`);

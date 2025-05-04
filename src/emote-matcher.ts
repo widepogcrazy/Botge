@@ -88,21 +88,20 @@ class SuffixTree {
       if (this.#data === undefined) return undefined;
       // reached the end of the query string
 
-      if (this.#data.assets.length === 1) return this.#data.assets[0];
-
       for (const asset of this.#data.assets) {
-        // exact match and case match
         if (asset.name === original) return asset;
       }
 
-      if (this.#data.assets.length > 0) return this.#data.assets[0];
+      for (const asset of this.#data.assets) {
+        if (asset.name.toLowerCase() === original.toLowerCase()) return asset;
+      }
 
-      return undefined;
+      return this.#data.assets[0];
     }
 
     const nextChar = normalizedSuffix.charAt(0);
     if (!this.#paths.has(nextChar)) return undefined;
-    return this.#paths.get(nextChar)?._query(normalizedSuffix.slice(1), original);
+    return this.#paths.get(nextChar)?._query(normalizedSuffix.slice(1), original) ?? undefined;
   }
 
   private _queryArray(
@@ -114,7 +113,7 @@ class SuffixTree {
     if (normalizedSuffix !== '') {
       const nextChar = normalizedSuffix.charAt(0);
       if (!this.#paths.has(nextChar)) return undefined;
-      return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), original, max, sort);
+      return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), original, max, sort) ?? undefined;
     }
     let assets: AssetInfo[] = [];
 

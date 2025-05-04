@@ -42,7 +42,6 @@ export function modalSubmitHandler(
       const baseCustomId = getBaseCustomIdFromCustomId(customId);
       const messageBuilder = messageBuilders[messageBuilderIndex];
       const messageBuilderInteraction = messageBuilder.interaction;
-      const { row } = messageBuilder;
 
       if (baseCustomId === JUMP_TO_MODAL_BASE_CUSTOM_ID) {
         const jumpToTextIntputValue = interaction.fields
@@ -50,28 +49,22 @@ export function modalSubmitHandler(
           .trim();
 
         if (jumpToTextIntputValue === '') {
-          const embed = messageBuilder.random();
+          const reply = messageBuilder.random();
           await defer;
 
-          if (embed === undefined) return;
-          await messageBuilderInteraction.editReply({
-            embeds: [embed],
-            components: [row]
-          });
+          if (reply === undefined) return;
+          await messageBuilderInteraction.editReply(reply);
           return;
         }
 
         const jumpToTextIntputValueNumber = Number(jumpToTextIntputValue);
         if (Number.isNaN(jumpToTextIntputValueNumber)) return;
 
-        const jumpTo = messageBuilder.jumpTo(jumpToTextIntputValueNumber - 1);
+        const reply = messageBuilder.jumpTo(jumpToTextIntputValueNumber - 1);
         await defer;
 
-        if (jumpTo === undefined) return;
-        await messageBuilderInteraction.editReply({
-          embeds: [jumpTo],
-          components: [row]
-        });
+        if (reply === undefined) return;
+        await messageBuilderInteraction.editReply(reply);
       }
     } catch (error) {
       console.log(`Error at modalSubmit --> ${error instanceof Error ? error.message : String(error)}`);

@@ -63,14 +63,11 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index) {
       }
 
       const twitchClipMessageBuilder = new TwitchClipMessageBuilder(interaction, hits, sortBy);
-      const embed = twitchClipMessageBuilder.first();
+      const reply = twitchClipMessageBuilder.first();
       await defer;
 
-      if (embed === undefined) return undefined;
-      await interaction.editReply({
-        embeds: [embed],
-        components: [twitchClipMessageBuilder.row]
-      });
+      if (reply === undefined) return undefined;
+      await interaction.editReply(reply);
       return twitchClipMessageBuilder;
     } catch (error) {
       console.log(`Error at clipHandler --> ${error instanceof Error ? error.message : String(error)}`);

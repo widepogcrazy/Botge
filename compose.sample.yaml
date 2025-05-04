@@ -52,6 +52,9 @@ services:
 
       # clips, comment out if not needed
       - UPDATE_CLIPS_ON_STARTUP=true
+
+      # embed server host, example: https://embedserver.com/t/ with / at the end
+      # - EMBED_SERVER_HOST=
     volumes:
       - ./tmp:/app/tmp
       - ./data:/app/data

@@ -203,3 +203,14 @@ export type NumberOfCurrentPlayers = {
     readonly player_count: number;
   };
 };
+
+export type TwitchClipMessageBuilderTransformFunctionReturnType = {
+  readonly content?: string;
+  readonly embeds?: readonly ReadonlyEmbedBuilder[];
+  readonly components: readonly ReadonlyActionRowBuilderMessageActionRowComponentBuilder[];
+};
+
+export type EmoteMessageBuilderTransformFunctionReturnType = {
+  readonly embeds: readonly ReadonlyEmbedBuilder[];
+  readonly components: readonly ReadonlyActionRowBuilderMessageActionRowComponentBuilder[];
+};

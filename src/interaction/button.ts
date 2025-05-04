@@ -12,6 +12,10 @@ import {
   NEXT_BUTTON_BASE_CUSTOM_ID,
   JUMP_TO_BUTTON_BASE_CUSTOM_ID
 } from '../message-builders/base.js';
+import type {
+  TwitchClipMessageBuilderTransformFunctionReturnType,
+  EmoteMessageBuilderTransformFunctionReturnType
+} from '../types.js';
 
 export function buttonHandler(
   twitchClipMessageBuilders: readonly Readonly<TwitchClipMessageBuilder>[],
@@ -43,48 +47,28 @@ export function buttonHandler(
       const baseCustomId = getBaseCustomIdFromCustomId(customId);
       const messageBuilder = messageBuilders[messageBuilderIndex];
       const messageBuilderInteraction = messageBuilder.interaction;
-      const { row } = messageBuilder;
 
-      //can't defer, when showing modal
+      let reply:
+        | EmoteMessageBuilderTransformFunctionReturnType
+        | TwitchClipMessageBuilderTransformFunctionReturnType
+        | undefined = undefined;
       if (baseCustomId === PREVIOUS_BUTTON_BASE_CUSTOM_ID) {
-        const embed = messageBuilder.previous();
-        await interaction.deferUpdate();
-
-        if (embed === undefined) return;
-        await messageBuilderInteraction.editReply({
-          embeds: [embed],
-          components: [row]
-        });
+        reply = messageBuilder.previous();
       } else if (baseCustomId === NEXT_BUTTON_BASE_CUSTOM_ID) {
-        const embed = messageBuilder.next();
-        await interaction.deferUpdate();
-
-        if (embed === undefined) return;
-        await messageBuilderInteraction.editReply({
-          embeds: [embed],
-          components: [row]
-        });
+        reply = messageBuilder.next();
       } else if (baseCustomId === FIRST_BUTTON_BASE_CUSTOM_ID) {
-        const embed = messageBuilder.first();
-        await interaction.deferUpdate();
-
-        if (embed === undefined) return;
-        await messageBuilderInteraction.editReply({
-          embeds: [embed],
-          components: [row]
-        });
+        reply = messageBuilder.first();
       } else if (baseCustomId === LAST_BUTTON_BASE_CUSTOM_ID) {
-        const embed = messageBuilder.last();
-        await interaction.deferUpdate();
-
-        if (embed === undefined) return;
-        await messageBuilderInteraction.editReply({
-          embeds: [embed],
-          components: [row]
-        });
+        reply = messageBuilder.last();
       } else if (baseCustomId === JUMP_TO_BUTTON_BASE_CUSTOM_ID) {
+        //can't defer, when showing modal
         await interaction.showModal(messageBuilder.modal);
+        return;
       }
+
+      await interaction.deferUpdate();
+      if (reply === undefined) return;
+      await messageBuilderInteraction.editReply(reply);
     } catch (error) {
       console.log(`Error at button --> ${error instanceof Error ? error.message : String(error)}`);
     }

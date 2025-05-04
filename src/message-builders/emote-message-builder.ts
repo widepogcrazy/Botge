@@ -1,6 +1,6 @@
 import { EmbedBuilder, type CommandInteraction } from 'discord.js';
 
-import type { ReadonlyEmbedBuilder, AssetInfo } from '../types.js';
+import type { AssetInfo, EmoteMessageBuilderTransformFunctionReturnType } from '../types.js';
 import { Platform } from '../enums.js';
 import { BaseMessageBuilder } from './base.js';
 
@@ -16,15 +16,15 @@ function platformToString(platform: Platform): string {
   else return 'Twitch';
 }
 
-export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, ReadonlyEmbedBuilder> {
+export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMessageBuilderTransformFunctionReturnType> {
   public static readonly messageBuilderType = 'Emote';
   static #staticCounter = 0;
 
   public constructor(interaction: CommandInteraction, emotes: readonly AssetInfo[]) {
-    const transformFunction = (assetInfo: AssetInfo): ReadonlyEmbedBuilder => {
+    const transformFunction = (assetInfo: AssetInfo): EmoteMessageBuilderTransformFunctionReturnType => {
       const { name, url, zeroWidth, platform, width, height } = assetInfo;
 
-      return new EmbedBuilder()
+      const embed = new EmbedBuilder()
         .setColor('DarkButNotBlack')
         .setTitle(name)
         .setURL(url)
@@ -38,6 +38,11 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, ReadonlyE
         .setFooter({
           text: `${this.currentIndex + 1}/${this.arrayLength}. Sorted by date added.`
         });
+
+      return {
+        embeds: [embed],
+        components: [this.row]
+      } as EmoteMessageBuilderTransformFunctionReturnType;
     };
 
     super(

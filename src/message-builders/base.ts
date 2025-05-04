@@ -111,12 +111,12 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
     return this.#interaction;
   }
 
-  public get row(): ReadonlyActionRowBuilderMessageActionRowComponentBuilder {
-    return this.#row;
-  }
-
   public get modal(): ReadonlyModalBuilder {
     return this.#modal;
+  }
+
+  protected get row(): ReadonlyActionRowBuilderMessageActionRowComponentBuilder {
+    return this.#row;
   }
 
   protected get currentIndex(): number {
@@ -129,12 +129,12 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
 
   public previous(): TransformFunctionReturnType | undefined {
     if (this.#currentIndex <= 0) return undefined;
-    return this.#transformFunction(this.#array[this.#currentIndex--]);
+    return this.#transformFunction(this.#array[--this.#currentIndex]);
   }
 
   public next(): TransformFunctionReturnType | undefined {
     if (this.#currentIndex >= this.#array.length - 1) return undefined;
-    return this.#transformFunction(this.#array[this.#currentIndex++]);
+    return this.#transformFunction(this.#array[++this.#currentIndex]);
   }
 
   public first(): TransformFunctionReturnType | undefined {
