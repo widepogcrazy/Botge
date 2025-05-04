@@ -1,7 +1,7 @@
 import type { Index } from 'meilisearch';
 import type { CommandInteraction } from 'discord.js';
 import type { TwitchClip, ReadonlyHit } from '../types.js';
-import { TwitchClipMessageBuilder } from '../twitch-clip-message-builder.js';
+import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.js';
 
 export function clipHandler(twitchClipsMeiliSearchIndex: Index) {
   return async (interaction: CommandInteraction): Promise<TwitchClipMessageBuilder | undefined> => {

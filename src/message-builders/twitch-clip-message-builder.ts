@@ -1,7 +1,7 @@
 import { EmbedBuilder, type CommandInteraction } from 'discord.js';
 
-import type { ReadonlyEmbedBuilder, TwitchClip } from './types.js';
-import { BaseMessageBuilder } from './message-builders/base.js';
+import type { ReadonlyEmbedBuilder, TwitchClip } from '../types.js';
+import { BaseMessageBuilder } from './base.js';
 
 export class TwitchClipMessageBuilder extends BaseMessageBuilder<TwitchClip, ReadonlyEmbedBuilder> {
   public static readonly messageBuilderType = 'Clip';

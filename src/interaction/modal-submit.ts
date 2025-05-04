@@ -1,7 +1,7 @@
 import type { ModalSubmitInteraction } from 'discord.js';
 
-import { TwitchClipMessageBuilder } from '../twitch-clip-message-builder.js';
-import { EmoteMessageBuilder } from '../emote-message-builder.js';
+import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.js';
+import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
 import {
   getBaseCustomIdFromCustomId,
   getMessageBuilderTypeFromCustomId,

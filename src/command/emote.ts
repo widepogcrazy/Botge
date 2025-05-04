@@ -13,7 +13,7 @@ import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
 import type { EmoteMatcher } from '../emote-matcher.js';
 import { TMP_DIR } from '../paths-and-endpoints.js';
-import { EmoteMessageBuilder } from '../emote-message-builder.js';
+import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
 
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;

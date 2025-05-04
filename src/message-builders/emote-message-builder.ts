@@ -1,8 +1,8 @@
 import { EmbedBuilder, type CommandInteraction } from 'discord.js';
 
-import type { ReadonlyEmbedBuilder, AssetInfo } from './types.js';
-import { Platform } from './enums.js';
-import { BaseMessageBuilder } from './message-builders/base.js';
+import type { ReadonlyEmbedBuilder, AssetInfo } from '../types.js';
+import { Platform } from '../enums.js';
+import { BaseMessageBuilder } from './base.js';
 
 function booleanToString(bool: boolean): string {
   if (bool) return 'Yes';

@@ -11,15 +11,15 @@ import { findTheEmojiHandler } from './command/find-the-emoji.js';
 import { pingMeHandler } from './command/pingme.js';
 import { assignEmoteSetsHandler } from './command/assing-emote-sets.js';
 import { steamHandler } from './command/steam.js';
-import { buttonHandler } from './button/button.js';
+import { buttonHandler } from './interaction/button.js';
 import { autocompleteHandler } from './interaction/autocomplete.js';
 import { modalSubmitHandler } from './interaction/modal-submit.js';
 import type { CachedUrl } from './api/cached-url.js';
 import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import type { PingsDatabase } from './api/ping-database.js';
-import type { TwitchClipMessageBuilder } from './twitch-clip-message-builder.js';
-import type { EmoteMessageBuilder } from './emote-message-builder.js';
+import type { TwitchClipMessageBuilder } from './message-builders/twitch-clip-message-builder.js';
+import type { EmoteMessageBuilder } from './message-builders/emote-message-builder.js';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import type { Guild } from './guild.js';
 
