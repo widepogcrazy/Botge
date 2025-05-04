@@ -14,7 +14,9 @@ import type {
   SlashCommandIntegerOption,
   EmbedBuilder,
   ActionRowBuilder,
-  MessageActionRowComponentBuilder
+  MessageActionRowComponentBuilder,
+  ModalBuilder,
+  ApplicationCommandOptionChoiceData
 } from 'discord.js';
 
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
@@ -31,6 +33,8 @@ export type ReadonlyEmbedBuilder = DeepReadonly<EmbedBuilder>;
 export type ReadonlyActionRowBuilderMessageActionRowComponentBuilder = DeepReadonly<
   ActionRowBuilder<MessageActionRowComponentBuilder>
 >;
+export type ReadonlyModalBuilder = DeepReadonly<ModalBuilder>;
+export type ReadonlyApplicationCommandOptionChoiceDataString = DeepReadonly<ApplicationCommandOptionChoiceData<string>>;
 
 export type SevenTVEmoteFile = {
   readonly name: string;

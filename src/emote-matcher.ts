@@ -20,13 +20,11 @@ import {
 const FFZGLOBALSETSKEY = 3;
 
 class EmoteNode {
-  public exact: boolean;
   public highestPriority: number;
   public assets: AssetInfo[];
   public uniquePath: boolean;
 
-  public constructor(exact: boolean, priority: number, asset: AssetInfo) {
-    this.exact = exact;
+  public constructor(priority: number, asset: AssetInfo) {
     this.highestPriority = priority;
     this.assets = [asset];
     this.uniquePath = true;
@@ -45,7 +43,7 @@ class SuffixTree {
   public addAllSuffix(asset: AssetInfo, priority: number): void {
     const normalized = asset.name.toLowerCase();
     for (let i = 0; i < normalized.length; i++) {
-      this._addAllSuffix(normalized.slice(i), priority, asset, i === 0);
+      this._addAllSuffix(normalized.slice(i), priority, asset);
     }
   }
 
@@ -65,30 +63,22 @@ class SuffixTree {
     return this._queryExact(suffix.toLowerCase(), suffix);
   }
 
-  private _addAllSuffix(suffix: string, priority: number, asset: AssetInfo, fromFullString: boolean): void {
-    const exact = fromFullString && suffix === '';
-
+  private _addAllSuffix(suffix: string, priority: number, asset: AssetInfo): void {
     if (this.#data === undefined) {
-      this.#data = new EmoteNode(exact, priority, asset);
+      this.#data = new EmoteNode(priority, asset);
     } else {
       this.#data.uniquePath = false;
-      if ((this.#data.exact && exact) || (!this.#data.exact && !exact)) {
-        if (priority > this.#data.highestPriority) {
-          this.#data.highestPriority = priority;
-          this.#data.assets.unshift(asset);
-        } else {
-          this.#data.assets.push(asset);
-        }
-      } else if (!this.#data.exact && exact) {
-        this.#data.exact = exact;
+      if (priority > this.#data.highestPriority) {
         this.#data.highestPriority = priority;
         this.#data.assets.unshift(asset);
+      } else {
+        this.#data.assets.push(asset);
       }
     }
 
     if (suffix !== '') {
       const tree = this.#getOrAddTree(suffix.charAt(0));
-      tree?._addAllSuffix(suffix.slice(1), priority, asset, fromFullString);
+      tree?._addAllSuffix(suffix.slice(1), priority, asset);
       return;
     }
   }
@@ -132,20 +122,6 @@ class SuffixTree {
       if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
     }
 
-    const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this.#paths.entries();
-    let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
-
-    while (pathsMapIteratorNextValue !== undefined) {
-      const pathsMapIteratorNextAssets: readonly AssetInfo[] | undefined = pathsMapIteratorNextValue[1].#data?.assets;
-
-      for (const asset of pathsMapIteratorNextAssets ?? []) {
-        if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
-      }
-
-      pathsMapIteratorNextValue = pathsMapIterator.next().value;
-      continue;
-    }
-
     //reached the end of the iteration, return
     if (sort !== undefined && sort) {
       const assetsTimestampNotUndefined = assets.filter((asset) => asset.timestamp !== undefined);
@@ -185,33 +161,8 @@ class SuffixTree {
   private _queryUnique(normalizedSuffix: string, original: string): boolean {
     if (normalizedSuffix === '') {
       if (this.#data === undefined) return false;
-      const [asset] = this.#data.assets;
-
-      if (this.#paths.size === 0) {
-        if (!this.#data.uniquePath) return false;
-        if (asset.name === original) return true;
-      } else if (this.#paths.size === 1) {
-        const pathsMapIterator: Readonly<MapIterator<readonly [string, SuffixTree]>> = this.#paths.entries();
-        let pathsMapIteratorNextValue: readonly [string, SuffixTree] | undefined = pathsMapIterator.next().value;
-
-        while (pathsMapIteratorNextValue !== undefined) {
-          const pathsMapIteratorNext = pathsMapIteratorNextValue[1].#data;
-
-          if (pathsMapIteratorNext?.assets === undefined) {
-            pathsMapIteratorNextValue = pathsMapIterator.next().value;
-            continue;
-          }
-
-          if (!pathsMapIteratorNext.uniquePath) return false;
-          if (asset.name !== original) return false;
-
-          pathsMapIteratorNextValue = pathsMapIterator.next().value;
-          continue;
-        }
-
-        //reached the end of the iteration, return true
-        return true;
-      }
+      if (this.#data.uniquePath && this.#data.assets[0].name === original) return true;
+      return false;
     }
 
     const nextChar = normalizedSuffix.charAt(0);

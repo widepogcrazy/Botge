@@ -1,133 +1,89 @@
 import type { ButtonInteraction } from 'discord.js';
+import { TwitchClipMessageBuilder } from '../twitch-clip-message-builder.js';
+import { EmoteMessageBuilder } from '../emote-message-builder.js';
+
 import {
-  getCounterFromButtonCustomIdClip,
-  PREVIOUS_BUTTON_CUSTOM_ID_CLIP,
-  NEXT_BUTTON_CUSTOM_ID_CLIP,
-  FIRST_BUTTON_CUSTOM_ID_CLIP,
-  LAST_BUTTON_CUSTOM_ID_CLIP,
-  SEND_LINK_BUTTON_CUSTOM_ID_CLIP,
-  type TwitchClipMessageBuilder
-} from '../twitch-clip-message-builder.js';
-import {
-  getCounterFromButtonCustomIdEmote,
-  PREVIOUS_BUTTON_CUSTOM_ID_EMOTE,
-  NEXT_BUTTON_CUSTOM_ID_EMOTE,
-  FIRST_BUTTON_CUSTOM_ID_EMOTE,
-  LAST_BUTTON_CUSTOM_ID_EMOTE,
-  SEND_LINK_BUTTON_CUSTOM_ID_EMOTE,
-  type EmoteMessageBuilder
-} from '../emote-message-builder.js';
+  getBaseCustomIdFromCustomId,
+  getMessageBuilderTypeFromCustomId,
+  getCounterFromCustomId,
+  FIRST_BUTTON_BASE_CUSTOM_ID,
+  LAST_BUTTON_BASE_CUSTOM_ID,
+  PREVIOUS_BUTTON_BASE_CUSTOM_ID,
+  NEXT_BUTTON_BASE_CUSTOM_ID,
+  JUMP_TO_BUTTON_BASE_CUSTOM_ID
+} from '../message-builders/base.js';
 
 export function buttonHandler(
-  twitchClipMessageBuilders: TwitchClipMessageBuilder[],
-  emoteMessageBuilders: EmoteMessageBuilder[]
+  twitchClipMessageBuilders: readonly Readonly<TwitchClipMessageBuilder>[],
+  emoteMessageBuilders: readonly Readonly<EmoteMessageBuilder>[]
 ) {
   return async (interaction: ButtonInteraction): Promise<void> => {
     try {
       const { customId } = interaction;
 
-      if (customId.includes('Clip')) {
-        const twitchClipMessageBuilderIndex = twitchClipMessageBuilders.findIndex(
-          (twitchClipMessageBuilder_: Readonly<TwitchClipMessageBuilder>) =>
-            twitchClipMessageBuilder_.counter === getCounterFromButtonCustomIdClip(customId)
-        );
-        if (twitchClipMessageBuilderIndex === -1) return;
-        const twitchClipMessageBuilder = twitchClipMessageBuilders[twitchClipMessageBuilderIndex];
+      const messageBuilders = (():
+        | readonly Readonly<TwitchClipMessageBuilder>[]
+        | readonly Readonly<EmoteMessageBuilder>[]
+        | undefined => {
+        const messageBuilderType = getMessageBuilderTypeFromCustomId(customId);
 
-        const twitchClipInteraction = twitchClipMessageBuilder.interaction;
-        const { row, ephemeral } = twitchClipMessageBuilder;
+        if (messageBuilderType === TwitchClipMessageBuilder.messageBuilderType) return twitchClipMessageBuilders;
+        else if (messageBuilderType === EmoteMessageBuilder.messageBuilderType) return emoteMessageBuilders;
+        return undefined;
+      })();
+      if (messageBuilders === undefined) return;
 
-        const defer = interaction.deferUpdate();
-        if (customId.includes(PREVIOUS_BUTTON_CUSTOM_ID_CLIP)) {
-          await twitchClipInteraction.editReply({
-            embeds: [twitchClipMessageBuilder.previous()],
-            components: [row]
-          });
-        } else if (customId.includes(NEXT_BUTTON_CUSTOM_ID_CLIP)) {
-          await defer;
-          await twitchClipInteraction.editReply({
-            embeds: [twitchClipMessageBuilder.next()],
-            components: [row]
-          });
-        } else if (customId.includes(FIRST_BUTTON_CUSTOM_ID_CLIP)) {
-          await defer;
-          await twitchClipInteraction.editReply({
-            embeds: [twitchClipMessageBuilder.first()],
-            components: [row]
-          });
-        } else if (customId.includes(LAST_BUTTON_CUSTOM_ID_CLIP)) {
-          await defer;
-          await twitchClipInteraction.editReply({
-            embeds: [twitchClipMessageBuilder.last()],
-            components: [row]
-          });
-        } else if (customId.includes(SEND_LINK_BUTTON_CUSTOM_ID_CLIP)) {
-          //only allow original clip command user to send not ephemeral link.
-          await defer;
-          if (interaction.user.id === twitchClipInteraction.user.id && ephemeral) {
-            await interaction.followUp({
-              content: twitchClipMessageBuilder.currentUrl()
-            });
-          } else {
-            await interaction.followUp({
-              content: twitchClipMessageBuilder.currentUrl(),
-              flags: 'Ephemeral'
-            });
-          }
-        } else {
-          console.log(`unknown button click clip: ${customId}`);
-        }
-      } else if (customId.includes('Emote')) {
-        const emoteMessageBuilderIndex = emoteMessageBuilders.findIndex(
-          (emoteMessageBuilder_: Readonly<EmoteMessageBuilder>) =>
-            emoteMessageBuilder_.counter === getCounterFromButtonCustomIdEmote(customId)
-        );
-        if (emoteMessageBuilderIndex === -1) return;
-        const emoteMessageBuilder = emoteMessageBuilders[emoteMessageBuilderIndex];
+      const counter = getCounterFromCustomId(customId);
+      const messageBuilderIndex = messageBuilders.findIndex(
+        (messageBuilder: Readonly<TwitchClipMessageBuilder> | Readonly<EmoteMessageBuilder>) =>
+          messageBuilder.counter === counter
+      );
+      if (messageBuilderIndex === -1) return;
 
-        const emoteInteraction = emoteMessageBuilder.interaction;
-        const { row, ephemeral } = emoteMessageBuilder;
+      const baseCustomId = getBaseCustomIdFromCustomId(customId);
+      const messageBuilder = messageBuilders[messageBuilderIndex];
+      const messageBuilderInteraction = messageBuilder.interaction;
+      const { row } = messageBuilder;
 
-        const defer = interaction.deferUpdate();
-        if (customId.includes(PREVIOUS_BUTTON_CUSTOM_ID_EMOTE)) {
-          await emoteInteraction.editReply({
-            embeds: [emoteMessageBuilder.previous()],
-            components: [row]
-          });
-        } else if (customId.includes(NEXT_BUTTON_CUSTOM_ID_EMOTE)) {
-          await defer;
-          await emoteInteraction.editReply({
-            embeds: [emoteMessageBuilder.next()],
-            components: [row]
-          });
-        } else if (customId.includes(FIRST_BUTTON_CUSTOM_ID_EMOTE)) {
-          await defer;
-          await emoteInteraction.editReply({
-            embeds: [emoteMessageBuilder.first()],
-            components: [row]
-          });
-        } else if (customId.includes(LAST_BUTTON_CUSTOM_ID_EMOTE)) {
-          await defer;
-          await emoteInteraction.editReply({
-            embeds: [emoteMessageBuilder.last()],
-            components: [row]
-          });
-        } else if (customId.includes(SEND_LINK_BUTTON_CUSTOM_ID_EMOTE)) {
-          //only allow original clip command user to send not ephemeral link.
-          await defer;
-          if (interaction.user.id === emoteInteraction.user.id && ephemeral) {
-            await interaction.followUp({
-              content: emoteMessageBuilder.currentUrl()
-            });
-          } else {
-            await interaction.followUp({
-              content: emoteMessageBuilder.currentUrl(),
-              flags: 'Ephemeral'
-            });
-          }
-        } else {
-          console.log(`unknown button click emote: ${customId}`);
-        }
+      //can't defer, when showing modal
+      if (baseCustomId === PREVIOUS_BUTTON_BASE_CUSTOM_ID) {
+        const embed = messageBuilder.previous();
+        await interaction.deferUpdate();
+
+        if (embed === undefined) return;
+        await messageBuilderInteraction.editReply({
+          embeds: [embed],
+          components: [row]
+        });
+      } else if (baseCustomId === NEXT_BUTTON_BASE_CUSTOM_ID) {
+        const embed = messageBuilder.next();
+        await interaction.deferUpdate();
+
+        if (embed === undefined) return;
+        await messageBuilderInteraction.editReply({
+          embeds: [embed],
+          components: [row]
+        });
+      } else if (baseCustomId === FIRST_BUTTON_BASE_CUSTOM_ID) {
+        const embed = messageBuilder.first();
+        await interaction.deferUpdate();
+
+        if (embed === undefined) return;
+        await messageBuilderInteraction.editReply({
+          embeds: [embed],
+          components: [row]
+        });
+      } else if (baseCustomId === LAST_BUTTON_BASE_CUSTOM_ID) {
+        const embed = messageBuilder.last();
+        await interaction.deferUpdate();
+
+        if (embed === undefined) return;
+        await messageBuilderInteraction.editReply({
+          embeds: [embed],
+          components: [row]
+        });
+      } else if (baseCustomId === JUMP_TO_BUTTON_BASE_CUSTOM_ID) {
+        await interaction.showModal(messageBuilder.modal);
       }
     } catch (error) {
       console.log(`Error at button --> ${error instanceof Error ? error.message : String(error)}`);

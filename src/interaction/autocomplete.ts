@@ -1,9 +1,9 @@
 import type { AutocompleteInteraction, ApplicationCommandOptionChoiceData } from 'discord.js';
-import type { EmoteMatcher } from '../emote-matcher.js';
 import type { Index } from 'meilisearch';
-import type { TwitchClip, ReadonlyHit } from '../types.js';
 import { getShortestUniqueSubstrings } from '../command/shortest-unique-substrings.js';
 import { applicableSizes } from '../utils/size-change.js';
+import type { TwitchClip, ReadonlyHit, ReadonlyApplicationCommandOptionChoiceDataString } from '../types.js';
+import type { EmoteMatcher } from '../emote-matcher.js';
 
 export function autocompleteHandler(
   emoteMatcher: Readonly<EmoteMatcher>,
@@ -18,8 +18,8 @@ export function autocompleteHandler(
       const focusedOptionName = focusedOption.name;
       const focusedOptionValue = focusedOption.value;
 
-      if (interactionCommandName === 'emote') {
-        if (focusedOptionName === 'emote') {
+      if (interactionCommandName === 'emote' || interactionCommandName === 'emotelist') {
+        if (focusedOptionName === 'emote' || focusedOptionName === 'query') {
           const matches = emoteMatcher.matchSingleArray(focusedOptionValue.trim(), 25, true) ?? [];
           const options: readonly ApplicationCommandOptionChoiceData<string>[] = matches.map((match) => {
             return {
@@ -105,7 +105,7 @@ export function autocompleteHandler(
         }
       } else if (interactionCommandName === 'shortestuniquesubstrings') {
         if (focusedOptionName === 'emotes') {
-          const focusedOptionValueSplit = focusedOptionValue.split(/\s+/);
+          const focusedOptionValueSplit: readonly string[] = focusedOptionValue.split(/\s+/);
           const focusedOptionValueLast = focusedOptionValueSplit.at(-1) ?? '';
           const focusedOptionValueEverythingButLast = focusedOptionValueSplit
             .slice(0, -1)
@@ -128,7 +128,7 @@ export function autocompleteHandler(
             } as ApplicationCommandOptionChoiceData<string>;
           });
 
-          if (options.some((option: Readonly<ApplicationCommandOptionChoiceData<string>>) => option.name.length > 100))
+          if (options.some((option: ReadonlyApplicationCommandOptionChoiceDataString) => option.name.length > 100))
             return;
 
           await interaction.respond(

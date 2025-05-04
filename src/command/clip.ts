@@ -2,14 +2,10 @@ import type { Index } from 'meilisearch';
 import type { CommandInteraction } from 'discord.js';
 import type { TwitchClip, ReadonlyHit } from '../types.js';
 import { TwitchClipMessageBuilder } from '../twitch-clip-message-builder.js';
-import { CLEANUP_MINUTES } from '../bot.js';
 
-const MAX_TWITCH_CLIP_MESSAGE_BUILDS_LENGTH = 15;
-
-export function clipHandler(twitchClipsMeiliSearchIndex: Index, twitchClipMessageBuilders: TwitchClipMessageBuilder[]) {
-  return async (interaction: CommandInteraction): Promise<void> => {
-    const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
-    const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
+export function clipHandler(twitchClipsMeiliSearchIndex: Index) {
+  return async (interaction: CommandInteraction): Promise<TwitchClipMessageBuilder | undefined> => {
+    const defer = interaction.deferReply();
     try {
       const title = ((): string | undefined => {
         const titleOptions = interaction.options.get('title')?.value;
@@ -59,32 +55,29 @@ export function clipHandler(twitchClipsMeiliSearchIndex: Index, twitchClipMessag
       if (hits.length === 0) {
         await defer;
         await interaction.editReply('Could not find clip.');
-        return;
+        return undefined;
       } else if (hits.length === 1) {
         await defer;
         await interaction.editReply(hits[0].url);
-        return;
-      } else if (twitchClipMessageBuilders.length > MAX_TWITCH_CLIP_MESSAGE_BUILDS_LENGTH) {
-        await defer;
-        await interaction.editReply(
-          `${MAX_TWITCH_CLIP_MESSAGE_BUILDS_LENGTH} clip commands are currently in use. Please wait at most ${CLEANUP_MINUTES} minutes.`
-        );
-        return;
+        return undefined;
       }
 
-      const twitchClipMessageBuilder = new TwitchClipMessageBuilder(interaction, hits, ephemeral, sortBy);
-      twitchClipMessageBuilders.push(twitchClipMessageBuilder);
-
+      const twitchClipMessageBuilder = new TwitchClipMessageBuilder(interaction, hits, sortBy);
+      const embed = twitchClipMessageBuilder.first();
       await defer;
+
+      if (embed === undefined) return undefined;
       await interaction.editReply({
-        embeds: [twitchClipMessageBuilder.first()],
+        embeds: [embed],
         components: [twitchClipMessageBuilder.row]
       });
+      return twitchClipMessageBuilder;
     } catch (error) {
       console.log(`Error at clipHandler --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply('failed to get clip.');
+      return undefined;
     }
   };
 }

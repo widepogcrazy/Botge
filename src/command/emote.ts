@@ -175,10 +175,9 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>) {
   };
 }
 
-export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>, emoteMessageBuilders: EmoteMessageBuilder[]) {
-  return async (interaction: CommandInteraction): Promise<void> => {
-    const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
-    const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
+export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
+  return async (interaction: CommandInteraction): Promise<EmoteMessageBuilder | undefined> => {
+    const defer = interaction.deferReply();
     try {
       const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
@@ -197,7 +196,7 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>, emoteMess
         } catch {
           await interaction.editReply(emoteNotFoundReply);
         }
-        return;
+        return undefined;
       }
 
       const sortedMatches: readonly AssetInfo[] = await Promise.all(
@@ -207,19 +206,22 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>, emoteMess
         })
       );
 
-      const emoteMessageBuilder = new EmoteMessageBuilder(interaction, sortedMatches, ephemeral);
-      emoteMessageBuilders.push(emoteMessageBuilder);
-
+      const emoteMessageBuilder = new EmoteMessageBuilder(interaction, sortedMatches);
+      const embed = emoteMessageBuilder.first();
       await defer;
+
+      if (embed === undefined) return undefined;
       await interaction.editReply({
-        embeds: [emoteMessageBuilder.first()],
+        embeds: [embed],
         components: [emoteMessageBuilder.row]
       });
+      return emoteMessageBuilder;
     } catch (error) {
       console.log(`Error at emoteListHandler --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply(SOMETHING_WENT_WRONG_REPLY_MESSAGE);
+      return undefined;
     }
   };
 }

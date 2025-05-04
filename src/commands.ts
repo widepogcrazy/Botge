@@ -39,10 +39,7 @@ const emotelist: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilde
   .setName('emotelist')
   .setDescription('replies with a webp/png')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('query').setDescription('the query').setAutocomplete(false)
-  )
-  .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
-    option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
+    option.setName('query').setDescription('the query').setAutocomplete(true)
   );
 
 const clip: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
@@ -62,9 +59,6 @@ const clip: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
       .setName('sortby')
       .setDescription("sort by this. by default it's sorted by views")
       .addChoices({ name: 'Created', value: 'created' })
-  )
-  .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
-    option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
   );
 
 const addemote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()

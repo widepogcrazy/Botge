@@ -144,15 +144,20 @@ process.on('unhandledRejection', (error): void => {
   console.log(`unhandledRejection: ${error instanceof Error ? error.message : String(error)}`);
 });
 
+let refreshClipsOrRefreshUniqueCreatorNamesAndGameIds: readonly Promise<void>[] = [];
 if (UPDATE_CLIPS_ON_STARTUP === 'true') {
   try {
-    await Promise.all(bot.guilds.map(async (guild) => guild.refreshClips(bot.twitchApi)));
+    refreshClipsOrRefreshUniqueCreatorNamesAndGameIds = bot.guilds.map(async (guild) =>
+      guild.refreshClips(bot.twitchApi)
+    );
   } catch (error) {
     console.log(`refreshClips() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 } else {
   try {
-    await Promise.all(bot.guilds.map((guild) => void guild.refreshUniqueCreatorNamesAndGameIds()));
+    refreshClipsOrRefreshUniqueCreatorNamesAndGameIds = bot.guilds.map(async (guild) =>
+      guild.refreshUniqueCreatorNamesAndGameIds()
+    );
   } catch (error) {
     console.log(
       `refreshUniqueCreatorNamesAndGameIds() failed: ${error instanceof Error ? error.message : String(error)}`
@@ -160,10 +165,10 @@ if (UPDATE_CLIPS_ON_STARTUP === 'true') {
   }
 }
 
-// update every 3th minutes 0th second
-scheduleJob('0 */3 * * * *', () => {
+// update every 4th minutes 0th second
+scheduleJob('0 */4 * * * *', () => {
   try {
-    bot.cleanUpTwitchClipMessageBuilders();
+    bot.cleanUpMessageBuilders();
   } catch (error) {
     console.log(`cleanUpTwitchClipMessageBuilders() failed: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -228,5 +233,6 @@ scheduleJob('12 */12 * * *', () => {
 bot.registerHandlers();
 await ensureDirTmp_;
 await commandUpdate;
+await Promise.all(refreshClipsOrRefreshUniqueCreatorNamesAndGameIds);
 await bot.start(DISCORD_TOKEN);
 void registerPings(bot.client, bot.pingsDatabase);
