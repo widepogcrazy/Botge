@@ -1,4 +1,8 @@
-import { SlashCommandBuilder, type RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js';
+import {
+  SlashCommandBuilder,
+  type RESTPostAPIChatInputApplicationCommandsJSONBody,
+  type ApplicationCommandOptionChoiceData
+} from 'discord.js';
 
 import type {
   ReadonlySlashCommandOptionsOnlyBuilder,
@@ -40,6 +44,15 @@ const emotelist: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilde
   .setDescription('replies with a webp/png')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option.setName('query').setDescription('the query').setAutocomplete(true)
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('platform').setDescription('the platform of the emote').setAutocomplete(true)
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('animated').setDescription('whether the emote is animated').setAutocomplete(true)
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('zerowidth').setDescription('whether the emote is zerowidth(overlaying)').setAutocomplete(true)
   );
 
 const clip: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
@@ -97,6 +110,12 @@ const shortestuniquesubstrings: ReadonlySlashCommandOptionsOnlyBuilder = new Sla
   )
   .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
     option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option
+      .setName('type')
+      .setDescription('whether to output the result as embeds or simple text, default is embeds')
+      .setChoices([{ name: 'Text', value: 'Text' } as ApplicationCommandOptionChoiceData<string>])
   );
 
 const transient: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
@@ -142,13 +161,9 @@ const poe2: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('poe2')
   .setDescription('Get poe2 steam stats');
 
-/*
-const assignEmoteSets: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
-  .setName('assignemotesets')
-  .setDescription(
-    'outputs a modal, where you can input emote set urls to assign to the server(only for administrators)'
-  );
-*/
+const settings: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('settings')
+  .setDescription('settingsge');
 
 export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommandsJSONBody>[] = [
   emote.toJSON(),
@@ -162,5 +177,6 @@ export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommands
   transient.toJSON(),
   findTheEmoji.toJSON(),
   pingMe.toJSON(),
-  poe2.toJSON()
+  poe2.toJSON(),
+  settings.toJSON()
 ];

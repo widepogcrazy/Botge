@@ -6,7 +6,8 @@ import type {
   FFZPersonalEmotes,
   FFZGlobalEmotes,
   SevenTVEmotes,
-  TwitchGlobalEmotes
+  TwitchGlobalEmotes,
+  AddedEmote
 } from './types.js';
 import { GLOBAL_EMOTE_ENDPOINTS, type PersonalEmoteEndpoints } from './paths-and-endpoints.js';
 import type { TwitchApi } from './api/twitch-api.js';
@@ -145,8 +146,19 @@ export class PersonalEmoteMatcherConstructor {
     this.#ffzPersonal = await ffzPersonal;
   }
 
-  public addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet: Readonly<SevenTVEmoteNotInSet>): void {
+  public addSevenTVEmoteNotInSet(sevenTVEmoteNotInSet: SevenTVEmoteNotInSet): void {
     this.#addedEmotes?.push(sevenTVEmoteNotInSet);
+  }
+
+  public removeSevenTVEmoteNotInSet(addedEmote: AddedEmote): void {
+    const { alias } = addedEmote;
+    if (this.#addedEmotes === undefined) return;
+    if (alias === null) return;
+
+    const toRemoveIndex = this.#addedEmotes.findIndex((sevenTVEmoteNotInSet_) => sevenTVEmoteNotInSet_.name === alias);
+    if (toRemoveIndex === -1) return;
+
+    this.#addedEmotes.splice(toRemoveIndex, 1);
   }
 
   async #refreshAddedEmotes(): Promise<void> {

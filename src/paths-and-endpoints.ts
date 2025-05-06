@@ -1,3 +1,5 @@
+import { Platform } from './enums.js';
+
 export const DATABASE_DIR = 'data';
 export const TMP_DIR = 'tmp';
 
@@ -17,7 +19,8 @@ export class PersonalEmoteEndpoints {
 
 export const DATABASE_ENDPOINTS = {
   addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`,
-  pings: `${DATABASE_DIR}/pings.sqlite`
+  pings: `${DATABASE_DIR}/pings.sqlite`,
+  permitRoleIds: `${DATABASE_DIR}/permitRoleIds.sqlite`
 };
 
 export const CDN_ENDPOINTS = {
@@ -48,3 +51,10 @@ export const PERSONAL_EMOTE_ENDPOINTS = {
     'https://api.frankerfacez.com/v1/room/cutedog_'
   )
 };
+
+export const EMOTE_ENDPOINTS = new Map<Platform, string>([
+  [Platform.sevenInSet, 'https://7tv.app/emotes/'],
+  [Platform.sevenNotInSet, 'https://7tv.app/emotes/'],
+  [Platform.bttv, 'https://betterttv.com/emotes/'],
+  [Platform.ffz, 'https://www.frankerfacez.com/emoticon/']
+]);

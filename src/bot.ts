@@ -11,13 +11,16 @@ import { findTheEmojiHandler } from './command/find-the-emoji.js';
 import { pingMeHandler } from './command/pingme.js';
 import { assignEmoteSetsHandler } from './command/assing-emote-sets.js';
 import { steamHandler } from './command/steam.js';
+import { settingsHandler } from './command/settings.js';
 import { buttonHandler } from './interaction/button.js';
 import { autocompleteHandler } from './interaction/autocomplete.js';
 import { modalSubmitHandler } from './interaction/modal-submit.js';
+import { roleSelectMenuHandler } from './interaction/role-select-menu.js';
 import type { CachedUrl } from './api/cached-url.js';
 import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import type { PingsDatabase } from './api/ping-database.js';
+import type { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.js';
 import type { TwitchClipMessageBuilder } from './message-builders/twitch-clip-message-builder.js';
 import type { EmoteMessageBuilder } from './message-builders/emote-message-builder.js';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
@@ -33,6 +36,7 @@ export class Bot {
   readonly #twitchApi: Readonly<TwitchApi> | undefined;
   readonly #addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
   readonly #pingsDatabase: Readonly<PingsDatabase>;
+  readonly #permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase>;
   readonly #cachedUrl: Readonly<CachedUrl>;
   readonly #guilds: Readonly<Guild>[];
   readonly #twitchClipMessageBuilders: TwitchClipMessageBuilder[];
@@ -45,6 +49,7 @@ export class Bot {
     twitchApi: Readonly<TwitchApi> | undefined,
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
     pingsDatabase: Readonly<PingsDatabase>,
+    permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase>,
     cachedUrl: Readonly<CachedUrl>,
     guilds: readonly Readonly<Guild>[]
   ) {
@@ -54,6 +59,7 @@ export class Bot {
     this.#twitchApi = twitchApi;
     this.#addedEmotesDatabase = addedEmotesDatabase;
     this.#pingsDatabase = pingsDatabase;
+    this.#permittedRoleIdsDatabase = permittedRoleIdsDatabase;
     this.#cachedUrl = cachedUrl;
     this.#guilds = [...guilds];
     this.#twitchClipMessageBuilders = [];
@@ -78,6 +84,10 @@ export class Bot {
     return this.#pingsDatabase;
   }
 
+  public get permittedRoleIdsDatabase(): Readonly<PermittedRoleIdsDatabase> {
+    return this.#permittedRoleIdsDatabase;
+  }
+
   public registerHandlers(): void {
     this.#client.on(Events.ClientReady, () => {
       console.log(`Logged in as ${this.#client.user?.tag ?? ''}!`);
@@ -90,17 +100,13 @@ export class Bot {
         !interaction.isChatInputCommand() &&
         !interaction.isButton() &&
         !interaction.isAutocomplete() &&
-        !interaction.isModalSubmit()
+        !interaction.isModalSubmit() &&
+        !interaction.isRoleSelectMenu()
       )
         return;
 
       const { guildId, user } = interaction;
       if (guildId === null || user.bot) return;
-
-      if (interaction.isButton()) {
-        void buttonHandler(this.#twitchClipMessageBuilders, this.#emoteMessageBuilders)(interaction);
-        return;
-      }
 
       if (interaction.isModalSubmit()) {
         void modalSubmitHandler(this.#twitchClipMessageBuilders, this.#emoteMessageBuilders)(interaction);
@@ -115,6 +121,7 @@ export class Bot {
             undefined,
             undefined,
             this.#addedEmotesDatabase,
+            this.#permittedRoleIdsDatabase,
             undefined
           );
           this.#guilds.push(newGuildWithoutPersonalEmotes_);
@@ -130,6 +137,24 @@ export class Bot {
           uniqueCreatorNames,
           uniqueGameIds
         )(interaction);
+        return;
+      }
+
+      if (interaction.isRoleSelectMenu()) {
+        void roleSelectMenuHandler(guild, this.#permittedRoleIdsDatabase)(interaction);
+        return;
+      }
+
+      if (interaction.isButton()) {
+        const emoteMessageBuilder = await buttonHandler(
+          this.#twitchClipMessageBuilders,
+          this.#emoteMessageBuilders,
+          guild,
+          this.#addedEmotesDatabase,
+          this.#permittedRoleIdsDatabase
+        )(interaction);
+
+        if (emoteMessageBuilder !== undefined) this.#emoteMessageBuilders.push(emoteMessageBuilder);
         return;
       }
 
@@ -178,7 +203,8 @@ export class Bot {
       }
 
       if (commandName === 'shortestuniquesubstrings') {
-        void shortestuniquesubstringsHandler(emoteMatcher)(interaction);
+        const emoteMessageBuilder = await shortestuniquesubstringsHandler(emoteMatcher)(interaction);
+        if (emoteMessageBuilder !== undefined) this.#emoteMessageBuilders.push(emoteMessageBuilder);
         return;
       }
 
@@ -216,6 +242,11 @@ export class Bot {
 
       if (commandName === 'assignemotesets') {
         void assignEmoteSetsHandler()(interaction);
+        return;
+      }
+
+      if (commandName === 'settings') {
+        void settingsHandler(guild)(interaction);
         return;
       }
 

@@ -6,6 +6,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type CommandInteraction,
+  type ButtonInteraction,
   type MessageActionRowComponentBuilder,
   type ModalActionRowComponentBuilder
 } from 'discord.js';
@@ -16,6 +17,7 @@ export const PREVIOUS_BUTTON_BASE_CUSTOM_ID = 'previousButton';
 export const NEXT_BUTTON_BASE_CUSTOM_ID = 'nextButton';
 export const FIRST_BUTTON_BASE_CUSTOM_ID = 'firstButton';
 export const LAST_BUTTON_BASE_CUSTOM_ID = 'lastButton';
+export const DELETE_BUTTON_BASE_CUSTOM_ID = 'deleteButton';
 export const JUMP_TO_BUTTON_BASE_CUSTOM_ID = 'jumpToButton';
 export const JUMP_TO_MODAL_BASE_CUSTOM_ID = 'jumpToModal';
 export const JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID = 'jumpToTextInput';
@@ -44,7 +46,7 @@ function randomNumberInInterval(min: number, max: number): number {
 
 export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
   readonly #counter: number;
-  readonly #interaction: CommandInteraction;
+  readonly #interaction: CommandInteraction | ButtonInteraction;
   readonly #array: readonly ArrayItemType[];
   readonly #row: ReadonlyActionRowBuilderMessageActionRowComponentBuilder;
   readonly #modal: ReadonlyModalBuilder;
@@ -54,7 +56,7 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
   protected constructor(
     counter: number,
     messageBuilderType: string,
-    interaction: CommandInteraction,
+    interaction: CommandInteraction | ButtonInteraction,
     array: readonly ArrayItemType[],
     transformFunction: (arrayItem: ArrayItemType) => TransformFunctionReturnType
   ) {
@@ -107,7 +109,7 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
     return this.#counter;
   }
 
-  public get interaction(): CommandInteraction {
+  public get interaction(): CommandInteraction | ButtonInteraction {
     return this.#interaction;
   }
 
@@ -121,6 +123,10 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
 
   protected get currentIndex(): number {
     return this.#currentIndex;
+  }
+
+  protected get currentItem(): ArrayItemType {
+    return this.#array[this.#currentIndex];
   }
 
   protected get arrayLength(): number {
@@ -169,6 +175,10 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
 
     if (this.#currentIndex === jumpTo) return undefined;
     this.#currentIndex = jumpTo;
+    return this.#transformFunction(this.#array[this.#currentIndex]);
+  }
+
+  protected current(): TransformFunctionReturnType {
     return this.#transformFunction(this.#array[this.#currentIndex]);
   }
 }

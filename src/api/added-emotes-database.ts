@@ -16,9 +16,19 @@ export class AddedEmotesDatabase {
   }
 
   public insert(addedEmote: AddedEmote, guildIds: readonly string[]): void {
-    const insert = this.#database.prepare(`INSERT INTO ${getTableName(guildIds)} (url,alias) VALUES (?,?)`);
     const { url, alias } = addedEmote;
-    insert.run(url, alias);
+
+    const prepare_ = this.#database.prepare(`INSERT INTO ${getTableName(guildIds)} (url,alias) VALUES (?,?)`);
+    prepare_.run(url, alias);
+  }
+
+  public delete(addedEmote: AddedEmote, guildIds: readonly string[]): void {
+    const { url, alias } = addedEmote;
+
+    const prepare_ = this.#database.prepare(
+      `DELETE FROM ${getTableName(guildIds)} WHERE url=(?) AND (alias=(?) OR alias IS NULL)`
+    );
+    prepare_.run(url, alias);
   }
 
   public getAll(guildIds: readonly string[]): readonly AddedEmote[] {

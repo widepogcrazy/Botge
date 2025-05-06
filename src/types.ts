@@ -44,6 +44,7 @@ export type SevenTVEmoteFile = {
 };
 
 export type SevenTVEmoteInSet = {
+  readonly id: string;
   readonly name: string;
   readonly flags: number;
   readonly timestamp: number;
@@ -56,6 +57,7 @@ export type SevenTVEmoteInSet = {
   };
 };
 export type SevenTVEmoteNotInSet = {
+  readonly id: string;
   readonly name: string;
   readonly flags: number;
   readonly animated: boolean;
@@ -71,12 +73,13 @@ export type BTTVEmote = {
   readonly animated: boolean;
 };
 export type FFZEmote = {
+  readonly id: string;
   readonly name: string;
   readonly urls: Readonly<Record<string, string>>;
 };
 export type TwitchEmote = {
-  readonly name: string;
   readonly id: string;
+  readonly name: string;
   readonly format: readonly string[];
   readonly theme_mode: readonly string[];
 };
@@ -161,6 +164,7 @@ export type Ping = {
 };
 
 export type AssetInfo = {
+  readonly id: string;
   readonly name: string;
   readonly url: string;
   readonly zeroWidth: boolean;

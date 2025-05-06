@@ -1,4 +1,4 @@
-import type { CommandInteraction } from 'discord.js';
+import type { CommandInteraction, GuildMember } from 'discord.js';
 
 import { sevenTVUrlToSevenTVNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
 import type { AddedEmote, SevenTVEmoteNotInSet } from '../types.js';
@@ -14,6 +14,36 @@ export function addEmoteHandlerSevenTVNotInSet(
   return async (interaction: CommandInteraction): Promise<void> => {
     const defer = interaction.deferReply();
     try {
+      const { member } = interaction;
+      const interactionGuild = interaction.guild;
+      if (interactionGuild === null || member === null) return;
+
+      const permitted = ((): boolean => {
+        if (guild.toggleAddEmotePermitNoRule) return true;
+
+        const member_ = member as GuildMember;
+        const memberRolesCache = member_.roles.cache;
+        const memberRoles = [...memberRolesCache.values()];
+        const owner = member_.user.id === interactionGuild.ownerId;
+        const administrator = memberRoles.some((memberRole) => memberRole.permissions.has('Administrator'));
+
+        if (owner || administrator) return true;
+
+        const { settingsPermittedRoleIds } = guild;
+        const memberRoleIds = [...memberRolesCache.keys()];
+
+        if (settingsPermittedRoleIds === null) return false;
+        const intersection: readonly string[] = settingsPermittedRoleIds.filter((settingsPermittedRoleId) =>
+          memberRoleIds.includes(settingsPermittedRoleId)
+        );
+        return intersection.length !== 0;
+      })();
+      if (!permitted) {
+        await defer;
+        await interaction.editReply('You do not have the necessary permissions to use this command.');
+        return;
+      }
+
       const url = String(interaction.options.get('url')?.value).trim();
       const alias = ((): string | null => {
         const aliasOptions = interaction.options.get('alias')?.value;

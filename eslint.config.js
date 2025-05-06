@@ -64,8 +64,10 @@ export default tseslint.config(
                 'ButtonInteraction',
                 'AutocompleteInteraction',
                 'ModalSubmitInteraction',
+                'RoleSelectMenuInteraction',
                 'Client',
-                'GuildEmoji'
+                'GuildEmoji',
+                'Role'
               ],
               package: 'discord.js'
             }

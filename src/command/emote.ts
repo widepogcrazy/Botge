@@ -5,15 +5,18 @@ import { rm } from 'node:fs/promises';
 
 import type { CommandInteraction } from 'discord.js';
 
-import { GUILD_ID_CUTEDOG } from '../guilds.js';
 import { downloadAsset } from '../utils/download-asset.js';
 import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/size-change.js';
 import { parseToken } from '../utils/parse-token.js';
+import { stringToBoolean } from '../utils/boolean-to-string.js';
+import { stringToPlatform } from '../utils/platform-to-string.js';
 import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
 import type { EmoteMatcher } from '../emote-matcher.js';
 import { TMP_DIR } from '../paths-and-endpoints.js';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
+import { GUILD_ID_CUTEDOG } from '../guilds.js';
+import type { Platform } from '../enums.js';
 
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
@@ -182,13 +185,28 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
       const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
       const query = ((): string => {
-        const queryOptions = interaction.options.get('query')?.value;
-        return queryOptions !== undefined ? String(queryOptions).trim() : '';
+        const option = interaction.options.get('query')?.value;
+        return option !== undefined ? String(option).trim() : '';
       })();
 
-      const matches = emoteMatcher.matchSingleArray(query, undefined, true);
+      const platform = ((): Platform | undefined => {
+        const option = interaction.options.get('platform')?.value;
+        return option !== undefined ? stringToPlatform(String(option)) : undefined;
+      })();
 
-      if (matches === undefined || matches.length === 0) {
+      const animated = ((): boolean | undefined => {
+        const option = interaction.options.get('animated')?.value;
+        return option !== undefined ? stringToBoolean(String(option)) : undefined;
+      })();
+
+      const zeroWidth = ((): boolean | undefined => {
+        const option = interaction.options.get('zerowidth')?.value;
+        return option !== undefined ? stringToBoolean(String(option)) : undefined;
+      })();
+
+      const matches = emoteMatcher.matchSingleArray(query, platform, animated, zeroWidth, undefined, true);
+
+      if (matches === undefined) {
         await defer;
         try {
           new URL(query);
@@ -199,14 +217,11 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
         return undefined;
       }
 
-      const sortedMatches: readonly AssetInfo[] = await Promise.all(
-        [...matches].map((asset) => {
-          const transformedAsset = { ...asset, url: asset.url.replace('.gif', '.webp') };
-          return transformedAsset;
-        })
+      const transformedMatches: readonly AssetInfo[] = matches.map(
+        (asset) => ({ ...asset, url: asset.url.replace('.gif', '.webp') }) as AssetInfo
       );
 
-      const emoteMessageBuilder = new EmoteMessageBuilder(interaction, sortedMatches);
+      const emoteMessageBuilder = new EmoteMessageBuilder(interaction, transformedMatches);
       const reply = emoteMessageBuilder.first();
       await defer;
 

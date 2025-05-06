@@ -37,12 +37,11 @@ export function modalSubmitHandler(
       );
       if (messageBuilderIndex === -1) return;
 
-      const defer = interaction.deferUpdate();
-
-      const baseCustomId = getBaseCustomIdFromCustomId(customId);
       const messageBuilder = messageBuilders[messageBuilderIndex];
       const messageBuilderInteraction = messageBuilder.interaction;
 
+      const defer = interaction.deferUpdate();
+      const baseCustomId = getBaseCustomIdFromCustomId(customId);
       if (baseCustomId === JUMP_TO_MODAL_BASE_CUSTOM_ID) {
         const jumpToTextIntputValue = interaction.fields
           .getTextInputValue(getCustomId(JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID, messageBuilderType, messageBuilder.counter))

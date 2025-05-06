@@ -1,6 +1,8 @@
 import type { AutocompleteInteraction, ApplicationCommandOptionChoiceData } from 'discord.js';
 import type { Index } from 'meilisearch';
 import { getShortestUniqueSubstrings } from '../command/shortest-unique-substrings.js';
+import { platformStrings, platformToString } from '../utils/platform-to-string.js';
+import { booleanToString } from '../utils/boolean-to-string.js';
 import { applicableSizes } from '../utils/size-change.js';
 import type { TwitchClip, ReadonlyHit, ReadonlyApplicationCommandOptionChoiceDataString } from '../types.js';
 import type { EmoteMatcher } from '../emote-matcher.js';
@@ -18,9 +20,10 @@ export function autocompleteHandler(
       const focusedOptionName = focusedOption.name;
       const focusedOptionValue = focusedOption.value;
 
-      if (interactionCommandName === 'emote' || interactionCommandName === 'emotelist') {
-        if (focusedOptionName === 'emote' || focusedOptionName === 'query') {
-          const matches = emoteMatcher.matchSingleArray(focusedOptionValue.trim(), 25, true) ?? [];
+      if (interactionCommandName === 'emote') {
+        if (focusedOptionName === 'emote') {
+          const matches =
+            emoteMatcher.matchSingleArray(focusedOptionValue.trim(), undefined, undefined, undefined, 25, true) ?? [];
           const options: readonly ApplicationCommandOptionChoiceData<string>[] = matches.map((match) => {
             return {
               name: match.name.trim(),
@@ -42,6 +45,56 @@ export function autocompleteHandler(
               } as ApplicationCommandOptionChoiceData<number>;
             }
           );
+
+          await interaction.respond(options);
+        }
+      } else if (interactionCommandName === 'emotelist') {
+        if (focusedOptionName === 'query') {
+          const matches =
+            emoteMatcher.matchSingleArray(focusedOptionValue.trim(), undefined, undefined, undefined, 25, true) ?? [];
+          const options: readonly ApplicationCommandOptionChoiceData<string>[] = matches.map((match) => {
+            return {
+              name: match.name.trim(),
+              value: match.name.trim()
+            } as ApplicationCommandOptionChoiceData<string>;
+          });
+
+          await interaction.respond(options);
+        } else if (focusedOptionName === 'platform') {
+          const emote = String(interaction.options.get('emote')?.value).trim();
+          const matches = emoteMatcher.matchSingleArray(emote) ?? emoteMatcher.matchSingleArray('');
+          const platforms: readonly string[] =
+            matches !== undefined
+              ? [...new Set(matches.map((match) => platformToString(match.platform))).keys()]
+              : platformStrings();
+
+          const options: readonly ApplicationCommandOptionChoiceData<string>[] = platforms.map((platform) => {
+            return {
+              name: platform,
+              value: platform
+            } as ApplicationCommandOptionChoiceData<string>;
+          });
+
+          await interaction.respond(options);
+        } else if (focusedOptionName === 'animated' || focusedOptionName === 'zerowidth') {
+          const emote = String(interaction.options.get('emote')?.value).trim();
+          const matches = emoteMatcher.matchSingleArray(emote) ?? emoteMatcher.matchSingleArray('');
+          const bools = [
+            ...new Set(
+              matches !== undefined
+                ? focusedOptionName === 'animated'
+                  ? matches.map((match) => match.animated)
+                  : matches.map((match) => match.zeroWidth)
+                : [true, false]
+            ).keys()
+          ];
+
+          const options: readonly ApplicationCommandOptionChoiceData<string>[] = bools.map((bool) => {
+            return {
+              name: booleanToString(bool),
+              value: booleanToString(bool)
+            } as ApplicationCommandOptionChoiceData<string>;
+          });
 
           await interaction.respond(options);
         }
@@ -116,7 +169,9 @@ export function autocompleteHandler(
             })
             .join(' ');
 
-          const matches = emoteMatcher.matchSingleArray(focusedOptionValueLast.trim(), 25, true) ?? [];
+          const matches =
+            emoteMatcher.matchSingleArray(focusedOptionValueLast.trim(), undefined, undefined, undefined, 25, true) ??
+            [];
           const options: readonly ApplicationCommandOptionChoiceData<string>[] = matches.map((match) => {
             const [, shortestUniqueSubstrings] = getShortestUniqueSubstrings(emoteMatcher, match.name);
             const shortestUniqueSubstring =

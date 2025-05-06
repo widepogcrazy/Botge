@@ -13,11 +13,12 @@ import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
 const EMOTESIZE = 2;
 
 export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): AssetInfo {
-  const { name, flags, data, timestamp } = emote;
+  const { id, name, flags, data, timestamp } = emote;
   const { host, animated } = data;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);
   return {
+    id: id,
     name: name,
     url: `https:${host.url}/${file?.name}`,
     zeroWidth: !!(1 & flags),
@@ -30,10 +31,11 @@ export function sevenTVInSetToAsset(emote: SevenTVEmoteInSet, size?: number): As
 }
 
 export function sevenTVNotInSetToAsset(emote: Readonly<SevenTVEmoteNotInSet>, size?: number): AssetInfo {
-  const { name, flags, host, animated } = emote;
+  const { id, name, flags, host, animated } = emote;
   const filename = `${size ?? EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   const file = host.files.find((f: SevenTVEmoteFile) => f.name === filename);
   return {
+    id: id,
     name: name,
     url: `https:${host.url}/${file?.name}`,
     zeroWidth: !!(256 & flags),
@@ -49,6 +51,7 @@ export function bttvToAsset(emote: BTTVEmote): AssetInfo {
   const { id, code, animated } = emote;
   const filename = `${EMOTESIZE}x.${animated ? 'gif' : 'png'}`;
   return {
+    id: id,
     name: code,
     url: `https://${CDN_ENDPOINTS.bttv}/${id}/${filename}`,
     zeroWidth: false,
@@ -61,8 +64,9 @@ export function bttvToAsset(emote: BTTVEmote): AssetInfo {
 }
 
 export function ffzToAsset(emote: FFZEmote): AssetInfo {
-  const { name, urls } = emote;
+  const { id, name, urls } = emote;
   return {
+    id: id,
     name: name,
     url: urls[`${EMOTESIZE}`],
     zeroWidth: false,
@@ -75,11 +79,12 @@ export function ffzToAsset(emote: FFZEmote): AssetInfo {
 }
 
 export function twitchToAsset(emote: TwitchEmote): AssetInfo {
-  const { name, id, format, theme_mode } = emote;
+  const { id, name, format, theme_mode } = emote;
   const animated = format.length === 2;
   const chosenFormat = animated ? format[1] : format[0];
   const chosenThemeMode = theme_mode.length === 2 ? theme_mode[1] : theme_mode[0];
   return {
+    id: id,
     name: name,
     url: `https://${CDN_ENDPOINTS.twitch}/${id}/${chosenFormat}/${chosenThemeMode}/${EMOTESIZE}.0`,
     zeroWidth: false,

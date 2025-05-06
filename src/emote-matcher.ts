@@ -1,3 +1,4 @@
+import type { Platform } from './enums.js';
 import type {
   SevenTVEmoteNotInSet,
   BTTVEmote,
@@ -51,8 +52,16 @@ class SuffixTree {
     return this._query(suffix.toLowerCase(), suffix);
   }
 
-  public queryArray(suffix: string, original: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
-    return this._queryArray(suffix.toLowerCase(), original, max, sort);
+  public queryArray(
+    suffix: string,
+    original: string,
+    platform?: Platform,
+    animated?: boolean,
+    zeroWidth?: boolean,
+    max?: number,
+    sort?: boolean
+  ): readonly AssetInfo[] | undefined {
+    return this._queryArray(suffix.toLowerCase(), original, platform, animated, zeroWidth, max, sort);
   }
 
   public queryUnique(suffix: string, original: string): boolean {
@@ -107,6 +116,9 @@ class SuffixTree {
   private _queryArray(
     normalizedSuffix: string,
     original: string,
+    platform?: Platform,
+    animated?: boolean,
+    zeroWidth?: boolean,
     max?: number,
     sort?: boolean
   ): readonly AssetInfo[] | undefined {
@@ -120,6 +132,12 @@ class SuffixTree {
     for (const asset of this.#data?.assets ?? []) {
       if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
     }
+
+    if (platform !== undefined) assets = assets.filter((asset) => asset.platform === platform);
+    if (animated !== undefined) assets = assets.filter((asset) => asset.animated === animated);
+    if (zeroWidth !== undefined) assets = assets.filter((asset) => asset.zeroWidth === zeroWidth);
+
+    if (assets.length === 0) return undefined;
 
     //reached the end of the iteration, return
     if (sort !== undefined && sort) {
@@ -154,7 +172,7 @@ class SuffixTree {
     }
 
     if (max !== undefined) return assets.slice(0, max);
-    else return assets;
+    return assets;
   }
 
   private _queryUnique(normalizedSuffix: string, original: string): boolean {
@@ -252,8 +270,15 @@ export class EmoteMatcher {
     return this.#root.query(query);
   }
 
-  public matchSingleArray(query: string, max?: number, sort?: boolean): readonly AssetInfo[] | undefined {
-    return this.#root.queryArray(query, query, max, sort);
+  public matchSingleArray(
+    query: string,
+    platform?: Platform,
+    animated?: boolean,
+    zeroWidth?: boolean,
+    max?: number,
+    sort?: boolean
+  ): readonly AssetInfo[] | undefined {
+    return this.#root.queryArray(query, query, platform, animated, zeroWidth, max, sort);
   }
 
   public matchSingleUnique(query: string, original: string): boolean {

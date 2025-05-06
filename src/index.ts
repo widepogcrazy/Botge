@@ -12,7 +12,7 @@ import { readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import OpenAI from 'openai';
 import { Translator } from 'deepl-node';
-import { Client } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
 import { MeiliSearch } from 'meilisearch';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import { Bot } from './bot.js';
@@ -24,6 +24,7 @@ import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import { PingsDatabase } from './api/ping-database.js';
+import { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
@@ -65,7 +66,7 @@ const commandUpdate = (async function (): Promise<void> {
 })();
 
 const bot = await (async (): Promise<Readonly<Bot>> => {
-  const client: Client = new Client({ intents: [] });
+  const client: Client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
   const openai: ReadonlyOpenAI | undefined =
     OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
@@ -85,6 +86,9 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
 
   const addedEmotesDatabase: Readonly<AddedEmotesDatabase> = new AddedEmotesDatabase(DATABASE_ENDPOINTS.addedEmotes);
   const pingsDatabase: Readonly<PingsDatabase> = new PingsDatabase(DATABASE_ENDPOINTS.pings);
+  const permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase> = new PermittedRoleIdsDatabase(
+    DATABASE_ENDPOINTS.permitRoleIds
+  );
 
   const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
@@ -96,6 +100,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       BROADCASTER_NAME_CUTEDOG,
       twitchClipsMeiliSearch,
       addedEmotesDatabase,
+      permittedRoleIdsDatabase,
       PERSONAL_EMOTE_ENDPOINTS.cutedog
     )
   ];
@@ -107,6 +112,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     await twitchApi,
     addedEmotesDatabase,
     pingsDatabase,
+    permittedRoleIdsDatabase,
     cachedUrl,
     await Promise.all(guilds)
   );
