@@ -18,7 +18,7 @@ export class Guild {
   #uniqueGameIds: Set<string> | undefined;
   #settingsPermittedRoleIds: readonly string[] | null;
   #addEmotePermittedRoleIds: readonly string[] | null;
-  #toggleAddEmotePermitNoRule: boolean;
+  #toggleAddEmotePermitNoRole: boolean;
 
   public constructor(
     ids: readonly string[],
@@ -28,7 +28,7 @@ export class Guild {
     emoteMatcherConstructor: Readonly<PersonalEmoteMatcherConstructor>,
     settingsPermittedRoleIds: readonly string[] | null,
     addEmotePermittedRoleIds: readonly string[] | null,
-    toggleAddEmotePermitNoRule: boolean
+    toggleAddEmotePermitNoRole: boolean
   ) {
     this.ids = ids;
     this.#broadcasterName = broadcasterName;
@@ -39,7 +39,7 @@ export class Guild {
     this.#uniqueGameIds = new Set<string>();
     this.#settingsPermittedRoleIds = settingsPermittedRoleIds;
     this.#addEmotePermittedRoleIds = addEmotePermittedRoleIds;
-    this.#toggleAddEmotePermitNoRule = toggleAddEmotePermitNoRule;
+    this.#toggleAddEmotePermitNoRole = toggleAddEmotePermitNoRole;
   }
 
   public get emoteMatcher(): Readonly<EmoteMatcher> {
@@ -66,8 +66,8 @@ export class Guild {
     return this.#addEmotePermittedRoleIds;
   }
 
-  public get toggleAddEmotePermitNoRule(): boolean {
-    return this.#toggleAddEmotePermitNoRule;
+  public get toggleAddEmotePermitNoRole(): boolean {
+    return this.#toggleAddEmotePermitNoRole;
   }
 
   public changeSettingsPermittedRoleIds(roleIds: readonly string[]): void {
@@ -80,8 +80,8 @@ export class Guild {
     this.#addEmotePermittedRoleIds = roleIds;
   }
 
-  public changeToggleAddEmotePermitNoRule(): void {
-    this.#toggleAddEmotePermitNoRule = !this.#toggleAddEmotePermitNoRule;
+  public changeToggleAddEmotePermitNoRole(): void {
+    this.#toggleAddEmotePermitNoRole = !this.#toggleAddEmotePermitNoRole;
   }
 
   public async refreshEmoteMatcher(): Promise<void> {

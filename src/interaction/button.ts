@@ -85,13 +85,13 @@ export function buttonHandler(
       } else if (customId === TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID) {
         const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-        guild.changeToggleAddEmotePermitNoRule();
-        const { toggleAddEmotePermitNoRule } = guild;
-        permittedRoleIdsDatabase.changeAddEmotePermitNoRule(guild.ids, toggleAddEmotePermitNoRule);
+        guild.changeToggleAddEmotePermitNoRole();
+        const { toggleAddEmotePermitNoRole } = guild;
+        permittedRoleIdsDatabase.changeAddEmotePermitNoRole(guild.ids, toggleAddEmotePermitNoRole);
 
         await defer;
         await interaction.editReply(
-          `Users with no rule are now ${booleanToPermittedOrNotPermitted(toggleAddEmotePermitNoRule)} to use add emote command.`
+          `Users with no role are now ${booleanToPermittedOrNotPermitted(toggleAddEmotePermitNoRole)} to use add emote command.`
         );
         return undefined;
       } else if (customId === SHOW_ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID) {

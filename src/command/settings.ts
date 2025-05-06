@@ -66,7 +66,7 @@ export function settingsHandler(guild: Readonly<Guild>) {
         new ButtonBuilder()
           .setCustomId(TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID)
           .setLabel(
-            `Toggle Add Emote Permit No Rule (Currently: ${booleanToPermittedOrNotPermitted(guild.toggleAddEmotePermitNoRule)})`
+            `Toggle Add Emote Permit No Role (Currently: ${booleanToPermittedOrNotPermitted(guild.toggleAddEmotePermitNoRole)})`
           )
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()

@@ -26,12 +26,12 @@ export class PermittedRoleIdsDatabase {
     this.#changePermittedRoleIds(tableName, ADD_EMOTE_ID_TYPE, roleIds);
   }
 
-  public changeAddEmotePermitNoRule(guildIds: readonly string[], permitNoRule: boolean): void {
+  public changeAddEmotePermitNoRole(guildIds: readonly string[], permitNoRole: boolean): void {
     const tableName = getTableName(guildIds);
-    this.#insertIfIdTypeDoesntExist(tableName, ADD_EMOTE_ID_TYPE, null, Number(permitNoRule));
+    this.#insertIfIdTypeDoesntExist(tableName, ADD_EMOTE_ID_TYPE, null, Number(permitNoRole));
 
-    const update = this.#database.prepare(`UPDATE ${tableName} SET permitNoRule=(?) WHERE idType=(?)`);
-    update.run(Number(permitNoRule), ADD_EMOTE_ID_TYPE);
+    const update = this.#database.prepare(`UPDATE ${tableName} SET permitNoRole=(?) WHERE idType=(?)`);
+    update.run(Number(permitNoRole), ADD_EMOTE_ID_TYPE);
     return;
   }
 
@@ -49,16 +49,16 @@ export class PermittedRoleIdsDatabase {
     return this.#getRoleIds(tableName, ADD_EMOTE_ID_TYPE);
   }
 
-  public getAddEmotePermitNoRule(guildIds: readonly string[]): boolean {
+  public getAddEmotePermitNoRole(guildIds: readonly string[]): boolean {
     const tableName = getTableName(guildIds);
     if (!this.#idTypeExists(tableName, ADD_EMOTE_ID_TYPE)) return false;
 
-    const { permitNoRule } = this.#database
-      .prepare(`SELECT permitNoRule FROM ${tableName} WHERE idType=(?)`)
+    const { permitNoRole } = this.#database
+      .prepare(`SELECT permitNoRole FROM ${tableName} WHERE idType=(?)`)
       .get(ADD_EMOTE_ID_TYPE) as {
-      permitNoRule: number;
+      permitNoRole: number;
     };
-    return Boolean(permitNoRule);
+    return Boolean(permitNoRole);
   }
 
   public createTable(guildIds: readonly string[]): void {
@@ -68,7 +68,7 @@ export class PermittedRoleIdsDatabase {
       CREATE TABLE IF NOT EXISTS ${tableName} (
         idType TEXT NOT NULL PRIMARY KEY,
         roleIds TEXT,
-        permitNoRule INTEGER NOT NULL
+        permitNoRole INTEGER NOT NULL
       );
     `);
     createTable.run();
@@ -87,11 +87,11 @@ export class PermittedRoleIdsDatabase {
     return true;
   }
 
-  #insertIfIdTypeDoesntExist(tableName: string, idType: string, roleIds: string | null, permitNoRule: number): void {
+  #insertIfIdTypeDoesntExist(tableName: string, idType: string, roleIds: string | null, permitNoRole: number): void {
     if (this.#idTypeExists(tableName, idType)) return;
 
-    const insert = this.#database.prepare(`INSERT INTO ${tableName} (idType,roleIds,permitNoRule) VALUES (?,?,?)`);
-    insert.run(idType, roleIds, permitNoRule);
+    const insert = this.#database.prepare(`INSERT INTO ${tableName} (idType,roleIds,permitNoRole) VALUES (?,?,?)`);
+    insert.run(idType, roleIds, permitNoRole);
   }
 
   #changePermittedRoleIds(tableName: string, idType: string, roleIds: readonly string[]): void {

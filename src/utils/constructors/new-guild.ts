@@ -18,7 +18,7 @@ export async function newGuild(
 
   const settingsPermittedRoleIds = permittedRoleIdsDatabase.getSettingsPermittedRoleIds(guildIds);
   const addEmotePermittedRoleIds = permittedRoleIdsDatabase.getAddEmotePermittedRoleIds(guildIds);
-  const addEmotePermitNoRule = permittedRoleIdsDatabase.getAddEmotePermitNoRule(guildIds);
+  const addEmotePermitNoRole = permittedRoleIdsDatabase.getAddEmotePermitNoRole(guildIds);
 
   const personalEmoteMatcherConstructor = PersonalEmoteMatcherConstructor.create(guildIds, personalEmoteEndpoints);
   const emoteMatcher = (await personalEmoteMatcherConstructor).constructEmoteMatcher();
@@ -33,6 +33,6 @@ export async function newGuild(
     await personalEmoteMatcherConstructor,
     settingsPermittedRoleIds,
     addEmotePermittedRoleIds,
-    addEmotePermitNoRule
+    addEmotePermitNoRole
   );
 }

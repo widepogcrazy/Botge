@@ -19,7 +19,7 @@ export function addEmoteHandlerSevenTVNotInSet(
       if (interactionGuild === null || member === null) return;
 
       const permitted = ((): boolean => {
-        if (guild.toggleAddEmotePermitNoRule) return true;
+        if (guild.toggleAddEmotePermitNoRole) return true;
 
         const member_ = member as GuildMember;
         const memberRolesCache = member_.roles.cache;
