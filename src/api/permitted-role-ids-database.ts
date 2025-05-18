@@ -1,5 +1,4 @@
 import Database from 'better-sqlite3';
-import { renameTable } from '../utils/rename-table.js';
 const TABLE_NAME = 'settingsPermittedRoleIds';
 
 function getTableName(guildId: string): string {
@@ -15,7 +14,6 @@ export class PermittedRoleIdsDatabase {
 
   public constructor(filepath: string) {
     this.#database = new Database(filepath);
-    renameTable(TABLE_NAME, this.#database);
   }
 
   public changeSettingsPermittedRoleIds(guildId: string, roleIds: readonly string[]): void {

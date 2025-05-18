@@ -1,7 +1,6 @@
 import Database from 'better-sqlite3';
 
 import type { Ping } from '../types.js';
-import { renameTable } from '../utils/rename-table.js';
 
 const TABLE_NAME = 'pings';
 
@@ -15,7 +14,6 @@ export class PingsDatabase {
   public constructor(filepath: string) {
     this.#database = new Database(filepath);
     this.#createTable();
-    renameTable(TABLE_NAME, this.#database);
   }
 
   public insert(ping: Ping): void {

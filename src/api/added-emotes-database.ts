@@ -1,7 +1,6 @@
 import Database from 'better-sqlite3';
 
 import type { AddedEmote } from '../types.js';
-import { renameTable } from '../utils/rename-table.js';
 
 const TABLE_NAME = 'addedEmotes';
 
@@ -14,7 +13,6 @@ export class AddedEmotesDatabase {
 
   public constructor(filepath: string) {
     this.#database = new Database(filepath);
-    renameTable(TABLE_NAME, this.#database);
   }
 
   public insert(addedEmote: AddedEmote, guildId: string): void {
