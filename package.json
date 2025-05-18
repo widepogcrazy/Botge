@@ -8,6 +8,7 @@
     "discord-bot",
     "emotes"
   ],
+  "homepage": "https://botge.gitbook.io",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Tresster/Botge.git"
@@ -27,25 +28,25 @@
   },
   "dependencies": {
     "@twemoji/api": "^16.0.1",
-    "better-sqlite3": "^11.9.1",
-    "deepl-node": "^1.17.3",
+    "better-sqlite3": "^11.10.0",
+    "deepl-node": "^1.18.0",
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
     "fs-extra": "^11.3.0",
     "meilisearch": "^0.50.0",
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
-    "openai": "^4.97.0"
+    "openai": "^4.100.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/fs-extra": "^11.0.4",
     "@types/node-schedule": "^2.1.7",
-    "eslint": "^9.26.0",
+    "eslint": "^9.27.0",
     "husky": "^9.1.7",
     "prettier": "^3.5.3",
     "ts-essentials": "^10.0.4",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.32.0"
+    "typescript-eslint": "^8.32.1"
   }
 }

@@ -1,8 +1,9 @@
 import Database from 'better-sqlite3';
+import { renameTable } from '../utils/rename-table.js';
 const TABLE_NAME = 'settingsPermittedRoleIds';
 
-function getTableName(guildIds: readonly string[]): string {
-  return `${TABLE_NAME}_${guildIds.join('_')}`;
+function getTableName(guildId: string): string {
+  return `${TABLE_NAME}_${guildId}`;
 }
 
 const SETTINGS_ID_TYPE = 'settingsType';
@@ -14,20 +15,21 @@ export class PermittedRoleIdsDatabase {
 
   public constructor(filepath: string) {
     this.#database = new Database(filepath);
+    renameTable(TABLE_NAME, this.#database);
   }
 
-  public changeSettingsPermittedRoleIds(guildIds: readonly string[], roleIds: readonly string[]): void {
-    const tableName = getTableName(guildIds);
+  public changeSettingsPermittedRoleIds(guildId: string, roleIds: readonly string[]): void {
+    const tableName = getTableName(guildId);
     this.#changePermittedRoleIds(tableName, SETTINGS_ID_TYPE, roleIds);
   }
 
-  public changeAddEmotePermittedRoleIds(guildIds: readonly string[], roleIds: readonly string[]): void {
-    const tableName = getTableName(guildIds);
+  public changeAddEmotePermittedRoleIds(guildId: string, roleIds: readonly string[]): void {
+    const tableName = getTableName(guildId);
     this.#changePermittedRoleIds(tableName, ADD_EMOTE_ID_TYPE, roleIds);
   }
 
-  public changeAddEmotePermitNoRole(guildIds: readonly string[], permitNoRole: boolean): void {
-    const tableName = getTableName(guildIds);
+  public changeAllowEveryoneToAddEmote(guildId: string, permitNoRole: boolean): void {
+    const tableName = getTableName(guildId);
     this.#insertIfIdTypeDoesntExist(tableName, ADD_EMOTE_ID_TYPE, null, Number(permitNoRole));
 
     const update = this.#database.prepare(`UPDATE ${tableName} SET permitNoRole=(?) WHERE idType=(?)`);
@@ -35,22 +37,22 @@ export class PermittedRoleIdsDatabase {
     return;
   }
 
-  public getSettingsPermittedRoleIds(guildIds: readonly string[]): readonly string[] | null {
-    const tableName = getTableName(guildIds);
+  public getSettingsPermittedRoleIds(guildId: string): readonly string[] | null {
+    const tableName = getTableName(guildId);
 
     if (!this.#idTypeExists(tableName, SETTINGS_ID_TYPE)) return null;
     return this.#getRoleIds(tableName, SETTINGS_ID_TYPE);
   }
 
-  public getAddEmotePermittedRoleIds(guildIds: readonly string[]): readonly string[] | null {
-    const tableName = getTableName(guildIds);
+  public getAddEmotePermittedRoleIds(guildId: string): readonly string[] | null {
+    const tableName = getTableName(guildId);
 
     if (!this.#idTypeExists(tableName, ADD_EMOTE_ID_TYPE)) return null;
     return this.#getRoleIds(tableName, ADD_EMOTE_ID_TYPE);
   }
 
-  public getAddEmotePermitNoRole(guildIds: readonly string[]): boolean {
-    const tableName = getTableName(guildIds);
+  public getAddEmotePermitNoRole(guildId: string): boolean {
+    const tableName = getTableName(guildId);
     if (!this.#idTypeExists(tableName, ADD_EMOTE_ID_TYPE)) return false;
 
     const { permitNoRole } = this.#database
@@ -61,8 +63,8 @@ export class PermittedRoleIdsDatabase {
     return Boolean(permitNoRole);
   }
 
-  public createTable(guildIds: readonly string[]): void {
-    const tableName = getTableName(guildIds);
+  public createTable(guildId: string): void {
+    const tableName = getTableName(guildId);
 
     const createTable = this.#database.prepare(`
       CREATE TABLE IF NOT EXISTS ${tableName} (

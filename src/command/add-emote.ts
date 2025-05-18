@@ -1,4 +1,4 @@
-import type { CommandInteraction, GuildMember } from 'discord.js';
+import type { CommandInteraction, GuildMember, Role } from 'discord.js';
 
 import { sevenTVUrlToSevenTVNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
 import type { AddedEmote, SevenTVEmoteNotInSet } from '../types.js';
@@ -6,6 +6,7 @@ import { CDN_ENDPOINTS } from '../paths-and-endpoints.js';
 import type { AddedEmotesDatabase } from '../api/added-emotes-database.js';
 import type { Guild } from '../guild.js';
 import { fetchAndJson } from '../utils/fetch-and-json.js';
+import { permitted, owner, globalAdministrator } from '../utils/permitted.js';
 
 export function addEmoteHandlerSevenTVNotInSet(
   addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
@@ -18,27 +19,14 @@ export function addEmoteHandlerSevenTVNotInSet(
       const interactionGuild = interaction.guild;
       if (interactionGuild === null || member === null) return;
 
-      const permitted = ((): boolean => {
-        if (guild.toggleAddEmotePermitNoRole) return true;
-
-        const member_ = member as GuildMember;
-        const memberRolesCache = member_.roles.cache;
-        const memberRoles = [...memberRolesCache.values()];
-        const owner = member_.user.id === interactionGuild.ownerId;
-        const administrator = memberRoles.some((memberRole) => memberRole.permissions.has('Administrator'));
-
-        if (owner || administrator) return true;
-
-        const { settingsPermittedRoleIds } = guild;
-        const memberRoleIds = [...memberRolesCache.keys()];
-
-        if (settingsPermittedRoleIds === null) return false;
-        const intersection: readonly string[] = settingsPermittedRoleIds.filter((settingsPermittedRoleId) =>
-          memberRoleIds.includes(settingsPermittedRoleId)
-        );
-        return intersection.length !== 0;
-      })();
-      if (!permitted) {
+      const member_ = member as GuildMember;
+      const memberRolesCache: readonly (readonly [string, Role])[] = [...member_.roles.cache];
+      if (
+        !guild.allowEveryoneToAddEmote &&
+        !permitted(memberRolesCache, guild.addEmotePermittedRoleIds) &&
+        !owner(member_, interactionGuild) &&
+        !globalAdministrator(member_)
+      ) {
         await defer;
         await interaction.editReply('You do not have the necessary permissions to use this command.');
         return;
@@ -67,7 +55,7 @@ export function addEmoteHandlerSevenTVNotInSet(
 
       const emoteId = url.split(SPLITTER).at(-1);
       const addedEmote: AddedEmote = { url: `${CDN_ENDPOINTS.sevenTVNotInSet}${SPLITTER}${emoteId}`, alias: alias };
-      const addedEmotes = addedEmotesDatabase.getAll(guild.ids);
+      const addedEmotes = addedEmotesDatabase.getAll(guild.id);
       if (addedEmotes.some((addedEmote_) => addedEmote_.url === addedEmote.url)) {
         await defer;
         await interaction.editReply('theres already an emote with the same url');
@@ -75,7 +63,7 @@ export function addEmoteHandlerSevenTVNotInSet(
         return;
       }
 
-      addedEmotesDatabase.insert(addedEmote, guild.ids);
+      addedEmotesDatabase.insert(addedEmote, guild.id);
 
       const sevenTVEmoteNotInSet = await (async (): Promise<SevenTVEmoteNotInSet> => {
         const sevenTVEmoteNotInSet_ = (await fetchAndJson(addedEmote.url)) as SevenTVEmoteNotInSet;

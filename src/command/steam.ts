@@ -27,7 +27,7 @@ function numberWithCommas(x: number): string {
 const RECENT_REVIEW_REGEX = /([0-9]+)% of the ([0-9,]+) user reviews in the last 30 days are positive\./;
 const ALL_REVIEWS_REGEX = /([0-9]+)% of the ([0-9,]+) user reviews for this game are positive\./;
 
-export function steamHandler(gameId: string, guildIds: readonly string[]) {
+export function steamHandler(gameId: string, guildId: string) {
   return async function (interaction: CommandInteraction): Promise<void> {
     const defer = interaction.deferReply();
     try {
@@ -88,7 +88,7 @@ export function steamHandler(gameId: string, guildIds: readonly string[]) {
         `ALL REVIEWS: \u001b[1m${allReviewsColor}${allReviewsPercent}% ${allReviewsLabel}\u001b[0m ${reset} (${allReviewsMatch[2]})\n` +
         `PLAYERS RIGHT NOW: \u001b[1m\u001b[32m${numberWithCommas(playerCount)}\u001b[0m\n` + // Player count bold and green
         '```' +
-        (guildIds.some((guildId) => guildId === GUILD_ID_CUTEDOG)
+        (guildId === GUILD_ID_CUTEDOG
           ? "\n-# Disclaimer: This CuteDog_ server is filled with a bunch of sad man-children who would rather waste time bot-checking a game's Steam rating than actually getting better at the game itself."
           : '');
 

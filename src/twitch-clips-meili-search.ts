@@ -2,8 +2,8 @@ import type { MeiliSearch, Index } from 'meilisearch';
 
 const INDEX_NAME = 'twitchClips';
 
-function getIndexName(guildIds: readonly string[]): string {
-  return `${INDEX_NAME}_${guildIds.join('_')}`;
+function getIndexName(guildId: string): string {
+  return `${INDEX_NAME}_${guildId}`;
 }
 
 const MAX_TOTAL_HITS = 3000;
@@ -15,8 +15,8 @@ export class TwitchClipsMeiliSearch {
     this.#meiliSearch = meiliSearch;
   }
 
-  public async getOrCreateIndex(guildIds: readonly string[]): Promise<Index | undefined> {
-    const indexName = getIndexName(guildIds);
+  public async getOrCreateIndex(guildId: string): Promise<Index | undefined> {
+    const indexName = getIndexName(guildId);
 
     await this.#meiliSearch
       .createIndex(indexName, {

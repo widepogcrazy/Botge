@@ -85,13 +85,19 @@ export type TwitchEmote = {
 };
 
 export type SevenTVEmotes = {
+  readonly error: string | undefined;
   readonly emotes: readonly SevenTVEmoteInSet[];
+  readonly owner: {
+    readonly username: string;
+  };
 };
 export type BTTVPersonalEmotes = {
+  readonly message: string | undefined;
   readonly channelEmotes: readonly BTTVEmote[];
   readonly sharedEmotes: readonly BTTVEmote[];
 };
 export type FFZPersonalEmotes = {
+  readonly error: string | undefined;
   readonly room: {
     readonly set: number;
   };

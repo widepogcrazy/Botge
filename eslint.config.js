@@ -67,7 +67,9 @@ export default tseslint.config(
                 'RoleSelectMenuInteraction',
                 'Client',
                 'GuildEmoji',
-                'Role'
+                'Role',
+                'GuildMember',
+                'Guild'
               ],
               package: 'discord.js'
             }

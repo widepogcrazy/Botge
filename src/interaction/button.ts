@@ -1,9 +1,13 @@
 import {
   RoleSelectMenuBuilder,
   ActionRowBuilder,
+  MessageFlags,
+  TextInputStyle,
+  TextInputBuilder,
+  ModalBuilder,
   type ButtonInteraction,
-  type MessageActionRowComponentBuilder,
-  MessageFlags
+  type ModalActionRowComponentBuilder,
+  type MessageActionRowComponentBuilder
 } from 'discord.js';
 
 import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.js';
@@ -20,25 +24,52 @@ import {
   DELETE_BUTTON_BASE_CUSTOM_ID
 } from '../message-builders/base.js';
 import {
-  SELECT_SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID,
-  SELECT_ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID,
-  TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID,
-  SHOW_ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID
+  SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID,
+  ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID,
+  ALLOW_EVERYONE_TO_ADD_EMOTE_BUTTON_CUSTOM_ID,
+  ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID,
+  CONFIGURATION_BUTTON_CUSTOM_ID
 } from '../command/settings.js';
 import type {
   TwitchClipMessageBuilderTransformFunctionReturnType,
   EmoteMessageBuilderTransformFunctionReturnType
 } from '../types.js';
 import type { Guild } from '../guild.js';
-import { booleanToPermittedOrNotPermitted } from '../utils/boolean-to-string.js';
+import { booleanToAllowed } from '../utils/boolean-to-string.js';
 import type { PermittedRoleIdsDatabase } from '../api/permitted-role-ids-database.js';
 import type { AddedEmotesDatabase } from '../api/added-emotes-database.js';
 import { Platform } from '../enums.js';
+import { getSevenTvEmoteSetLinkFromSevenTvApiUlr } from '../utils/get-api-url.js';
 
 export const SELECT_SETTINGS_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID = 'selectSettingsPermittedRolesRoleSelectMenu';
 export const SELECT_ADD_EMOTE_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID = 'selectAddEmotePermittedRolesRoleSelectMenu';
+export const ASSIGN_EMOTE_SETS_MODAL_CUSTOM_ID = 'assignEmoteSetsModal';
 
-const MAX_ROLE_SELECT_MENU_VALUES = 5;
+export const BROADCASTER_NAME_TEXT_INPUT_CUSTOM_ID = 'broadcasterNameTextInput';
+export const SEVENTV_TEXT_INPUT_CUSTOM_ID = 'sevenTVTextInput';
+
+const BROADCASTER_NAME_TEXT_INPUT = new TextInputBuilder()
+  .setCustomId(BROADCASTER_NAME_TEXT_INPUT_CUSTOM_ID)
+  .setLabel('Streamer Twitch username')
+  .setStyle(TextInputStyle.Short)
+  .setRequired(false);
+const SEVENTV_TEXT_INPUT = new TextInputBuilder()
+  .setCustomId(SEVENTV_TEXT_INPUT_CUSTOM_ID)
+  .setLabel('7TV Emote Set Link')
+  .setStyle(TextInputStyle.Short)
+  .setRequired(false);
+
+const BROADCASTER_NAME_ACTION_ROW = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+  BROADCASTER_NAME_TEXT_INPUT
+);
+const SEVENTV_ACTION_ROW = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(SEVENTV_TEXT_INPUT);
+
+const ASSIGN_EMOTE_SETS_MODAL = new ModalBuilder()
+  .setCustomId(ASSIGN_EMOTE_SETS_MODAL_CUSTOM_ID)
+  .setTitle('Configuration')
+  .addComponents(BROADCASTER_NAME_ACTION_ROW, SEVENTV_ACTION_ROW);
+
+const MAX_ROLE_SELECT_MENU_VALUES = 10;
 
 export function buttonHandler(
   twitchClipMessageBuilders: readonly Readonly<TwitchClipMessageBuilder>[],
@@ -52,8 +83,8 @@ export function buttonHandler(
       const { customId } = interaction;
 
       if (
-        customId === SELECT_SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID ||
-        customId === SELECT_ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID
+        customId === SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID ||
+        customId === ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID
       ) {
         const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -61,10 +92,10 @@ export function buttonHandler(
         let roleSelectMenuCustomId = SELECT_SETTINGS_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID;
         let commandName = 'settings';
 
-        if (customId === SELECT_ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID) {
+        if (customId === ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID) {
           permittedRoles = guild.addEmotePermittedRoleIds;
           roleSelectMenuCustomId = SELECT_ADD_EMOTE_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID;
-          commandName = 'add emote';
+          commandName = 'addemote';
         }
 
         const roleSelectMenuBuilder = new RoleSelectMenuBuilder()
@@ -82,19 +113,19 @@ export function buttonHandler(
           components: [row]
         });
         return undefined;
-      } else if (customId === TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID) {
+      } else if (customId === ALLOW_EVERYONE_TO_ADD_EMOTE_BUTTON_CUSTOM_ID) {
         const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-        guild.changeToggleAddEmotePermitNoRole();
-        const { toggleAddEmotePermitNoRole } = guild;
-        permittedRoleIdsDatabase.changeAddEmotePermitNoRole(guild.ids, toggleAddEmotePermitNoRole);
+        guild.toggleAllowEveryoneToAddEmote();
+        const { allowEveryoneToAddEmote } = guild;
+        permittedRoleIdsDatabase.changeAllowEveryoneToAddEmote(guild.id, allowEveryoneToAddEmote);
 
         await defer;
         await interaction.editReply(
-          `Users with no role are now ${booleanToPermittedOrNotPermitted(toggleAddEmotePermitNoRole)} to use add emote command.`
+          `Everyone is ${booleanToAllowed(allowEveryoneToAddEmote)} to use add emote command now.`
         );
         return undefined;
-      } else if (customId === SHOW_ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID) {
+      } else if (customId === ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID) {
         const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
         const emotes = guild.emoteMatcher.matchSingleArray('', Platform.sevenNotInSet);
         if (emotes === undefined) {
@@ -110,6 +141,15 @@ export function buttonHandler(
         if (reply === undefined) return undefined;
         await interaction.editReply(reply);
         return emoteMessageBuilder;
+      } else if (customId === CONFIGURATION_BUTTON_CUSTOM_ID) {
+        if (guild.broadcasterName !== null) BROADCASTER_NAME_TEXT_INPUT.setValue(guild.broadcasterName);
+
+        const { personalEmoteSets } = guild.personalEmoteMatcherConstructor;
+        if (personalEmoteSets !== undefined && personalEmoteSets.sevenTv !== null)
+          SEVENTV_TEXT_INPUT.setValue(getSevenTvEmoteSetLinkFromSevenTvApiUlr(personalEmoteSets.sevenTv));
+
+        await interaction.showModal(ASSIGN_EMOTE_SETS_MODAL);
+        return undefined;
       }
 
       const messageBuilders = (():
@@ -156,7 +196,7 @@ export function buttonHandler(
         const { currentAddedEmote } = messageBuilder_;
 
         if (currentAddedEmote !== undefined) {
-          addedEmotesDatabase.delete(currentAddedEmote, guild.ids);
+          addedEmotesDatabase.delete(currentAddedEmote, guild.id);
           guild.personalEmoteMatcherConstructor.removeSevenTVEmoteNotInSet(currentAddedEmote);
           await guild.refreshEmoteMatcher();
           reply = messageBuilder_.markCurrentAsDeleted();

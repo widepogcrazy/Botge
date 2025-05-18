@@ -1,11 +1,12 @@
 import Database from 'better-sqlite3';
 
 import type { AddedEmote } from '../types.js';
+import { renameTable } from '../utils/rename-table.js';
 
 const TABLE_NAME = 'addedEmotes';
 
-function getTableName(guildIds: readonly string[]): string {
-  return `${TABLE_NAME}_${guildIds.join('_')}`;
+function getTableName(guildId: string): string {
+  return `${TABLE_NAME}_${guildId}`;
 }
 
 export class AddedEmotesDatabase {
@@ -13,33 +14,34 @@ export class AddedEmotesDatabase {
 
   public constructor(filepath: string) {
     this.#database = new Database(filepath);
+    renameTable(TABLE_NAME, this.#database);
   }
 
-  public insert(addedEmote: AddedEmote, guildIds: readonly string[]): void {
+  public insert(addedEmote: AddedEmote, guildId: string): void {
     const { url, alias } = addedEmote;
 
-    const prepare_ = this.#database.prepare(`INSERT INTO ${getTableName(guildIds)} (url,alias) VALUES (?,?)`);
+    const prepare_ = this.#database.prepare(`INSERT INTO ${getTableName(guildId)} (url,alias) VALUES (?,?)`);
     prepare_.run(url, alias);
   }
 
-  public delete(addedEmote: AddedEmote, guildIds: readonly string[]): void {
+  public delete(addedEmote: AddedEmote, guildId: string): void {
     const { url, alias } = addedEmote;
 
     const prepare_ = this.#database.prepare(
-      `DELETE FROM ${getTableName(guildIds)} WHERE url=(?) AND (alias=(?) OR alias IS NULL)`
+      `DELETE FROM ${getTableName(guildId)} WHERE url=(?) AND (alias=(?) OR alias IS NULL)`
     );
     prepare_.run(url, alias);
   }
 
-  public getAll(guildIds: readonly string[]): readonly AddedEmote[] {
-    const select = this.#database.prepare(`SELECT url,alias FROM ${getTableName(guildIds)}`);
+  public getAll(guildId: string): readonly AddedEmote[] {
+    const select = this.#database.prepare(`SELECT url,alias FROM ${getTableName(guildId)}`);
     const addedEmotes = select.all() as readonly AddedEmote[];
 
     return addedEmotes;
   }
 
-  public createTable(guildIds: readonly string[]): void {
-    const tableName = getTableName(guildIds);
+  public createTable(guildId: string): void {
+    const tableName = getTableName(guildId);
 
     const createTable = this.#database.prepare(`
       CREATE TABLE IF NOT EXISTS ${tableName} (

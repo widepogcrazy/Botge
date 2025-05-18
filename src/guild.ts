@@ -7,30 +7,31 @@ import type { TwitchApi } from './api/twitch-api.js';
 import { listCutedogClipIds } from './utils/list-cutedog-clip-ids.js';
 import { getClipsWithGameNameFromBroadcasterName, getClipsWithGameNameFromIds } from './utils/twitch-api-utils.js';
 import type { ReadonlyRecordAny, TwitchClip } from './types.js';
+import type { PersonalEmoteSets } from './personal-emote-sets.js';
 
 export class Guild {
-  public readonly ids: readonly string[];
-  readonly #broadcasterName: string | undefined;
+  readonly #id: string;
+  #broadcasterName: string | null;
   #emoteMatcher: Readonly<EmoteMatcher>;
   readonly #twitchClipsMeiliSearchIndex: Index | undefined;
   readonly #personalEmoteMatcherConstructor: Readonly<PersonalEmoteMatcherConstructor>;
-  #uniqueCreatorNames: Set<string> | undefined;
-  #uniqueGameIds: Set<string> | undefined;
+  #uniqueCreatorNames: Readonly<Set<string>> | undefined;
+  #uniqueGameIds: Readonly<Set<string>> | undefined;
   #settingsPermittedRoleIds: readonly string[] | null;
   #addEmotePermittedRoleIds: readonly string[] | null;
-  #toggleAddEmotePermitNoRole: boolean;
+  #allowEveryoneToAddEmote: boolean;
 
   public constructor(
-    ids: readonly string[],
-    broadcasterName: string | undefined,
+    id: string,
+    broadcasterName: string | null,
     twitchClipsMeiliSearchIndex: Index | undefined,
     emoteMatcher: Readonly<EmoteMatcher>,
     emoteMatcherConstructor: Readonly<PersonalEmoteMatcherConstructor>,
     settingsPermittedRoleIds: readonly string[] | null,
     addEmotePermittedRoleIds: readonly string[] | null,
-    toggleAddEmotePermitNoRole: boolean
+    allowEveryoneToAddEmote: boolean
   ) {
-    this.ids = ids;
+    this.#id = id;
     this.#broadcasterName = broadcasterName;
     this.#twitchClipsMeiliSearchIndex = twitchClipsMeiliSearchIndex;
     this.#emoteMatcher = emoteMatcher;
@@ -39,9 +40,15 @@ export class Guild {
     this.#uniqueGameIds = new Set<string>();
     this.#settingsPermittedRoleIds = settingsPermittedRoleIds;
     this.#addEmotePermittedRoleIds = addEmotePermittedRoleIds;
-    this.#toggleAddEmotePermitNoRole = toggleAddEmotePermitNoRole;
+    this.#allowEveryoneToAddEmote = allowEveryoneToAddEmote;
   }
 
+  public get id(): string {
+    return this.#id;
+  }
+  public get broadcasterName(): string | null {
+    return this.#broadcasterName;
+  }
   public get emoteMatcher(): Readonly<EmoteMatcher> {
     return this.#emoteMatcher;
   }
@@ -66,8 +73,8 @@ export class Guild {
     return this.#addEmotePermittedRoleIds;
   }
 
-  public get toggleAddEmotePermitNoRole(): boolean {
-    return this.#toggleAddEmotePermitNoRole;
+  public get allowEveryoneToAddEmote(): boolean {
+    return this.#allowEveryoneToAddEmote;
   }
 
   public changeSettingsPermittedRoleIds(roleIds: readonly string[]): void {
@@ -80,24 +87,41 @@ export class Guild {
     this.#addEmotePermittedRoleIds = roleIds;
   }
 
-  public changeToggleAddEmotePermitNoRole(): void {
-    this.#toggleAddEmotePermitNoRole = !this.#toggleAddEmotePermitNoRole;
+  public toggleAllowEveryoneToAddEmote(): void {
+    this.#allowEveryoneToAddEmote = !this.#allowEveryoneToAddEmote;
   }
 
   public async refreshEmoteMatcher(): Promise<void> {
     this.#emoteMatcher = await this.#personalEmoteMatcherConstructor.constructEmoteMatcher();
   }
 
-  public async refreshClips(twitchApi: Readonly<TwitchApi> | undefined): Promise<void> {
+  public async changeBroadcasterNameAndRefreshClips(
+    twitchApi: Readonly<TwitchApi> | undefined,
+    broadcasterName: string
+  ): Promise<void> {
+    //if (this.#broadcasterName === broadcasterName) return;
+
+    this.#broadcasterName = broadcasterName;
+    await this.refreshClips(twitchApi, true);
+  }
+
+  public async changePersonalEmoteSetsAndRefreshEmoteMatcher(personalEmoteSets: PersonalEmoteSets): Promise<void> {
+    const emoteMatcher_ = await this.#personalEmoteMatcherConstructor.changePersonalEmoteSets(personalEmoteSets);
+    if (emoteMatcher_ !== undefined) this.#emoteMatcher = emoteMatcher_;
+  }
+
+  public async refreshClips(twitchApi: Readonly<TwitchApi> | undefined, deleteOld?: boolean): Promise<void> {
     if (this.#twitchClipsMeiliSearchIndex === undefined || twitchApi === undefined) return;
-    if (this.#broadcasterName === undefined) return;
+    if (this.#broadcasterName === null) return;
 
     this.#uniqueCreatorNames = new Set<string>();
     this.#uniqueGameIds = new Set<string>();
 
     let updated = 0;
 
-    if (this.ids.some((id) => id === GUILD_ID_CUTEDOG)) {
+    if (deleteOld !== undefined && deleteOld) await this.#twitchClipsMeiliSearchIndex.deleteAllDocuments().waitTask();
+
+    if (this.#id === GUILD_ID_CUTEDOG) {
       //custom clips
       const increment = 100;
       const clipIds = await listCutedogClipIds();

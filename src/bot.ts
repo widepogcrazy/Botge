@@ -21,10 +21,12 @@ import type { TwitchApi } from './api/twitch-api.js';
 import type { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import type { PingsDatabase } from './api/ping-database.js';
 import type { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.js';
+import type { BroadcasterNameAndPersonalEmoteSetsDatabase } from './api/broadcaster-name-and-personal-emote-sets-database.js';
 import type { TwitchClipMessageBuilder } from './message-builders/twitch-clip-message-builder.js';
 import type { EmoteMessageBuilder } from './message-builders/emote-message-builder.js';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import type { Guild } from './guild.js';
+import type { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
 
 export const CLEANUP_MINUTES = 10;
 const MAX_TWITCH_CLIP_MESSAGE_BUILDERS_LENGTH = 15;
@@ -37,10 +39,12 @@ export class Bot {
   readonly #addedEmotesDatabase: Readonly<AddedEmotesDatabase>;
   readonly #pingsDatabase: Readonly<PingsDatabase>;
   readonly #permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase>;
+  readonly #broadcasterNameAndPersonalEmoteSetsDatabase: Readonly<BroadcasterNameAndPersonalEmoteSetsDatabase>;
   readonly #cachedUrl: Readonly<CachedUrl>;
   readonly #guilds: Readonly<Guild>[];
   readonly #twitchClipMessageBuilders: TwitchClipMessageBuilder[];
   readonly #emoteMessageBuilders: EmoteMessageBuilder[];
+  readonly #twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined;
 
   public constructor(
     client: Client,
@@ -50,8 +54,10 @@ export class Bot {
     addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
     pingsDatabase: Readonly<PingsDatabase>,
     permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase>,
+    broadcasterNameAndPersonalEmoteSetsDatabase: Readonly<BroadcasterNameAndPersonalEmoteSetsDatabase>,
     cachedUrl: Readonly<CachedUrl>,
-    guilds: readonly Readonly<Guild>[]
+    guilds: readonly Readonly<Guild>[],
+    twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined
   ) {
     this.#client = client;
     this.#openai = openai;
@@ -60,10 +66,12 @@ export class Bot {
     this.#addedEmotesDatabase = addedEmotesDatabase;
     this.#pingsDatabase = pingsDatabase;
     this.#permittedRoleIdsDatabase = permittedRoleIdsDatabase;
+    this.#broadcasterNameAndPersonalEmoteSetsDatabase = broadcasterNameAndPersonalEmoteSetsDatabase;
     this.#cachedUrl = cachedUrl;
     this.#guilds = [...guilds];
     this.#twitchClipMessageBuilders = [];
     this.#emoteMessageBuilders = [];
+    this.#twitchClipsMeiliSearch = twitchClipsMeiliSearch;
   }
 
   public get client(): Client {
@@ -88,6 +96,10 @@ export class Bot {
     return this.#permittedRoleIdsDatabase;
   }
 
+  public get broadcasterNameAndPersonalEmoteSetsDatabase(): Readonly<BroadcasterNameAndPersonalEmoteSetsDatabase> {
+    return this.#broadcasterNameAndPersonalEmoteSetsDatabase;
+  }
+
   public registerHandlers(): void {
     this.#client.on(Events.ClientReady, () => {
       console.log(`Logged in as ${this.#client.user?.tag ?? ''}!`);
@@ -108,20 +120,15 @@ export class Bot {
       const { guildId, user } = interaction;
       if (guildId === null || user.bot) return;
 
-      if (interaction.isModalSubmit()) {
-        void modalSubmitHandler(this.#twitchClipMessageBuilders, this.#emoteMessageBuilders)(interaction);
-        return;
-      }
-
       const guild =
-        this.#guilds.find((guild_) => guild_.ids.some((id) => id === guildId)) ??
+        this.#guilds.find((guild_) => guild_.id === guildId) ??
         (await (async (): Promise<Readonly<Guild>> => {
           const newGuildWithoutPersonalEmotes_ = await newGuild(
-            [guildId],
-            undefined,
-            undefined,
+            guildId,
+            this.#twitchClipsMeiliSearch,
             this.#addedEmotesDatabase,
             this.#permittedRoleIdsDatabase,
+            null,
             undefined
           );
           this.#guilds.push(newGuildWithoutPersonalEmotes_);
@@ -129,6 +136,17 @@ export class Bot {
           return newGuildWithoutPersonalEmotes_;
         })());
       const { emoteMatcher, twitchClipsMeiliSearchIndex, uniqueCreatorNames, uniqueGameIds } = guild;
+
+      if (interaction.isModalSubmit()) {
+        void modalSubmitHandler(
+          this.#twitchClipMessageBuilders,
+          this.#emoteMessageBuilders,
+          guild,
+          this.#broadcasterNameAndPersonalEmoteSetsDatabase,
+          this.#twitchApi
+        )(interaction);
+        return;
+      }
 
       if (interaction.isAutocomplete()) {
         void autocompleteHandler(
@@ -181,6 +199,9 @@ export class Bot {
       if (commandName === 'clip') {
         if (twitchClipsMeiliSearchIndex === undefined) {
           void interaction.reply('clip command is not available in this server.');
+          return;
+        } else if (guild.broadcasterName === null) {
+          void interaction.reply('clip command is not available without streamer Twitch username.');
           return;
         }
 
@@ -236,7 +257,7 @@ export class Bot {
       }
 
       if (commandName === 'poe2') {
-        void steamHandler('2694490', guild.ids)(interaction);
+        void steamHandler('2694490', guild.id)(interaction);
         return;
       }
 

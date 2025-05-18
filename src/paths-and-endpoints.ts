@@ -3,24 +3,11 @@ import { Platform } from './enums.js';
 export const DATABASE_DIR = 'data';
 export const TMP_DIR = 'tmp';
 
-export class PersonalEmoteEndpoints {
-  public readonly sevenTV: string | undefined;
-  public readonly bttv: string | undefined;
-  public readonly ffz: string | undefined;
-
-  public constructor(sevenTV: string | undefined, bttv: string | undefined, ffz: string | undefined) {
-    if (arguments.length === 0) throw new Error('no arguments provided');
-
-    this.sevenTV = sevenTV;
-    this.bttv = bttv;
-    this.ffz = ffz;
-  }
-}
-
 export const DATABASE_ENDPOINTS = {
   addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`,
   pings: `${DATABASE_DIR}/pings.sqlite`,
-  permitRoleIds: `${DATABASE_DIR}/permitRoleIds.sqlite`
+  permitRoleIds: `${DATABASE_DIR}/permitRoleIds.sqlite`,
+  broadcasterNameAndpersonalEmoteSets: `${DATABASE_DIR}/broadcasterNameAndPersonalEmoteSets.sqlite`
 };
 
 export const CDN_ENDPOINTS = {
@@ -44,13 +31,15 @@ export const GLOBAL_EMOTE_ENDPOINTS = {
   ffz: 'https://api.frankerfacez.com/v1/set/global'
 };
 
+/*
 export const PERSONAL_EMOTE_ENDPOINTS = {
-  cutedog: new PersonalEmoteEndpoints(
+  cutedog: new PersonalE(moteEndpoints
     'https://7tv.io/v3/emote-sets/01FDMJPSF8000CJ4MDR2FNZEQ3',
     'https://api.betterttv.net/3/users/5809977263c97c037fc9e66c',
     'https://api.frankerfacez.com/v1/room/cutedog_'
   )
 };
+*/
 
 export const EMOTE_ENDPOINTS = new Map<Platform, string>([
   [Platform.sevenInSet, 'https://7tv.app/emotes/'],

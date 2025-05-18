@@ -1,12 +1,12 @@
 const TRUE_STRING = 'Yes';
 const FALSE_STRING = 'No';
 
-const ALLOWED_TEXT = 'permitted';
-const DISALLOWED_TEXT = 'not permitted';
+const ALLOWED_TEXT = 'allowed';
+const NOT_ALLOWED_TEXT = `not ${ALLOWED_TEXT}`;
 
-export function booleanToPermittedOrNotPermitted(bool: boolean): string {
-  if (bool) return ALLOWED_TEXT;
-  return DISALLOWED_TEXT;
+export function booleanToAllowed(allowed: boolean): string {
+  if (allowed) return ALLOWED_TEXT;
+  return NOT_ALLOWED_TEXT;
 }
 
 export function booleanToString(bool: boolean): string {

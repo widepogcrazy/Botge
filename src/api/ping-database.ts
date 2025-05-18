@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 
 import type { Ping } from '../types.js';
+import { renameTable } from '../utils/rename-table.js';
 
 const TABLE_NAME = 'pings';
 
@@ -14,6 +15,7 @@ export class PingsDatabase {
   public constructor(filepath: string) {
     this.#database = new Database(filepath);
     this.#createTable();
+    renameTable(TABLE_NAME, this.#database);
   }
 
   public insert(ping: Ping): void {
@@ -25,7 +27,7 @@ export class PingsDatabase {
   }
 
   public delete(ping: Ping): void {
-    const del = this.#database.prepare(`DELETE FROM ${TABLE_NAME} WHERE id = ?`);
+    const del = this.#database.prepare(`DELETE FROM ${TABLE_NAME} WHERE id=(?)`);
     del.run(getId(ping));
   }
 

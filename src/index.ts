@@ -17,18 +17,19 @@ import { MeiliSearch } from 'meilisearch';
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import { Bot } from './bot.js';
 import type { Guild } from './guild.js';
-import { GUILD_ID_CUTEDOG, GUILD_ID_CUTEDOG2, BROADCASTER_NAME_CUTEDOG } from './guilds.js';
-import { DATABASE_DIR, DATABASE_ENDPOINTS, PERSONAL_EMOTE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
+import { DATABASE_DIR, DATABASE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.js';
 import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
 import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
 import { CachedUrl } from './api/cached-url.js';
 import { AddedEmotesDatabase } from './api/added-emotes-database.js';
 import { PingsDatabase } from './api/ping-database.js';
 import { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.js';
+import { BroadcasterNameAndPersonalEmoteSetsDatabase } from './api/broadcaster-name-and-personal-emote-sets-database.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
 import { registerPings } from './utils/ping/register-pings.js';
+import type { PersonalEmoteSets } from './personal-emote-sets.js';
 
 //dotenv
 dotenv.config();
@@ -89,21 +90,32 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   const permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase> = new PermittedRoleIdsDatabase(
     DATABASE_ENDPOINTS.permitRoleIds
   );
+  const broadcasterNameAndPersonalEmoteSetsDatabase: Readonly<BroadcasterNameAndPersonalEmoteSetsDatabase> =
+    new BroadcasterNameAndPersonalEmoteSetsDatabase(DATABASE_ENDPOINTS.broadcasterNameAndpersonalEmoteSets);
 
   const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
   await GlobalEmoteMatcherConstructor.createInstance(await twitchApi, addedEmotesDatabase);
 
-  const guilds: readonly Promise<Readonly<Guild>>[] = [
-    newGuild(
-      [GUILD_ID_CUTEDOG, GUILD_ID_CUTEDOG2],
-      BROADCASTER_NAME_CUTEDOG,
-      twitchClipsMeiliSearch,
-      addedEmotesDatabase,
-      permittedRoleIdsDatabase,
-      PERSONAL_EMOTE_ENDPOINTS.cutedog
-    )
-  ];
+  const guilds: readonly Promise<Readonly<Guild>>[] = broadcasterNameAndPersonalEmoteSetsDatabase
+    .getAllBroadcasterNamesAndPersonalEmoteSets()
+    .entries()
+    .toArray()
+    .map(
+      async ([guildId, [broadcasterName, personalEmoteSets]]: readonly [
+        string,
+        readonly [string | null, PersonalEmoteSets]
+      ]) => {
+        return newGuild(
+          guildId,
+          twitchClipsMeiliSearch,
+          addedEmotesDatabase,
+          permittedRoleIdsDatabase,
+          broadcasterName,
+          personalEmoteSets
+        );
+      }
+    );
 
   return new Bot(
     client,
@@ -113,8 +125,10 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     addedEmotesDatabase,
     pingsDatabase,
     permittedRoleIdsDatabase,
+    broadcasterNameAndPersonalEmoteSetsDatabase,
     cachedUrl,
-    await Promise.all(guilds)
+    await Promise.all(guilds),
+    twitchClipsMeiliSearch
   );
 })();
 
@@ -198,11 +212,7 @@ scheduleJob('0 */20 * * * *', () => {
 // update every hour, in the 54th minute 0th second
 // this is because of the 300 second timeout of fetch + 1 minute, so twitch api is validated before use
 scheduleJob('0 54 * * * *', () => {
-  try {
-    void bot.twitchApi?.validateAccessToken();
-  } catch (error) {
-    console.log(`validateTwitchAccessToken() failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
+  void bot.twitchApi?.validateAccessToken();
 });
 
 // update every 2 hours

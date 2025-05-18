@@ -25,10 +25,10 @@ export function roleSelectMenuHandler(
 
         if (customId === SELECT_SETTINGS_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID) {
           guild.changeSettingsPermittedRoleIds(roleIds);
-          permittedRoleIdsDatabase.changeSettingsPermittedRoleIds(guild.ids, roleIds);
+          permittedRoleIdsDatabase.changeSettingsPermittedRoleIds(guild.id, roleIds);
         } else {
           guild.changeAddEmotePermittedRoleIds(roleIds);
-          permittedRoleIdsDatabase.changeAddEmotePermittedRoleIds(guild.ids, roleIds);
+          permittedRoleIdsDatabase.changeAddEmotePermittedRoleIds(guild.id, roleIds);
         }
 
         await defer;

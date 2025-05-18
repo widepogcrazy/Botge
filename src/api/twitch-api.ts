@@ -1,14 +1,17 @@
 import type { TwitchClips, TwitchGames, TwitchGlobalEmotes, TwitchGlobalOptions, TwitchUsers } from '../types.js';
 import { TWITCH_API_ENDPOINTS } from '../paths-and-endpoints.js';
 import { fetchAndJson } from '../utils/fetch-and-json.js';
+import { getTwitchAccessToken } from '../utils/twitch-api-utils.js';
 
 // raw twitch api methods
 export class TwitchApi {
   readonly #clientId: string;
-  readonly #accessToken: string;
+  readonly #secret: string;
+  #accessToken: string;
 
-  public constructor(clientId: string, accessToken: string) {
+  public constructor(clientId: string, secret: string, accessToken: string) {
     this.#clientId = clientId;
+    this.#secret = secret;
     this.#accessToken = accessToken;
   }
 
@@ -32,7 +35,7 @@ export class TwitchApi {
       }
     });
 
-    if (resp.status !== 200) console.error(`Error validating twitch access token: ${resp.status}`);
+    if (resp.status === 401) this.#accessToken = await getTwitchAccessToken(this.#clientId, this.#secret);
   }
 
   public async clipsFromIds(ids: Readonly<Iterable<string>>): Promise<TwitchClips> {

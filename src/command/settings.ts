@@ -5,16 +5,19 @@ import {
   MessageFlags,
   type CommandInteraction,
   type MessageActionRowComponentBuilder,
-  type GuildMember
+  type GuildMember,
+  type Role
 } from 'discord.js';
 
-import { booleanToPermittedOrNotPermitted } from '../utils/boolean-to-string.js';
+import { booleanToAllowed } from '../utils/boolean-to-string.js';
+import { permitted, administrator, owner, globalAdministrator } from '../utils/permitted.js';
 import type { Guild } from '../guild.js';
 
-export const SELECT_SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID = 'selectSettingsPermittedRolesButton';
-export const SELECT_ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID = 'selectAddEmotePermittedRolesButton';
-export const TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID = 'toggleAddEmotePermitNoRoleButton';
-export const SHOW_ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID = 'showAddedEmoteDeletionMenuButton';
+export const SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID = 'settingsPermittedRolesButton';
+export const ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID = 'addEmotePermittedRolesButton';
+export const ALLOW_EVERYONE_TO_ADD_EMOTE_BUTTON_CUSTOM_ID = 'allowEveryoneToAddEmoteButton';
+export const ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID = 'addedEmoteDeletionMenuButton';
+export const CONFIGURATION_BUTTON_CUSTOM_ID = 'configurationButton';
 
 export function settingsHandler(guild: Readonly<Guild>) {
   return async (interaction: CommandInteraction): Promise<void> => {
@@ -25,55 +28,41 @@ export function settingsHandler(guild: Readonly<Guild>) {
       if (interactionGuild === null || member === null) return;
 
       const member_ = member as GuildMember;
-      const memberRolesCache = member_.roles.cache;
-      const memberRoles = [...memberRolesCache.values()];
-      const bob = member_.user.username === 'gentlebob';
-      const owner = member_.user.id === interactionGuild.ownerId;
-      const administrator = memberRoles.some((memberRole) => memberRole.permissions.has('Administrator'));
-
-      const permitted = ((): boolean => {
-        if (bob) return true;
-        if (owner || administrator) return true;
-
-        const { settingsPermittedRoleIds } = guild;
-        const memberRoleIds = [...memberRolesCache.keys()];
-
-        if (settingsPermittedRoleIds === null) return false;
-        const intersection: readonly string[] = settingsPermittedRoleIds.filter((settingsPermittedRoleId) =>
-          memberRoleIds.includes(settingsPermittedRoleId)
-        );
-        return intersection.length !== 0;
-      })();
-      if (!permitted) {
+      const memberRolesCache: readonly (readonly [string, Role])[] = [...member_.roles.cache];
+      const owner_ = owner(member_, interactionGuild);
+      const globalAdministrator_ = globalAdministrator(member_);
+      if (!permitted(memberRolesCache, guild.settingsPermittedRoleIds) && !owner_ && !globalAdministrator_) {
         await defer;
         await interaction.editReply('You do not have the necessary permissions to use this command.');
         return;
       }
 
       const row = new ActionRowBuilder<MessageActionRowComponentBuilder>();
-      if (bob || owner || administrator) {
+      if (administrator(memberRolesCache) || owner_ || globalAdministrator_) {
         row.addComponents(
           new ButtonBuilder()
-            .setCustomId(SELECT_SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID)
-            .setLabel('Select Settings Permitted Roles')
+            .setCustomId(CONFIGURATION_BUTTON_CUSTOM_ID)
+            .setLabel('Configuration')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId(SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID)
+            .setLabel('Settings permitted roles')
             .setStyle(ButtonStyle.Success)
         );
       }
 
       row.addComponents(
         new ButtonBuilder()
-          .setCustomId(SELECT_ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID)
-          .setLabel('Select Add Emote Permitted Roles')
+          .setCustomId(ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID)
+          .setLabel('Add emote permitted roles')
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
-          .setCustomId(TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID)
-          .setLabel(
-            `Toggle Add Emote Permit No Role (Currently: ${booleanToPermittedOrNotPermitted(guild.toggleAddEmotePermitNoRole)})`
-          )
+          .setCustomId(ALLOW_EVERYONE_TO_ADD_EMOTE_BUTTON_CUSTOM_ID)
+          .setLabel(`Allow everyone to add emote (Currently: ${booleanToAllowed(guild.allowEveryoneToAddEmote)})`)
           .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
-          .setCustomId(SHOW_ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID)
-          .setLabel('Show the added emote deletion menu')
+          .setCustomId(ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID)
+          .setLabel('Added emote deletion menu')
           .setStyle(ButtonStyle.Danger)
       );
 
