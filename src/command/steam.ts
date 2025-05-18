@@ -85,13 +85,14 @@ export function steamHandler(gameId: string) {
 
       const replyText =
         '```ansi\n' +
-        `RECENT REVIEWS: \u001b[1m${recentReviewsColor}${recentReviewsPercent}% ${recentReviewsLabel}\u001b[0m ${reset} (${recentReviewsMatch[2]})\n` +
-        `ALL REVIEWS: \u001b[1m${allReviewsColor}${allReviewsPercent}% ${allReviewsLabel}\u001b[0m ${reset} (${allReviewsMatch[2]})\n` +
-        `PLAYERS RIGHT NOW: \u001b[1m\u001b[32m${numberWithCommas(playerCount)}\u001b[0m\n` + // Player count bold and green
-        '```' +
-        (guild.id === GUILD_ID_CUTEDOG)
+          `RECENT REVIEWS: \u001b[1m${recentReviewsColor}${recentReviewsPercent}% ${recentReviewsLabel}\u001b[0m ${reset} (${recentReviewsMatch[2]})\n` +
+          `ALL REVIEWS: \u001b[1m${allReviewsColor}${allReviewsPercent}% ${allReviewsLabel}\u001b[0m ${reset} (${allReviewsMatch[2]})\n` +
+          `PLAYERS RIGHT NOW: \u001b[1m\u001b[32m${numberWithCommas(playerCount)}\u001b[0m\n` + // Player count bold and green
+          '```' +
+          guild.id ===
+        GUILD_ID_CUTEDOG
           ? "\n-# Disclaimer: This CuteDog_ server is filled with a bunch of sad man-children who would rather waste time bot-checking a game's Steam rating than actually getting better at the game itself."
-          : '');
+          : '';
 
       await defer;
       await interaction.editReply(replyText);
