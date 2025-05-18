@@ -1,4 +1,4 @@
-import { Events, type Client } from 'discord.js';
+import { type ChatInputCommandInteraction, Events, type Client } from 'discord.js';
 import { newGuild } from './utils/constructors/new-guild.js';
 import { addEmoteHandlerSevenTVNotInSet } from './command/add-emote.js';
 import { emoteHandler, emotesHandler, emoteListHandler } from './command/emote.js';
@@ -26,8 +26,7 @@ import type { EmoteMessageBuilder } from './message-builders/emote-message-build
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import type { Guild } from './guild.js';
 
-export const CLEANUP_MINUTES = 10;
-const MAX_TWITCH_CLIP_MESSAGE_BUILDERS_LENGTH = 15;
+const CLEANUP_MINUTES = 10;
 
 export class Bot {
   readonly #client: Client;
@@ -41,6 +40,10 @@ export class Bot {
   readonly #guilds: Readonly<Guild>[];
   readonly #twitchClipMessageBuilders: TwitchClipMessageBuilder[];
   readonly #emoteMessageBuilders: EmoteMessageBuilder[];
+  readonly #commandHanders: Map<
+    string,
+    (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>) => Promise<void>
+  >;
 
   public constructor(
     client: Client,
@@ -64,6 +67,25 @@ export class Bot {
     this.#guilds = [...guilds];
     this.#twitchClipMessageBuilders = [];
     this.#emoteMessageBuilders = [];
+    this.#commandHanders = new Map<
+      string,
+      (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>) => Promise<void>
+    >([
+      ['emote', emoteHandler()],
+      ['emotes', emotesHandler(this.#cachedUrl)],
+      ['emotelist', emoteListHandler(this.#emoteMessageBuilders)],
+      ['clip', clipHandler(this.#twitchClipMessageBuilders)],
+      ['addemote', addEmoteHandlerSevenTVNotInSet(this.#addedEmotesDatabase)],
+      ['shortestuniquesubstrings', shortestuniquesubstringsHandler(this.#emoteMessageBuilders)],
+      ['chatgpt', chatgptHandler(this.#openai)],
+      ['translate', translateHandler(this.#translator)],
+      ['transient', transientHandler()],
+      ['findtheemoji', findTheEmojiHandler()],
+      ['pingme', pingMeHandler(this.#pingsDatabase, this.#client)],
+      ['poe2', steamHandler('2694490')],
+      ['assignemotesets', assignEmoteSetsHandler()],
+      ['settings', settingsHandler()]
+    ]);
   }
 
   public get client(): Client {
@@ -158,97 +180,10 @@ export class Bot {
         return;
       }
 
-      const { commandName } = interaction;
-
-      //interaction emote
-      if (commandName === 'emote') {
-        void emoteHandler(emoteMatcher)(interaction);
-        return;
-      }
-
-      if (commandName === 'emotes') {
-        void emotesHandler(emoteMatcher, this.#cachedUrl)(interaction);
-        return;
-      }
-
-      if (commandName === 'emotelist') {
-        //is it a good idea to await here?
-        const emoteMessageBuilder = await emoteListHandler(emoteMatcher)(interaction);
-        if (emoteMessageBuilder !== undefined) this.#emoteMessageBuilders.push(emoteMessageBuilder);
-        return;
-      }
-
-      if (commandName === 'clip') {
-        if (twitchClipsMeiliSearchIndex === undefined) {
-          void interaction.reply('clip command is not available in this server.');
-          return;
-        }
-
-        if (this.#twitchClipMessageBuilders.length >= MAX_TWITCH_CLIP_MESSAGE_BUILDERS_LENGTH) {
-          void interaction.reply(
-            `${this.#twitchClipMessageBuilders.length} clip commands are currently in use. Please wait at most ${CLEANUP_MINUTES} minutes.`
-          );
-          return;
-        }
-
-        //is it a good idea to await here?
-        const twitchClipMessageBuilder = await clipHandler(twitchClipsMeiliSearchIndex)(interaction);
-        if (twitchClipMessageBuilder !== undefined) this.#twitchClipMessageBuilders.push(twitchClipMessageBuilder);
-        return;
-      }
-
-      if (commandName === 'addemote') {
-        void addEmoteHandlerSevenTVNotInSet(this.#addedEmotesDatabase, guild)(interaction);
-        return;
-      }
-
-      if (commandName === 'shortestuniquesubstrings') {
-        const emoteMessageBuilder = await shortestuniquesubstringsHandler(emoteMatcher)(interaction);
-        if (emoteMessageBuilder !== undefined) this.#emoteMessageBuilders.push(emoteMessageBuilder);
-        return;
-      }
-
-      if (commandName === 'chatgpt') {
-        if (this.#openai !== undefined) void chatgptHandler(this.#openai)(interaction);
-        else void interaction.reply('chatgpt command is currently not available.');
-        return;
-      }
-
-      if (commandName === 'translate') {
-        if (this.#translator !== undefined) void translateHandler(this.#translator)(interaction);
-        else void interaction.reply('Translate command is currently not available.');
-        return;
-      }
-
-      if (commandName === 'transient') {
-        void transientHandler()(interaction);
-        return;
-      }
-
-      if (commandName === 'findtheemoji') {
-        void findTheEmojiHandler()(interaction);
-        return;
-      }
-
-      if (commandName === 'pingme') {
-        void pingMeHandler(this.#pingsDatabase, this.#client)(interaction);
-        return;
-      }
-
-      if (commandName === 'poe2') {
-        void steamHandler('2694490', guild.ids)(interaction);
-        return;
-      }
-
-      if (commandName === 'assignemotesets') {
-        void assignEmoteSetsHandler()(interaction);
-        return;
-      }
-
-      if (commandName === 'settings') {
-        void settingsHandler(guild)(interaction);
-        return;
-      }
+      const handler = this.#commandHanders.get(interaction.commandName);
+      if (handler === undefined) return;
+      void handler(interaction, guild);
+      // TODO: error handling
 
       return;
     });

@@ -16,8 +16,8 @@ export const SELECT_ADD_EMOTE_PERMITTED_ROLES_BUTTON_CUSTOM_ID = 'selectAddEmote
 export const TOGGLE_ADD_EMOTE_PERMIT_NO_ROLE_BUTTON_CUSTOM_ID = 'toggleAddEmotePermitNoRoleButton';
 export const SHOW_ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID = 'showAddedEmoteDeletionMenuButton';
 
-export function settingsHandler(guild: Readonly<Guild>) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+export function settingsHandler() {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
     try {
       const { member } = interaction;

@@ -1,9 +1,11 @@
 import type { CommandInteraction, GuildEmoji } from 'discord.js';
 
+import type { Guild } from '../guild.js';
+
 const DEFAULT_SIZE = 5;
 
 export function findTheEmojiHandler() {
-  return async (interaction: CommandInteraction): Promise<void> => {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const emoji = ((): string | undefined => {
@@ -25,14 +27,16 @@ export function findTheEmojiHandler() {
         return;
       }
 
-      const { guild } = interaction;
-      if (guild === null) {
+      const interactionGuild = interaction.guild;
+      if (interactionGuild === null) {
         await defer;
         await interaction.editReply('The bot must be in a server for this command to work.');
         return;
       }
 
-      const emojiArray: readonly string[] = Array.from((await (await guild.fetch()).emojis.fetch()).entries())
+      const emojiArray: readonly string[] = Array.from(
+        (await (await interactionGuild.fetch()).emojis.fetch()).entries()
+      )
         .filter((emoji_: readonly [string, GuildEmoji]) => emoji_[1].animated === false)
         .map((emoji_: readonly [string, GuildEmoji]) => `<:${emoji_[1].name}:${emoji_[0]}>`);
 

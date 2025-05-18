@@ -1,11 +1,16 @@
 import type { CommandInteraction } from 'discord.js';
 
 import type { ReadonlyOpenAI } from '../types.js';
+import type { Guild } from '../guild.js';
 
 const MAXDISCORDMESSAGELENGTH = 2000;
 
-export function chatgptHandler(openai: ReadonlyOpenAI) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+export function chatgptHandler(openai: ReadonlyOpenAI | undefined) {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+    if (openai === undefined) {
+      void interaction.reply('chatgpt command is not available in this server.');
+      return;
+    }
     const defer = interaction.deferReply();
     try {
       const text = String(interaction.options.get('text')?.value).trim();

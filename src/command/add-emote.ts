@@ -7,11 +7,8 @@ import type { AddedEmotesDatabase } from '../api/added-emotes-database.js';
 import type { Guild } from '../guild.js';
 import { fetchAndJson } from '../utils/fetch-and-json.js';
 
-export function addEmoteHandlerSevenTVNotInSet(
-  addedEmotesDatabase: Readonly<AddedEmotesDatabase>,
-  guild: Readonly<Guild>
-) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<AddedEmotesDatabase>) {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const { member } = interaction;
