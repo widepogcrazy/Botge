@@ -5,12 +5,18 @@ export function renameTable(tableName: string, database: Readonly<Database>): vo
   const newTableName = `${tableName}_251211223012474880`;
 
   const tableExists_ = database.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name=(?)`);
-  const tableExistsOld = tableExists_.get(oldTableName);
-  const tableExistsNew = tableExists_.get(newTableName);
-  if (tableExistsOld === undefined || tableExistsNew !== undefined) {
-    return;
+  const tableExistsOld = tableExists_.get(oldTableName) !== undefined;
+  const tableExistsNew = tableExists_.get(newTableName) !== undefined;
+  if (tableExistsNew && tableExistsOld) {
+    const dropTable = database.prepare(`DROP TABLE ${newTableName}`);
+    dropTable.run();
+
+    const renameTable_ = database.prepare(`ALTER TABLE ${oldTableName} RENAME TO ${newTableName}`);
+    renameTable_.run();
   }
 
-  const renameTable_ = database.prepare(`ALTER TABLE ${oldTableName} RENAME TO ${newTableName}`);
-  renameTable_.run();
+  if (!tableExistsNew && tableExistsOld) {
+    const renameTable_ = database.prepare(`ALTER TABLE ${oldTableName} RENAME TO ${newTableName}`);
+    renameTable_.run();
+  }
 }
