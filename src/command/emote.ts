@@ -12,11 +12,11 @@ import { stringToBoolean } from '../utils/boolean-to-string.js';
 import { stringToPlatform } from '../utils/platform-to-string.js';
 import type { CachedUrl } from '../api/cached-url.js';
 import type { AssetInfo, DownloadedAsset, HstackElement } from '../types.js';
-import type { EmoteMatcher } from '../emote-matcher.js';
 import { TMP_DIR } from '../paths-and-endpoints.js';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
 import { GUILD_ID_CUTEDOG } from '../guilds.js';
 import type { Platform } from '../enums.js';
+import type { Guild } from '../guild.js';
 
 const DEFAULTFPS = 25;
 const MAXWIDTH = 192;
@@ -133,8 +133,9 @@ function onlyUnique(value: string, index: number, array: readonly string[]): boo
   return array.indexOf(value) === index;
 }
 
-export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+export function emoteHandler() {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+    const { emoteMatcher } = guild;
     const emote = String(interaction.options.get('emote')?.value).trim();
     if (emote.split(/\s+/).length > 1) {
       await interaction.reply({ content: 'Please use /emotes for combined emotes.', flags: 'Ephemeral' });
@@ -178,8 +179,9 @@ export function emoteHandler(emoteMatcher: Readonly<EmoteMatcher>) {
   };
 }
 
-export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
-  return async (interaction: CommandInteraction): Promise<EmoteMessageBuilder | undefined> => {
+export function emoteListHandler(emb: EmoteMessageBuilder[]) {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+    const { emoteMatcher } = guild;
     const defer = interaction.deferReply();
     try {
       const emoteNotFoundReply = interaction.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
@@ -214,7 +216,7 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
         } catch {
           await interaction.editReply(emoteNotFoundReply);
         }
-        return undefined;
+        return;
       }
 
       const transformedMatches: readonly AssetInfo[] = matches.map(
@@ -227,19 +229,22 @@ export function emoteListHandler(emoteMatcher: Readonly<EmoteMatcher>) {
 
       if (reply === undefined) return undefined;
       await interaction.editReply(reply);
-      return emoteMessageBuilder;
+      emb.push(emoteMessageBuilder);
+      return;
     } catch (error) {
       console.log(`Error at emoteListHandler --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply(SOMETHING_WENT_WRONG_REPLY_MESSAGE);
-      return undefined;
+      return;
     }
   };
 }
 
-export function emotesHandler(emoteMatcher: Readonly<EmoteMatcher>, cachedUrl: Readonly<CachedUrl>) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+export function emotesHandler(cachedUrl: Readonly<CachedUrl>) {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+    const { emoteMatcher } = guild;
+
     const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
     const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
     const outdir = join(TMP_DIR, String(interaction.id));

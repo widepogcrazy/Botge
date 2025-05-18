@@ -2,6 +2,7 @@ import fetch, { type Response } from 'node-fetch';
 import type { CommandInteraction } from 'discord.js';
 import type { NumberOfCurrentPlayers } from '../types.js';
 import { GUILD_ID_CUTEDOG } from '../guilds.js';
+import type { Guild } from '../guild.js';
 
 function getColor(percent: number): string {
   if (percent <= 39)
@@ -27,8 +28,8 @@ function numberWithCommas(x: number): string {
 const RECENT_REVIEW_REGEX = /([0-9]+)% of the ([0-9,]+) user reviews in the last 30 days are positive\./;
 const ALL_REVIEWS_REGEX = /([0-9]+)% of the ([0-9,]+) user reviews for this game are positive\./;
 
-export function steamHandler(gameId: string, guildId: string) {
-  return async function (interaction: CommandInteraction): Promise<void> {
+export function steamHandler(gameId: string) {
+  return async function (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> {
     const defer = interaction.deferReply();
     try {
       const store = (async (): Promise<Response> => {
@@ -88,7 +89,7 @@ export function steamHandler(gameId: string, guildId: string) {
         `ALL REVIEWS: \u001b[1m${allReviewsColor}${allReviewsPercent}% ${allReviewsLabel}\u001b[0m ${reset} (${allReviewsMatch[2]})\n` +
         `PLAYERS RIGHT NOW: \u001b[1m\u001b[32m${numberWithCommas(playerCount)}\u001b[0m\n` + // Player count bold and green
         '```' +
-        (guildId === GUILD_ID_CUTEDOG
+        (guild.id === GUILD_ID_CUTEDOG)
           ? "\n-# Disclaimer: This CuteDog_ server is filled with a bunch of sad man-children who would rather waste time bot-checking a game's Steam rating than actually getting better at the game itself."
           : '');
 

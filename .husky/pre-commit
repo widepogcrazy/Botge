@@ -1,1 +1,3 @@
-npm run prettier-format
+if test -f .prettierrc; then
+  npm run prettier-format
+fi

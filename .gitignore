@@ -1,9 +1,10 @@
 .env
-node_modules
+/node_modules
 .DS_Store
-dist
-tmp
-data
-meili_data
-compose.yaml
-nginx/cache
+/dist
+/tmp
+/data
+/meili_data
+/compose.yaml
+/nginx/cache
+/.prettierrc

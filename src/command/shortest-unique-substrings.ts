@@ -2,6 +2,7 @@ import type { CommandInteraction } from 'discord.js';
 
 import type { EmoteMatcher } from '../emote-matcher.js';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
+import type { Guild } from '../guild.js';
 
 function getAllSubstrings(str: string): readonly string[] {
   const result: string[] = [];
@@ -46,8 +47,9 @@ export function getShortestUniqueSubstrings(
   return [original, shortestUniqueSubstrings];
 }
 
-export function shortestuniquesubstringsHandler(emoteMatcher: Readonly<EmoteMatcher>) {
-  return async (interaction: CommandInteraction): Promise<EmoteMessageBuilder | undefined> => {
+export function shortestuniquesubstringsHandler(emb: EmoteMessageBuilder[]) {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+    const { emoteMatcher } = guild;
     const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
     const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
     try {
@@ -81,7 +83,8 @@ export function shortestuniquesubstringsHandler(emoteMatcher: Readonly<EmoteMatc
 
         await defer;
         await interaction.editReply(reply);
-        return emoteMessageBuilder;
+        emb.push(emoteMessageBuilder);
+        return;
       }
 
       let message = '';
@@ -104,13 +107,13 @@ export function shortestuniquesubstringsHandler(emoteMatcher: Readonly<EmoteMatc
 
       await defer;
       await interaction.editReply(message.trim());
-      return undefined;
+      return;
     } catch (error) {
       console.log(`Error at shortestuniquesubstrings --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
       await interaction.editReply('failed to provide shortest unique substrings.');
-      return undefined;
+      return;
     }
   };
 }

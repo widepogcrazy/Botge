@@ -1,5 +1,7 @@
 import type { CommandInteraction } from 'discord.js';
 
+import type { Guild } from '../guild.js';
+
 async function sleep(seconds: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, seconds * 1000);
@@ -7,7 +9,10 @@ async function sleep(seconds: number): Promise<void> {
 }
 
 export function transientHandler() {
-  return async function transientHandlerInnerFunction(interaction: CommandInteraction): Promise<undefined> {
+  return async function transientHandlerInnerFunction(
+    interaction: CommandInteraction,
+    guild: Readonly<Guild>
+  ): Promise<undefined> {
     const defer = interaction.deferReply();
     try {
       const attachment = interaction.options.get('file')?.attachment;

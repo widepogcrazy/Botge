@@ -19,8 +19,8 @@ export const ALLOW_EVERYONE_TO_ADD_EMOTE_BUTTON_CUSTOM_ID = 'allowEveryoneToAddE
 export const ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID = 'addedEmoteDeletionMenuButton';
 export const CONFIGURATION_BUTTON_CUSTOM_ID = 'configurationButton';
 
-export function settingsHandler(guild: Readonly<Guild>) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+export function settingsHandler() {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
     try {
       const { member } = interaction;

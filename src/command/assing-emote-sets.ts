@@ -7,6 +7,7 @@ import {
   type CommandInteraction,
   type ModalSubmitInteraction
 } from 'discord.js';
+import type { Guild } from '../guild.js';
 
 const SEVENTV_INPUT = new TextInputBuilder()
   .setCustomId('sevenTVInput')
@@ -37,7 +38,7 @@ const MODAL_SUBMIT_FILTER = (modalInteraction_: ModalSubmitInteraction): boolean
   modalInteraction_.customId === MODAL.data.custom_id;
 
 export function assignEmoteSetsHandler() {
-  return async (interaction: CommandInteraction): Promise<void> => {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     try {
       await interaction.showModal(MODAL);
 

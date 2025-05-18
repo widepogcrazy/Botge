@@ -10,9 +10,10 @@ import {
   getTimeMessagePart,
   getMessageMessagePart
 } from '../utils/ping/ping-utils.js';
+import type { Guild } from '../guild.js';
 
 export function pingMeHandler(pingsDataBase: Readonly<PingsDatabase>, client: Client) {
-  return async (interaction: CommandInteraction): Promise<void> => {
+  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const hours = ((): number | undefined => {
