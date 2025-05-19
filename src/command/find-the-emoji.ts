@@ -1,11 +1,11 @@
-import type { CommandInteraction, GuildEmoji } from 'discord.js';
+import type { ChatInputCommandInteraction, GuildEmoji } from 'discord.js';
 
 import type { Guild } from '../guild.js';
 
 const DEFAULT_SIZE = 5;
 
 export function findTheEmojiHandler() {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const emoji = ((): string | undefined => {

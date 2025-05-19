@@ -9,7 +9,6 @@ import { transientHandler } from './command/transient.js';
 import { clipHandler } from './command/clip.js';
 import { findTheEmojiHandler } from './command/find-the-emoji.js';
 import { pingMeHandler } from './command/pingme.js';
-import { assignEmoteSetsHandler } from './command/assing-emote-sets.js';
 import { steamHandler } from './command/steam.js';
 import { settingsHandler } from './command/settings.js';
 import { buttonHandler } from './interaction/button.js';
@@ -91,7 +90,6 @@ export class Bot {
       ['findtheemoji', findTheEmojiHandler()],
       ['pingme', pingMeHandler(this.#pingsDatabase, this.#client)],
       ['poe2', steamHandler('2694490')],
-      ['assignemotesets', assignEmoteSetsHandler()],
       ['settings', settingsHandler()]
     ]);
   }
@@ -99,7 +97,6 @@ export class Bot {
   public get client(): Client {
     return this.#client;
   }
-
   public get guilds(): readonly Readonly<Guild>[] {
     return this.#guilds;
   }
@@ -109,15 +106,12 @@ export class Bot {
   public get addedEmotesDatabase(): Readonly<AddedEmotesDatabase> {
     return this.#addedEmotesDatabase;
   }
-
   public get pingsDatabase(): Readonly<PingsDatabase> {
     return this.#pingsDatabase;
   }
-
   public get permittedRoleIdsDatabase(): Readonly<PermittedRoleIdsDatabase> {
     return this.#permittedRoleIdsDatabase;
   }
-
   public get broadcasterNameAndPersonalEmoteSetsDatabase(): Readonly<BroadcasterNameAndPersonalEmoteSetsDatabase> {
     return this.#broadcasterNameAndPersonalEmoteSetsDatabase;
   }
@@ -198,9 +192,9 @@ export class Bot {
         return;
       }
 
-      const handler = this.#commandHandlers.get(interaction.commandName);
-      if (handler === undefined) return;
-      void handler(interaction, guild);
+      const commandHandler = this.#commandHandlers.get(interaction.commandName);
+      if (commandHandler === undefined) return;
+      void commandHandler(interaction, guild);
       // TODO: error handling
 
       return;

@@ -1,4 +1,4 @@
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
 import type { Guild } from '../guild.js';
 
@@ -10,7 +10,7 @@ async function sleep(seconds: number): Promise<void> {
 
 export function transientHandler() {
   return async function transientHandlerInnerFunction(
-    interaction: CommandInteraction,
+    interaction: ChatInputCommandInteraction,
     guild: Readonly<Guild>
   ): Promise<undefined> {
     const defer = interaction.deferReply();

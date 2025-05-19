@@ -3,7 +3,7 @@ import { join } from 'path';
 import { ensureDirSync } from 'fs-extra';
 import { rm } from 'node:fs/promises';
 
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
 import { downloadAsset } from '../utils/download-asset.js';
 import { maxPlatformSize, emoteSizeChange, assetSizeChange } from '../utils/size-change.js';
@@ -134,9 +134,9 @@ function onlyUnique(value: string, index: number, array: readonly string[]): boo
 }
 
 export function emoteHandler() {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const { emoteMatcher } = guild;
-    const emote = String(interaction.options.get('emote')?.value).trim();
+    const emote = String(interaction.options.get('name')?.value).trim();
     if (emote.split(/\s+/).length > 1) {
       await interaction.reply({ content: 'Please use /emotes for combined emotes.', flags: 'Ephemeral' });
       return;
@@ -180,7 +180,7 @@ export function emoteHandler() {
 }
 
 export function emoteListHandler(emb: EmoteMessageBuilder[]) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const { emoteMatcher } = guild;
     const defer = interaction.deferReply();
     try {
@@ -202,7 +202,7 @@ export function emoteListHandler(emb: EmoteMessageBuilder[]) {
       })();
 
       const zeroWidth = ((): boolean | undefined => {
-        const option = interaction.options.get('zerowidth')?.value;
+        const option = interaction.options.get('overlaying')?.value;
         return option !== undefined ? stringToBoolean(String(option)) : undefined;
       })();
 
@@ -242,7 +242,7 @@ export function emoteListHandler(emb: EmoteMessageBuilder[]) {
 }
 
 export function emotesHandler(cachedUrl: Readonly<CachedUrl>) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const { emoteMatcher } = guild;
 
     const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);

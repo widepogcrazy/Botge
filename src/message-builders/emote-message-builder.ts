@@ -3,7 +3,7 @@ import {
   ButtonBuilder,
   ActionRowBuilder,
   ButtonStyle,
-  type CommandInteraction,
+  type ChatInputCommandInteraction,
   type ButtonInteraction,
   type MessageActionRowComponentBuilder
 } from 'discord.js';
@@ -28,7 +28,7 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
   readonly #markedAsDeleteds: number[] | undefined = undefined;
 
   public constructor(
-    interaction: CommandInteraction | ButtonInteraction,
+    interaction: ChatInputCommandInteraction | ButtonInteraction,
     emotes: readonly AssetInfo[],
     shortestUniqueSubstrings?: readonly string[],
     isAddedEmoteDeleteMode = false

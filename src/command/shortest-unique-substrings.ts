@@ -1,4 +1,4 @@
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
 import type { EmoteMatcher } from '../emote-matcher.js';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
@@ -48,21 +48,21 @@ export function getShortestUniqueSubstrings(
 }
 
 export function shortestuniquesubstringsHandler(emb: EmoteMessageBuilder[]) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const { emoteMatcher } = guild;
     const ephemeral = Boolean(interaction.options.get('ephemeral')?.value);
     const defer = ephemeral ? interaction.deferReply({ flags: 'Ephemeral' }) : interaction.deferReply();
     try {
       const emotesOption: readonly string[] = String(interaction.options.get('emotes')?.value).split(/\s+/);
-      const typeOption = ((): string | undefined => {
-        const option = interaction.options.get('type')?.value;
+      const formatOption = ((): string | undefined => {
+        const option = interaction.options.get('format')?.value;
         return option !== undefined ? String(option) : undefined;
       })();
 
       const getShortestUniqueSubstrings_: readonly (readonly [string | undefined, readonly string[] | undefined])[] =
         emotesOption.map((emoteOption) => getShortestUniqueSubstrings(emoteMatcher, emoteOption));
 
-      if (typeOption === undefined) {
+      if (formatOption !== undefined) {
         const emotes = emotesOption
           .map((emoteOption) => emoteMatcher.matchSingle(emoteOption))
           .filter((emote) => emote !== undefined);

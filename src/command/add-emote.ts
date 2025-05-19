@@ -1,4 +1,4 @@
-import type { CommandInteraction, GuildMember, Role } from 'discord.js';
+import type { ChatInputCommandInteraction, GuildMember, Role } from 'discord.js';
 
 import { sevenTVUrlToSevenTVNotInSet, SPLITTER } from '../utils/platform-url-to-api-url.js';
 import type { AddedEmote, SevenTVEmoteNotInSet } from '../types.js';
@@ -9,7 +9,7 @@ import { fetchAndJson } from '../utils/fetch-and-json.js';
 import { permitted, owner, globalAdministrator } from '../utils/permitted.js';
 
 export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<AddedEmotesDatabase>) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const { member } = interaction;

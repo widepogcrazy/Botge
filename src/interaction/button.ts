@@ -173,6 +173,7 @@ export function buttonHandler(
 
       const messageBuilder = messageBuilders[messageBuilderIndex];
       const messageBuilderInteraction = messageBuilder.interaction;
+      if (messageBuilderInteraction.user.id !== interaction.user.id) return undefined;
 
       let reply:
         | EmoteMessageBuilderTransformFunctionReturnType

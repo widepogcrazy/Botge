@@ -15,8 +15,8 @@ export class Guild {
   #emoteMatcher: Readonly<EmoteMatcher>;
   readonly #twitchClipsMeiliSearchIndex: Index | undefined;
   readonly #personalEmoteMatcherConstructor: Readonly<PersonalEmoteMatcherConstructor>;
-  #uniqueCreatorNames: Readonly<Set<string>> | undefined;
-  #uniqueGameIds: Readonly<Set<string>> | undefined;
+  #uniqueCreatorNames: readonly string[] | undefined;
+  #uniqueGameIds: readonly string[] | undefined;
   #settingsPermittedRoleIds: readonly string[] | null;
   #addEmotePermittedRoleIds: readonly string[] | null;
   #allowEveryoneToAddEmote: boolean;
@@ -36,8 +36,8 @@ export class Guild {
     this.#twitchClipsMeiliSearchIndex = twitchClipsMeiliSearchIndex;
     this.#emoteMatcher = emoteMatcher;
     this.#personalEmoteMatcherConstructor = emoteMatcherConstructor;
-    this.#uniqueCreatorNames = new Set<string>();
-    this.#uniqueGameIds = new Set<string>();
+    this.#uniqueCreatorNames = [];
+    this.#uniqueGameIds = [];
     this.#settingsPermittedRoleIds = settingsPermittedRoleIds;
     this.#addEmotePermittedRoleIds = addEmotePermittedRoleIds;
     this.#allowEveryoneToAddEmote = allowEveryoneToAddEmote;
@@ -58,10 +58,10 @@ export class Guild {
   public get personalEmoteMatcherConstructor(): Readonly<PersonalEmoteMatcherConstructor> {
     return this.#personalEmoteMatcherConstructor;
   }
-  public get uniqueCreatorNames(): Readonly<Set<string>> | undefined {
+  public get uniqueCreatorNames(): readonly string[] | undefined {
     return this.#uniqueCreatorNames;
   }
-  public get uniqueGameIds(): Readonly<Set<string>> | undefined {
+  public get uniqueGameIds(): readonly string[] | undefined {
     return this.#uniqueGameIds;
   }
 
@@ -114,8 +114,8 @@ export class Guild {
     if (this.#twitchClipsMeiliSearchIndex === undefined || twitchApi === undefined) return;
     if (this.#broadcasterName === null) return;
 
-    this.#uniqueCreatorNames = new Set<string>();
-    this.#uniqueGameIds = new Set<string>();
+    this.#uniqueCreatorNames = [];
+    this.#uniqueGameIds = [];
 
     let updated = 0;
 
@@ -185,7 +185,7 @@ export class Guild {
       .map((record: ReadonlyRecordAny) => record as TwitchClip)
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-    this.#uniqueCreatorNames = new Set(clipsge.map((clip) => clip.creator_name));
-    this.#uniqueGameIds = new Set(clipsge.map((clip) => clip.game_id));
+    this.#uniqueCreatorNames = new Set(clipsge.map((clip) => clip.creator_name)).keys().toArray();
+    this.#uniqueGameIds = new Set(clipsge.map((clip) => clip.game_id)).keys().toArray();
   }
 }

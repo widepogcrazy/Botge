@@ -14,156 +14,157 @@ import type {
 
 const emote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('emote')
-  .setDescription('replies with a gif/png')
+  .setDescription('Get an emote')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('emote').setDescription("the emote' name").setRequired(true).setAutocomplete(true)
+    option.setName('name').setDescription("The emote's name").setRequired(true).setAutocomplete(true)
   )
   .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
-    option.setName('size').setDescription("the emote's size").setAutocomplete(true)
+    option.setName('size').setDescription("The emote's size").setAutocomplete(true)
   );
 
 const emotes: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('emotes')
-  .setDescription('replies with a webp/png')
-  .setDescription('emote command for combined emote usage')
+  .setDescription(
+    'Overlay and/or create a horizontal stack of emotes/Discord built-in emojis/external images (png/gif)'
+  )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option
       .setName('emotes')
-      .setDescription('the emotes names. works even if this input is a substring of the emotes original name')
+      .setDescription('Inputs separated by space. Partial emote name is sufficient')
       .setRequired(true)
   )
   .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
-    option.setName('fullsize').setDescription('whether to use the full size of the input or not')
+    option
+      .setName('fullsize')
+      .setDescription(
+        'Whether to use the full size of the inputs or not. External image: full size, emote: highest size'
+      )
   )
   .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
-    option.setName('stretch').setDescription('whether to stretch the zero-width emotes instead of centering them')
+    option.setName('stretch').setDescription('Whether to stretch the overlaying emotes instead of centering them')
   );
 
 const emotelist: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('emotelist')
-  .setDescription('replies with a webp/png')
+  .setDescription('Browse through the queried emotes')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('query').setDescription('the query').setAutocomplete(true)
+    option.setName('query').setDescription('The query').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('platform').setDescription('the platform of the emote').setAutocomplete(true)
+    option.setName('platform').setDescription('The platform of the queried emotes').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('animated').setDescription('whether the emote is animated').setAutocomplete(true)
+    option.setName('animated').setDescription('Whether the queried emotes should be animated').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('zerowidth').setDescription('whether the emote is zerowidth(overlaying)').setAutocomplete(true)
+    option
+      .setName('overlaying')
+      .setDescription('Whether the queried emotes should be overlaying (zero-width)')
+      .setAutocomplete(true)
   );
 
 const clip: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('clip')
-  .setDescription('replies with clip url, if found.')
+  .setDescription('Get a single clip or browse through multiple clips')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('title').setDescription('the clips name').setAutocomplete(true)
+    option.setName('title').setDescription('The clip title').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('clipper').setDescription('the username of the clipper').setAutocomplete(true)
+    option.setName('clipper').setDescription('The Twitch username of the clipper').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('game').setDescription("the game's name").setAutocomplete(true)
+    option.setName('category').setDescription('The category of the clips').setAutocomplete(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option
       .setName('sortby')
-      .setDescription("sort by this. by default it's sorted by views")
-      .addChoices({ name: 'Created', value: 'created' })
+      .setDescription('Sort. Default: date created (newest first)')
+      .addChoices({ name: 'Views', value: 'views' })
   );
 
 const addemote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('addemote')
-  .setDescription('adds an emote.')
+  .setDescription('Add an emote')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('url').setDescription('the 7tv/old.7tv link to the emote.').setRequired(true)
+    option.setName('url').setDescription('The 7TV link of the emote').setRequired(true)
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('alias').setDescription('an alias for the emote.')
+    option.setName('name').setDescription('Add the emote with this name instead')
   );
 
 const chatgpt: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('chatgpt')
-  .setDescription('sends text to chatgpt and chatgpt answers.')
+  .setDescription('Send a prompt to ChatGPT and receive a response')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('text').setDescription('the text to send').setRequired(true)
+    option.setName('prompt').setDescription('The prompt to send').setRequired(true)
   );
 
 const translate: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('translate')
-  .setDescription('detects language of text, then translates into english.')
+  .setDescription('Translate text to english. Auto-detects language')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('text').setDescription('the text to translate').setRequired(true)
+    option.setName('text').setDescription('The text to translate').setRequired(true)
   );
 
 const shortestuniquesubstrings: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('shortestuniquesubstrings')
-  .setDescription('outputs the shortest unique substring(s) for the emote(s)')
+  .setDescription('Get the shortest unique substring(s) of emote(s)')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('emotes').setDescription('Emote name(s). Separated by space').setRequired(true).setAutocomplete(true)
+  )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option
-      .setName('emotes')
-      .setDescription('emote or emotes separated by space')
-      .setRequired(true)
-      .setAutocomplete(true)
+      .setName('format')
+      .setDescription('Text/emote browser. Default: text')
+      .setChoices([{ name: 'Emote browser', value: 'emoteBrowser' } as ApplicationCommandOptionChoiceData<string>])
   )
   .addBooleanOption((option: ReadonlySlashCommandBooleanOption) =>
     option.setName('ephemeral').setDescription('whether to output the result so only you can see it')
-  )
-  .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option
-      .setName('type')
-      .setDescription('whether to output the result as embeds or simple text, default is embeds')
-      .setChoices([{ name: 'Text', value: 'Text' } as ApplicationCommandOptionChoiceData<string>])
   );
 
 const transient: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('transient')
-  .setDescription('Sends a message for you, and delete it after a certain time')
+  .setDescription('Send a message and delete it after the specified time')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('text').setDescription('text/link to send').setRequired(false)
+    option.setName('text').setDescription('The text to send')
   )
   .addAttachmentOption((option: ReadonlySlashCommandAttachmentOption) =>
-    option.setName('file').setDescription('file to send').setRequired(false)
+    option.setName('attachement').setDescription('The attachment to send')
   )
   .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
-    option.setName('duration').setDescription('duration in seconds before deletion, default: 3').setRequired(false)
+    option.setName('duration').setDescription('The duration in seconds before deletion. Default: 3')
   );
 
 const findTheEmoji: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('findtheemoji')
-  .setDescription('generates a find the emoji grid, where each grid element is in a spoiler tag.')
+  .setDescription('Generates an emoji grid, where each emoji is in a spoiler tag')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option
-      .setName('emoji')
-      .setDescription('the emoji to find, by default its a random server emoji.')
-      .setRequired(false)
+    option.setName('emoji').setDescription('The emoji to find. Non-animated server emoji')
   )
   .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
-    option.setName('size').setDescription('the size of the grid, by default its 3x3.').setRequired(false)
+    option.setName('size').setDescription('The size of the grid. Default: 5x5, minimum: 3x3, maximum: 7x7')
   );
 
 const pingMe: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('pingme')
-  .setDescription('pings you after the specified time. the hours and minutes get added together')
+  .setDescription('Pings you after the specified time')
   .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
-    option.setName('hours').setDescription('the hours to wait before pinging you').setRequired(false)
+    option.setName('hours').setDescription('The hours to wait before pinging you')
   )
   .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
-    option.setName('minutes').setDescription('the minutes to wait before pinging you').setRequired(false)
+    option.setName('minutes').setDescription('The minutes to wait before pinging you')
   )
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('message').setDescription('the message to attach to the ping').setRequired(false)
+    option.setName('message').setDescription('The message to display when pinging you')
   );
 
 const poe2: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('poe2')
-  .setDescription('Get poe2 steam stats');
+  .setDescription('Get POE2 steam stats');
 
 const settings: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('settings')
-  .setDescription('settingsge');
+  .setDescription('Settings for configuring the behavior of the bot in this server. Permission required');
 
 export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommandsJSONBody>[] = [
   emote.toJSON(),

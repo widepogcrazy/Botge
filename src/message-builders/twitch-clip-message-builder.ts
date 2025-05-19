@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { EmbedBuilder, type CommandInteraction } from 'discord.js';
+import { EmbedBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import type {
   TwitchClip,
   TwitchClipMessageBuilderTransformFunctionReturnType,
@@ -19,7 +19,7 @@ export class TwitchClipMessageBuilder extends BaseMessageBuilder<
   readonly #sortedByText: string | undefined;
 
   public constructor(
-    interaction: CommandInteraction,
+    interaction: ChatInputCommandInteraction,
     twitchClips: readonly TwitchClip[],
     sortedBy: string | undefined
   ) {
@@ -69,6 +69,6 @@ export class TwitchClipMessageBuilder extends BaseMessageBuilder<
       EMBED_SERVER_HOST !== undefined ? transformFunctionWithEmbedServer : transformFunctionWithoutEmbedServer
     );
 
-    this.#sortedByText = sortedBy !== undefined ? `${sortedBy} then views` : 'views';
+    this.#sortedByText = sortedBy ?? 'date created(newest first)';
   }
 }

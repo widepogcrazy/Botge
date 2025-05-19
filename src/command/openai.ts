@@ -1,4 +1,4 @@
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
 import type { ReadonlyOpenAI } from '../types.js';
 import type { Guild } from '../guild.js';
@@ -6,7 +6,7 @@ import type { Guild } from '../guild.js';
 const MAXDISCORDMESSAGELENGTH = 2000;
 
 export function chatgptHandler(openai: ReadonlyOpenAI | undefined) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     if (openai === undefined) {
       void interaction.reply('chatgpt command is not available in this server.');
       return;

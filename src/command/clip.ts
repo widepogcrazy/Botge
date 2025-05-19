@@ -1,4 +1,4 @@
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 import type { TwitchClip, ReadonlyHit } from '../types.js';
 import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.js';
 import type { Guild } from '../guild.js';
@@ -7,7 +7,7 @@ const CLEANUP_MINUTES = 10;
 const MAX_TWITCH_CLIP_MESSAGE_BUILDERS_LENGTH = 15;
 
 export function clipHandler(twitchClipMessageBuilders: TwitchClipMessageBuilder[]) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const { twitchClipsMeiliSearchIndex } = guild;
     if (twitchClipsMeiliSearchIndex === undefined) {
       void interaction.reply('clip command is not available in this server.');
@@ -30,23 +30,23 @@ export function clipHandler(twitchClipMessageBuilders: TwitchClipMessageBuilder[
         const clipperOptions = interaction.options.get('clipper')?.value;
         return clipperOptions !== undefined ? String(clipperOptions).trim() : undefined;
       })();
-      const game = ((): string | undefined => {
-        const gameOptions = interaction.options.get('game')?.value;
-        return gameOptions !== undefined ? String(gameOptions).trim() : undefined;
+      const category = ((): string | undefined => {
+        const categoryOptions = interaction.options.get('category')?.value;
+        return categoryOptions !== undefined ? String(categoryOptions).trim() : undefined;
       })();
       const sortBy = ((): string | undefined => {
         const sortOptions = interaction.options.get('sortby')?.value;
         return sortOptions !== undefined ? String(sortOptions).trim() : undefined;
       })();
       const sortByField = ((): string | undefined => {
-        if (sortBy === 'created') return 'created_at';
-        else return undefined;
+        if (sortBy === 'views') return 'view_count';
+        return undefined;
       })();
 
       const filter = ((): string => {
         const filter_: string[] = [];
         const clipperFilter = clipper !== undefined ? `creator_name = ${clipper}` : undefined;
-        const gameFilter = game !== undefined ? `game_id = "${game}"` : undefined;
+        const gameFilter = category !== undefined ? `game_id = "${category}"` : undefined;
 
         if (clipperFilter !== undefined) filter_.push(clipperFilter);
         if (gameFilter !== undefined) filter_.push(gameFilter);
@@ -62,7 +62,7 @@ export function clipHandler(twitchClipMessageBuilders: TwitchClipMessageBuilder[
       const search = await twitchClipsMeiliSearchIndex.search(title ?? '', {
         filter: filter,
         matchingStrategy: 'all',
-        sort: sortByField !== undefined ? [`${sortByField}:desc`] : ['view_count:desc'],
+        sort: sortByField !== undefined ? [`${sortByField}:desc`] : ['created_at:desc'],
         limit: maxTotalHits
       });
       const hits: readonly TwitchClip[] = search.hits.map((hit: ReadonlyHit) => hit as TwitchClip);

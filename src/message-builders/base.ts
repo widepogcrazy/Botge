@@ -5,7 +5,7 @@ import {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  type CommandInteraction,
+  type ChatInputCommandInteraction,
   type ButtonInteraction,
   type MessageActionRowComponentBuilder,
   type ModalActionRowComponentBuilder
@@ -46,7 +46,7 @@ function randomNumberInInterval(min: number, max: number): number {
 
 export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
   readonly #counter: number;
-  readonly #interaction: CommandInteraction | ButtonInteraction;
+  readonly #interaction: ChatInputCommandInteraction | ButtonInteraction;
   readonly #array: readonly ArrayItemType[];
   readonly #row: ReadonlyActionRowBuilderMessageActionRowComponentBuilder;
   readonly #modal: ReadonlyModalBuilder;
@@ -56,7 +56,7 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
   protected constructor(
     counter: number,
     messageBuilderType: string,
-    interaction: CommandInteraction | ButtonInteraction,
+    interaction: ChatInputCommandInteraction | ButtonInteraction,
     array: readonly ArrayItemType[],
     transformFunction: (arrayItem: ArrayItemType) => TransformFunctionReturnType
   ) {
@@ -109,7 +109,7 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
     return this.#counter;
   }
 
-  public get interaction(): CommandInteraction | ButtonInteraction {
+  public get interaction(): ChatInputCommandInteraction | ButtonInteraction {
     return this.#interaction;
   }
 

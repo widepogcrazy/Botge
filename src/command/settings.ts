@@ -3,7 +3,7 @@ import {
   ButtonStyle,
   ButtonBuilder,
   MessageFlags,
-  type CommandInteraction,
+  type ChatInputCommandInteraction,
   type MessageActionRowComponentBuilder,
   type GuildMember,
   type Role
@@ -20,7 +20,7 @@ export const ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID = 'addedEmoteDeletionMen
 export const CONFIGURATION_BUTTON_CUSTOM_ID = 'configurationButton';
 
 export function settingsHandler() {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
     try {
       const { member } = interaction;

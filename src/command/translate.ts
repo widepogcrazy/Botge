@@ -1,10 +1,10 @@
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
 import type { ReadonlyTranslator } from '../types.js';
 import type { Guild } from '../guild.js';
 
 export function translateHandler(translator: ReadonlyTranslator | undefined) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     if (translator === undefined) {
       void interaction.reply('translate command is not available in this server.');
       return;

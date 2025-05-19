@@ -1,6 +1,6 @@
 import schedule from 'node-schedule';
 
-import type { Client, CommandInteraction, TextChannel } from 'discord.js';
+import type { Client, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 
 import type { Ping } from '../types.js';
 import type { PingsDatabase } from '../api/ping-database.js';
@@ -13,7 +13,7 @@ import {
 import type { Guild } from '../guild.js';
 
 export function pingMeHandler(pingsDataBase: Readonly<PingsDatabase>, client: Client) {
-  return async (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> => {
+  return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     const defer = interaction.deferReply();
     try {
       const hours = ((): number | undefined => {

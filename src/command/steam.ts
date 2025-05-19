@@ -1,5 +1,5 @@
 import fetch, { type Response } from 'node-fetch';
-import type { CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 import type { NumberOfCurrentPlayers } from '../types.js';
 import { GUILD_ID_CUTEDOG } from '../guilds.js';
 import type { Guild } from '../guild.js';
@@ -29,7 +29,7 @@ const RECENT_REVIEW_REGEX = /([0-9]+)% of the ([0-9,]+) user reviews in the last
 const ALL_REVIEWS_REGEX = /([0-9]+)% of the ([0-9,]+) user reviews for this game are positive\./;
 
 export function steamHandler(gameId: string) {
-  return async function (interaction: CommandInteraction, guild: Readonly<Guild>): Promise<void> {
+  return async function (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> {
     const defer = interaction.deferReply();
     try {
       const store = (async (): Promise<Response> => {

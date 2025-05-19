@@ -125,10 +125,14 @@ class SuffixTree {
     if (normalizedSuffix !== '') {
       const nextChar = normalizedSuffix.charAt(0);
       if (!this.#paths.has(nextChar)) return undefined;
-      return this.#paths.get(nextChar)?._queryArray(normalizedSuffix.slice(1), original, max, sort) ?? undefined;
+      return (
+        this.#paths
+          .get(nextChar)
+          ?._queryArray(normalizedSuffix.slice(1), original, platform, animated, zeroWidth, max, sort) ?? undefined
+      );
     }
-    let assets: AssetInfo[] = [];
 
+    let assets: AssetInfo[] = [];
     for (const asset of this.#data?.assets ?? []) {
       if (asset.name.includes(normalizedSuffix) && !assets.includes(asset)) assets.push(asset);
     }
@@ -159,12 +163,8 @@ class SuffixTree {
         return lowerCaseMatchIndex !== -1 ? assets.splice(lowerCaseMatchIndex, 1)[0] : undefined;
       })();
 
-      const startsWithLowerCaseMatches: readonly AssetInfo[] = assets
-        .map((asset, index) => {
-          if (asset.name.toLowerCase().startsWith(original.toLowerCase())) return assets.splice(index, 1)[0];
-          return undefined;
-        })
-        .filter((startsWithLowerCaseMatch) => startsWithLowerCaseMatch !== undefined);
+      const startsWithLowerCaseMatches: AssetInfo[] = [];
+      this.#getStartsWithLowerCaseMatches(assets, original.toLowerCase(), startsWithLowerCaseMatches);
 
       assets.unshift(...startsWithLowerCaseMatches);
       if (lowerCaseMatch !== undefined) assets.unshift(lowerCaseMatch);
@@ -202,6 +202,22 @@ class SuffixTree {
     const nextChar = normalizedSuffix.charAt(0);
     if (!this.#paths.has(nextChar)) return false;
     return this.#paths.get(nextChar)?._queryExact(normalizedSuffix.slice(1), original) ?? false;
+  }
+
+  #getStartsWithLowerCaseMatches(
+    assets: AssetInfo[],
+    startsWithLowerCase: string,
+    startsWithLowerCaseMatches: AssetInfo[]
+  ): void {
+    for (const [index, asset] of assets.entries()) {
+      if (!asset.name.toLowerCase().startsWith(startsWithLowerCase)) continue;
+
+      const [splicedAsset] = assets.splice(index, 1);
+      startsWithLowerCaseMatches.push(splicedAsset);
+
+      this.#getStartsWithLowerCaseMatches(assets, startsWithLowerCase, startsWithLowerCaseMatches);
+      return;
+    }
   }
 
   #getOrAddTree(char: string): SuffixTree | undefined {
