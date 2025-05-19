@@ -8,7 +8,8 @@ import {
   getCounterFromCustomId,
   getCustomId,
   JUMP_TO_MODAL_BASE_CUSTOM_ID,
-  JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID
+  JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID,
+  JUMP_TO_IDENTIFIER_INPUT_BASE_CUSTOM_ID
 } from '../message-builders/base.js';
 
 import {
@@ -162,29 +163,52 @@ export function modalSubmitHandler(
 
       const defer = interaction.deferUpdate();
       const baseCustomId = getBaseCustomIdFromCustomId(customId);
-      if (baseCustomId === JUMP_TO_MODAL_BASE_CUSTOM_ID) {
-        const jumpToTextIntputValue = interaction.fields
-          .getTextInputValue(getCustomId(JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID, messageBuilderType, messageBuilder.counter))
-          .trim();
+      if (baseCustomId !== JUMP_TO_MODAL_BASE_CUSTOM_ID) return;
 
-        if (jumpToTextIntputValue === '') {
-          const reply = messageBuilder.random();
-          await defer;
+      const jumpToTextInputValue = interaction.fields
+        .getTextInputValue(getCustomId(JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID, messageBuilderType, messageBuilder.counter))
+        .trim();
+      const jumpToIdentifierTextInputValue = interaction.fields
+        .getTextInputValue(
+          getCustomId(JUMP_TO_IDENTIFIER_INPUT_BASE_CUSTOM_ID, messageBuilderType, messageBuilder.counter)
+        )
+        .trim();
 
-          if (reply === undefined) return;
-          await messageBuilderInteraction.editReply(reply);
-          return;
-        }
+      if (jumpToTextInputValue !== '' && jumpToIdentifierTextInputValue !== '') {
+        //can't set both
+        await defer;
+        return;
+      }
 
-        const jumpToTextIntputValueNumber = Number(jumpToTextIntputValue);
-        if (Number.isNaN(jumpToTextIntputValueNumber)) return;
-
-        const reply = messageBuilder.jumpTo(jumpToTextIntputValueNumber - 1);
+      if (jumpToIdentifierTextInputValue !== '') {
+        const reply = messageBuilder.jumpToIdentifer(jumpToIdentifierTextInputValue);
         await defer;
 
         if (reply === undefined) return;
         await messageBuilderInteraction.editReply(reply);
+        return;
       }
+
+      if (jumpToTextInputValue === '') {
+        const reply = messageBuilder.random();
+        await defer;
+
+        if (reply === undefined) return;
+        await messageBuilderInteraction.editReply(reply);
+        return;
+      }
+
+      const jumpToTextIntputValueNumber = Number(jumpToTextInputValue);
+      if (Number.isNaN(jumpToTextIntputValueNumber)) {
+        await defer;
+        return;
+      }
+
+      const reply = messageBuilder.jumpTo(jumpToTextIntputValueNumber - 1);
+      await defer;
+
+      if (reply === undefined) return;
+      await messageBuilderInteraction.editReply(reply);
     } catch (error) {
       console.log(`Error at modalSubmit --> ${error instanceof Error ? error.message : String(error)}`);
       if (deferReply !== undefined) {

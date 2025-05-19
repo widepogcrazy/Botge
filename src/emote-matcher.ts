@@ -59,9 +59,19 @@ class SuffixTree {
     animated?: boolean,
     zeroWidth?: boolean,
     max?: number,
-    sort?: boolean
+    sortByDateAdded?: boolean,
+    sortByName?: boolean
   ): readonly AssetInfo[] | undefined {
-    return this._queryArray(suffix.toLowerCase(), original, platform, animated, zeroWidth, max, sort);
+    return this._queryArray(
+      suffix.toLowerCase(),
+      original,
+      platform,
+      animated,
+      zeroWidth,
+      max,
+      sortByDateAdded,
+      sortByName
+    );
   }
 
   public queryUnique(suffix: string, original: string): boolean {
@@ -120,7 +130,8 @@ class SuffixTree {
     animated?: boolean,
     zeroWidth?: boolean,
     max?: number,
-    sort?: boolean
+    sortByDateAdded?: boolean,
+    sortByName?: boolean
   ): readonly AssetInfo[] | undefined {
     if (normalizedSuffix !== '') {
       const nextChar = normalizedSuffix.charAt(0);
@@ -128,7 +139,16 @@ class SuffixTree {
       return (
         this.#paths
           .get(nextChar)
-          ?._queryArray(normalizedSuffix.slice(1), original, platform, animated, zeroWidth, max, sort) ?? undefined
+          ?._queryArray(
+            normalizedSuffix.slice(1),
+            original,
+            platform,
+            animated,
+            zeroWidth,
+            max,
+            sortByDateAdded,
+            sortByName
+          ) ?? undefined
       );
     }
 
@@ -144,12 +164,14 @@ class SuffixTree {
     if (assets.length === 0) return undefined;
 
     //reached the end of the iteration, return
-    if (sort !== undefined && sort) {
+    if (sortByDateAdded !== undefined && sortByDateAdded) {
       const assetsTimestampNotUndefined = assets.filter((asset) => asset.timestamp !== undefined);
       const assetsTimestampUndefined = assets.filter((asset) => asset.timestamp === undefined);
 
       assetsTimestampNotUndefined.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
       assets = [...assetsTimestampNotUndefined, ...assetsTimestampUndefined];
+    } else if (sortByName !== undefined && sortByName) {
+      assets.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     if (original !== '') {
@@ -292,9 +314,10 @@ export class EmoteMatcher {
     animated?: boolean,
     zeroWidth?: boolean,
     max?: number,
-    sort?: boolean
+    sortByDateAdded?: boolean,
+    sortByName?: boolean
   ): readonly AssetInfo[] | undefined {
-    return this.#root.queryArray(query, query, platform, animated, zeroWidth, max, sort);
+    return this.#root.queryArray(query, query, platform, animated, zeroWidth, max, sortByDateAdded, sortByName);
   }
 
   public matchSingleUnique(query: string, original: string): boolean {

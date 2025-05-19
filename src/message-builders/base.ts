@@ -11,7 +11,14 @@ import {
   type ModalActionRowComponentBuilder
 } from 'discord.js';
 
-import type { ReadonlyActionRowBuilderMessageActionRowComponentBuilder, ReadonlyModalBuilder } from '../types.js';
+import type {
+  AssetInfo,
+  EmoteMessageBuilderTransformFunctionReturnType,
+  ReadonlyActionRowBuilderMessageActionRowComponentBuilder,
+  ReadonlyModalBuilder,
+  TwitchClip,
+  TwitchClipMessageBuilderTransformFunctionReturnType
+} from '../types.js';
 
 export const PREVIOUS_BUTTON_BASE_CUSTOM_ID = 'previousButton';
 export const NEXT_BUTTON_BASE_CUSTOM_ID = 'nextButton';
@@ -21,6 +28,7 @@ export const DELETE_BUTTON_BASE_CUSTOM_ID = 'deleteButton';
 export const JUMP_TO_BUTTON_BASE_CUSTOM_ID = 'jumpToButton';
 export const JUMP_TO_MODAL_BASE_CUSTOM_ID = 'jumpToModal';
 export const JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID = 'jumpToTextInput';
+export const JUMP_TO_IDENTIFIER_INPUT_BASE_CUSTOM_ID = 'jumpToIdentifierTextInput';
 
 const BUTTON_CUSTOM_ID_SPLITTER = '-';
 
@@ -44,13 +52,19 @@ function randomNumberInInterval(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
+export class BaseMessageBuilder<
+  ArrayItemType = AssetInfo | TwitchClip,
+  TransformFunctionReturnType =
+    | TwitchClipMessageBuilderTransformFunctionReturnType
+    | EmoteMessageBuilderTransformFunctionReturnType
+> {
   readonly #counter: number;
   readonly #interaction: ChatInputCommandInteraction | ButtonInteraction;
   readonly #array: readonly ArrayItemType[];
   readonly #row: ReadonlyActionRowBuilderMessageActionRowComponentBuilder;
   readonly #modal: ReadonlyModalBuilder;
   readonly #transformFunction: (arrayItem: ArrayItemType) => TransformFunctionReturnType;
+  readonly #getIdentifierFunction: (arrayItem: ArrayItemType) => string;
   #currentIndex: number;
 
   protected constructor(
@@ -58,12 +72,15 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
     messageBuilderType: string,
     interaction: ChatInputCommandInteraction | ButtonInteraction,
     array: readonly ArrayItemType[],
-    transformFunction: (arrayItem: ArrayItemType) => TransformFunctionReturnType
+    transformFunction: (arrayItem: ArrayItemType) => TransformFunctionReturnType,
+    getIdentifierFunction: (arrayItem: ArrayItemType) => string,
+    identifierName: string
   ) {
     this.#counter = counter;
     this.#interaction = interaction;
     this.#array = array;
     this.#transformFunction = transformFunction;
+    this.#getIdentifierFunction = getIdentifierFunction;
     //-1 because of first element
     this.#currentIndex = -1;
 
@@ -96,10 +113,18 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
           new TextInputBuilder()
             .setCustomId(getCustomId(JUMP_TO_TEXT_INPUT_BASE_CUSTOM_ID, messageBuilderType, this.#counter))
-            .setLabel('Jump to')
+            .setLabel('Jump to index')
             .setMaxLength(6)
             .setStyle(TextInputStyle.Short)
             .setPlaceholder('random')
+            .setRequired(false)
+        ),
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          new TextInputBuilder()
+            .setCustomId(getCustomId(JUMP_TO_IDENTIFIER_INPUT_BASE_CUSTOM_ID, messageBuilderType, this.#counter))
+            .setLabel(`Jump to ${identifierName}`)
+            .setMaxLength(20)
+            .setStyle(TextInputStyle.Short)
             .setRequired(false)
         )
       );
@@ -108,11 +133,9 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
   public get counter(): number {
     return this.#counter;
   }
-
   public get interaction(): ChatInputCommandInteraction | ButtonInteraction {
     return this.#interaction;
   }
-
   public get modal(): ReadonlyModalBuilder {
     return this.#modal;
   }
@@ -120,15 +143,12 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
   protected get row(): ReadonlyActionRowBuilderMessageActionRowComponentBuilder {
     return this.#row;
   }
-
   protected get currentIndex(): number {
     return this.#currentIndex;
   }
-
   protected get currentItem(): ArrayItemType {
     return this.#array[this.#currentIndex];
   }
-
   protected get arrayLength(): number {
     return this.#array.length;
   }
@@ -176,6 +196,36 @@ export class BaseMessageBuilder<ArrayItemType, TransformFunctionReturnType> {
     if (this.#currentIndex === jumpTo) return undefined;
     this.#currentIndex = jumpTo;
     return this.#transformFunction(this.#array[this.#currentIndex]);
+  }
+
+  public jumpToIdentifer(jumpTo: string): TransformFunctionReturnType | undefined {
+    if (jumpTo === '') return undefined;
+
+    for (const [index, arrayItem] of this.#array.entries()) {
+      const identifier = this.#getIdentifierFunction(arrayItem);
+      if (identifier === jumpTo) {
+        this.#currentIndex = index;
+        return this.current();
+      }
+    }
+
+    for (const [index, arrayItem] of this.#array.entries()) {
+      const identifier = this.#getIdentifierFunction(arrayItem);
+      if (identifier.toLowerCase() === jumpTo.toLowerCase()) {
+        this.#currentIndex = index;
+        return this.current();
+      }
+    }
+
+    for (const [index, arrayItem] of this.#array.entries()) {
+      const identifier = this.#getIdentifierFunction(arrayItem);
+      if (identifier.toLowerCase().includes(jumpTo.toLowerCase())) {
+        this.#currentIndex = index;
+        return this.current();
+      }
+    }
+
+    return undefined;
   }
 
   protected current(): TransformFunctionReturnType {

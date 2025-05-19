@@ -45,7 +45,7 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
         });
 
       if (this.#markedAsDeleteds !== undefined && this.#markedAsDeleteds.includes(this.currentIndex))
-        embed.setDescription('DELETED');
+        embed.setDescription('❌ DELETED ❌');
 
       embed
         .setColor('DarkButNotBlack')
@@ -59,7 +59,7 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
         )
         .setImage(url)
         .setFooter({
-          text: `${this.currentIndex + 1}/${this.arrayLength}. Sorted by date added.`
+          text: `${this.currentIndex + 1}/${this.arrayLength}.${isAddedEmoteDeleteMode ? ' Sorted alphabetically.' : shortestUniqueSubstrings === undefined ? ' Sorted by date added(newest first).' : ''}`
         });
 
       return {
@@ -68,12 +68,18 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
       } as EmoteMessageBuilderTransformFunctionReturnType;
     };
 
+    const getIdentifierFunction = (assetInfo: AssetInfo): string => {
+      return assetInfo.name;
+    };
+
     super(
       EmoteMessageBuilder.#staticCounter++,
       EmoteMessageBuilder.messageBuilderType,
       interaction,
       emotes,
-      transformFunction
+      transformFunction,
+      getIdentifierFunction,
+      'name'
     );
 
     if (isAddedEmoteDeleteMode) {

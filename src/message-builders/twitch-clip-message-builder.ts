@@ -61,12 +61,18 @@ export class TwitchClipMessageBuilder extends BaseMessageBuilder<
       } as TwitchClipMessageBuilderTransformFunctionReturnType;
     };
 
+    const getIdentifierFunction = (twitchClip: TwitchClip): string => {
+      return twitchClip.title;
+    };
+
     super(
       TwitchClipMessageBuilder.#staticCounter++,
       TwitchClipMessageBuilder.messageBuilderType,
       interaction,
       twitchClips,
-      EMBED_SERVER_HOST !== undefined ? transformFunctionWithEmbedServer : transformFunctionWithoutEmbedServer
+      EMBED_SERVER_HOST !== undefined ? transformFunctionWithEmbedServer : transformFunctionWithoutEmbedServer,
+      getIdentifierFunction,
+      'title'
     );
 
     this.#sortedByText = sortedBy ?? 'date created(newest first)';

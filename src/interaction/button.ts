@@ -127,7 +127,15 @@ export function buttonHandler(
         return undefined;
       } else if (customId === ADDED_EMOTE_DELETION_MENU_BUTTON_CUSTOM_ID) {
         const defer = interaction.deferReply({ flags: MessageFlags.Ephemeral });
-        const emotes = guild.emoteMatcher.matchSingleArray('', Platform.sevenNotInSet);
+        const emotes = guild.emoteMatcher.matchSingleArray(
+          '',
+          Platform.sevenNotInSet,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          true
+        );
         if (emotes === undefined) {
           await defer;
           await interaction.editReply('No emotes have been added to this server yet.');
