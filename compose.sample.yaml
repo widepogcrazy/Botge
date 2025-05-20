@@ -33,13 +33,13 @@ services:
       - APP_ID=
       - DISCORD_TOKEN=
 
-      # open ai
+      # open ai - optional
       #- OPENAI_API_KEY=
 
-      # google
+      # google - optional
       #- CREDENTIALS=
 
-      # twitch
+      # twitch - optional
       #- TWITCH_CLIENT_ID=
       #- TWITCH_SECRET=
 
@@ -50,11 +50,14 @@ services:
       # nginx
       - LOCAL_CACHE_BASE=http://nginx:80
 
-      # clips, comment out if not needed
+      # clips - optional
       - UPDATE_CLIPS_ON_STARTUP=true
 
-      # embed server host, example: https://embedserver.com/t/ with / at the end
+      # embed server host, example: https://embedserver.com/t/ with / at the end - optional
       # - EMBED_SERVER_HOST=
+
+      # Gemini - optional
+      # GEMINI_API_KEY=
     volumes:
       - ./tmp:/app/tmp
       - ./data:/app/data
