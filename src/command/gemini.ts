@@ -18,7 +18,8 @@ export function geminiHandler(googleGenAi: Readonly<GoogleGenAI> | undefined) {
       //1 token is around 4 english characters
       const response = await googleGenAi.models.generateContent({
         model: 'gemini-2.5-flash-preview-04-17',
-        contents: prompt
+        contents: prompt,
+        config: { maxOutputTokens: 500 }
       });
       const messageContent = response.text;
 
