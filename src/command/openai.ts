@@ -40,7 +40,7 @@ export function chatgptHandler(openai: ReadonlyOpenAI | undefined) {
       console.log(`Error at chatgpt --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
-      await interaction.editReply('failed to chatpgt.');
+      await interaction.editReply('failed to chatgpt.');
     }
   };
 }
