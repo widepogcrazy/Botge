@@ -30,6 +30,7 @@ import { newTwitchApi } from './utils/constructors/new-twitch-api.js';
 import { updateCommands } from './update-commands-docker.js';
 import { registerPings } from './utils/ping/register-pings.js';
 import type { PersonalEmoteSets } from './personal-emote-sets.js';
+import { GoogleGenAI } from '@google/genai';
 
 //dotenv
 dotenv.config();
@@ -42,7 +43,8 @@ const {
   MEILISEARCH_HOST,
   MEILISEARCH_API_KEY,
   LOCAL_CACHE_BASE,
-  UPDATE_CLIPS_ON_STARTUP
+  UPDATE_CLIPS_ON_STARTUP,
+  GEMINI_API_KEY
 } = process.env;
 
 async function ensureDirTmp(): Promise<void> {
@@ -71,6 +73,8 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
 
   const openai: ReadonlyOpenAI | undefined =
     OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
+
+  const googleGenAi = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
   const translator: ReadonlyTranslator | undefined =
     DEEPL_API_KEY !== undefined ? new Translator(DEEPL_API_KEY) : undefined;
@@ -128,7 +132,8 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     broadcasterNameAndPersonalEmoteSetsDatabase,
     cachedUrl,
     await Promise.all(guilds),
-    twitchClipsMeiliSearch
+    twitchClipsMeiliSearch,
+    googleGenAi
   );
 })();
 

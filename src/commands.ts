@@ -99,6 +99,13 @@ const chatgpt: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder(
     option.setName('prompt').setDescription('The prompt to send').setRequired(true)
   );
 
+const gemini: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName('gemini')
+  .setDescription('Send a prompt to ChatGPT and receive a response')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('prompt').setDescription('The prompt to send').setRequired(true)
+  );
+
 const translate: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('translate')
   .setDescription('Translate text to english. Auto-detects language')
@@ -173,6 +180,7 @@ export const commands: readonly Readonly<RESTPostAPIChatInputApplicationCommands
   clip.toJSON(),
   addemote.toJSON(),
   chatgpt.toJSON(),
+  gemini.toJSON(),
   translate.toJSON(),
   shortestuniquesubstrings.toJSON(),
   transient.toJSON(),

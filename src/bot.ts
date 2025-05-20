@@ -5,6 +5,7 @@ import { emoteHandler, emotesHandler, emoteListHandler } from './command/emote.j
 import { chatgptHandler } from './command/openai.js';
 import { shortestuniquesubstringsHandler } from './command/shortest-unique-substrings.js';
 import { translateHandler } from './command/translate.js';
+import { geminiHandler } from './command/gemini.js';
 import { transientHandler } from './command/transient.js';
 import { clipHandler } from './command/clip.js';
 import { findTheEmojiHandler } from './command/find-the-emoji.js';
@@ -26,6 +27,7 @@ import type { EmoteMessageBuilder } from './message-builders/emote-message-build
 import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.js';
 import type { Guild } from './guild.js';
 import type { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.js';
+import type { GoogleGenAI } from '@google/genai';
 
 const CLEANUP_MINUTES = 10;
 
@@ -43,6 +45,7 @@ export class Bot {
   readonly #twitchClipMessageBuilders: TwitchClipMessageBuilder[];
   readonly #emoteMessageBuilders: EmoteMessageBuilder[];
   readonly #twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined;
+  readonly #googleGenAi: Readonly<GoogleGenAI> | undefined;
   readonly #commandHandlers: Map<
     string,
     (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>) => Promise<void>
@@ -59,7 +62,8 @@ export class Bot {
     broadcasterNameAndPersonalEmoteSetsDatabase: Readonly<BroadcasterNameAndPersonalEmoteSetsDatabase>,
     cachedUrl: Readonly<CachedUrl>,
     guilds: readonly Readonly<Guild>[],
-    twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined
+    twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined,
+    googleGenAI: Readonly<GoogleGenAI> | undefined
   ) {
     this.#client = client;
     this.#openai = openai;
@@ -74,6 +78,7 @@ export class Bot {
     this.#twitchClipMessageBuilders = [];
     this.#emoteMessageBuilders = [];
     this.#twitchClipsMeiliSearch = twitchClipsMeiliSearch;
+    this.#googleGenAi = googleGenAI;
     this.#commandHandlers = new Map<
       string,
       (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>) => Promise<void>
@@ -81,6 +86,7 @@ export class Bot {
       ['emote', emoteHandler()],
       ['emotes', emotesHandler(this.#cachedUrl)],
       ['emotelist', emoteListHandler(this.#emoteMessageBuilders)],
+      ['gemini', geminiHandler(this.#googleGenAi)],
       ['clip', clipHandler(this.#twitchClipMessageBuilders)],
       ['addemote', addEmoteHandlerSevenTVNotInSet(this.#addedEmotesDatabase)],
       ['shortestuniquesubstrings', shortestuniquesubstringsHandler(this.#emoteMessageBuilders)],

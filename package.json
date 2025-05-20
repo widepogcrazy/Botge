@@ -27,6 +27,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@google/genai": "^1.0.0",
     "@twemoji/api": "^16.0.1",
     "better-sqlite3": "^11.10.0",
     "deepl-node": "^1.18.0",
