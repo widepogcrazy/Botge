@@ -8,28 +8,34 @@ const MAXDISCORDMESSAGELENGTH = 2000;
 export function chatgptHandler(openai: ReadonlyOpenAI | undefined) {
   return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     if (openai === undefined) {
-      void interaction.reply('chatgpt command is not available in this server.');
+      await interaction.reply('chatgpt command is not available in this server.');
       return;
     }
+
     const defer = interaction.deferReply();
     try {
-      const text = String(interaction.options.get('text')?.value).trim();
+      const prompt = String(interaction.options.get('prompt')?.value).trim();
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: text }]
+      //1 token is around 4 english characters
+      const response = await openai.responses.create({
+        model: 'gpt-4.1',
+        input: [{ role: 'user', content: prompt }],
+        max_output_tokens: 500
       });
-      const messageContent = completion.choices[0].message.content;
+      const messageContent = response.output_text;
 
-      const replyText =
-        messageContent !== null
-          ? messageContent.length > MAXDISCORDMESSAGELENGTH
-            ? messageContent.slice(0, MAXDISCORDMESSAGELENGTH - 5) + ' ...'
-            : messageContent
-          : '';
+      if (messageContent.length > MAXDISCORDMESSAGELENGTH) {
+        await defer;
+        await interaction.editReply(messageContent.slice(0, MAXDISCORDMESSAGELENGTH - 5) + ' ...');
 
-      await defer;
-      await interaction.editReply(replyText);
+        const followUp = '... ' + messageContent.slice(MAXDISCORDMESSAGELENGTH - 5);
+        if (followUp.length > MAXDISCORDMESSAGELENGTH)
+          await interaction.followUp(followUp.slice(0, MAXDISCORDMESSAGELENGTH - 5) + ' ...');
+        else await interaction.followUp(followUp);
+      } else {
+        await defer;
+        await interaction.editReply(messageContent);
+      }
     } catch (error) {
       console.log(`Error at chatgpt --> ${error instanceof Error ? error.message : String(error)}`);
 
