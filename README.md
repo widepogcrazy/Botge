@@ -1,30 +1,41 @@
----
-icon: hand-wave
-cover: .gitbook/assets/7tvgif.gif
-coverY: 186
-layout:
-  cover:
-    visible: true
-    size: full
-  title:
-    visible: true
-  description:
-    visible: false
-  tableOfContents:
-    visible: true
-  outline:
-    visible: false
-  pagination:
-    visible: true
----
+# Botge
 
-# Welcome
+[🌐 Botge Website](https://botge.gitbook.io/)
 
-Botge is an open-source Discord bot designed to connect Twitch to Discord, primarily to be used in a streamer's Discord server.
+Botge is a [Discord](https://discord.com) bot that provides functionalities inspired by the [Twitch](https://www.twitch.tv) chat experience to your server. It offers seamless emote handling, Twitch clip searching, and other powerful features that enhance Discord interactions. With built-in [DeepL Translation](https://www.deepl.com/en/products/translator), integration with [OpenAI's](https://openai.com) GPT models and [Google's Gemini](https://gemini.google.com) models, Botge makes conversations more dynamic, engaging, and intelligent.
 
-It features 13 commands, mainly to do with 7TV, BTTV, FFZ and Twitch emotes and clips.\
-Also features ChatGPT and DeepL translate commands, a fun Discord emoji game, an alarm-like pingme, shortest unique name of emote, add 7TV emote and send message that auto-deletes.
+## Features
 
-### Jump right in
+- **Configuration**: Configure the bot to a streamer with Twitch username and [7TV](https://7tv.app) emote set link.
+- **Emote Handling**: Search emotes from platforms: 7TV, [BTTV](https://betterttv.com), [FFZ](https://www.frankerfacez.com) and [Twitch](https://www.twitch.tv), including using overlaying (zero-width) emotes and [Discord emojis](https://github.com/jdecked/twemoji).\
+  It fetches global emotes and channel-specific emotes (if specified) from those platforms.
+- **Twitch Clip Search**: Search Twitch clips from the 1000 most viewed channel-specific clips.
+- **Add Emote**: Add an emote to the emote pool.
+- **Shortest unique substring**: Display the shortest unique substring for the specified emote(s) compared to other emotes in the emote pool.
+- **ChatGPT Integration**: Interact with OpenAI's GPT models for generating responses.
+- **Gemini Integration**: Interact with Google's Gemini models for generating responses.
+- **Translation**: Translate text to English using DeepL.
+- **Transient Messages**: Send messages that auto-delete after a specified duration.
+- **Find the emoji**: Generates an x by x grid where each element is a random, non-animated server emoji hidden in a spoiler tag, with only a single occurrence of the specified emoji.
+- **Ping Me**: Pings you after a specified time, optionally with a message.
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-cover data-type="files"></th><th data-hidden></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td>Invitation</td><td>Invite Botge to your server</td><td><a href=".gitbook/assets/cropped-invitation.png">cropped-invitation.png</a></td><td></td><td><a href="getting-started/invitation.md">invitation.md</a></td></tr><tr><td><strong>Configuration</strong></td><td>Personalise Botge</td><td><a href=".gitbook/assets/cropped-settingsge.png">cropped-settingsge.png</a></td><td></td><td><a href="getting-started/configuration.md">configuration.md</a></td></tr><tr><td><strong>Usage</strong></td><td>Read about basic and advanced usage </td><td><a href=".gitbook/assets/cropped-83.png">cropped-83.png</a></td><td></td><td><a href="getting-started/usage.md">usage.md</a></td></tr><tr><td>Documentation</td><td>View the developer documentation of Botge</td><td><a href=".gitbook/assets/cropped-Docker.png">cropped-Docker.png</a></td><td></td><td><a href="documentation/documentation.md">documentation.md</a></td></tr></tbody></table>
+## Configuration
+
+Configure the bot in the `/settings` command.
+
+Further help in configuration is available on the [website](https://botge.gitbook.io/botge/getting-started/configuration).
+
+## Usage
+
+Add the bot by [link](https://discord.com/oauth2/authorize?client_id=1298983961992757328).\
+Usage of Botge is straightforward if you are familiar with Discord bot usage.
+
+Read about advanced usage on the [website](https://botge.gitbook.io/botge/getting-started/usage).
+
+## Documentation
+
+The documentation is available on the [website](https://botge.gitbook.io/botge/documentation/documentation).
+
+## License
+
+This project is licensed under the MIT License.
