@@ -145,7 +145,7 @@ const transient: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilde
     option.setName('text').setDescription('The text to send')
   )
   .addAttachmentOption((option: ReadonlySlashCommandAttachmentOption) =>
-    option.setName('attachement').setDescription('The attachment to send')
+    option.setName('attachment').setDescription('The attachment to send')
   )
   .addIntegerOption((option: ReadonlySlashCommandIntegerOption) =>
     option.setName('duration').setDescription('The duration in seconds before deletion. Default: 3')

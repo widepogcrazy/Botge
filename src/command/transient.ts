@@ -15,7 +15,7 @@ export function transientHandler() {
   ): Promise<undefined> {
     const defer = interaction.deferReply();
     try {
-      const attachment = interaction.options.get('file')?.attachment;
+      const attachment = interaction.options.get('attachment')?.attachment;
       const text = interaction.options.get('text')?.value;
 
       const duration = ((): number => {

@@ -31,21 +31,21 @@ export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<Add
 
       const url = String(interaction.options.get('url')?.value).trim();
       const alias = ((): string | null => {
-        const aliasOptions = interaction.options.get('alias')?.value;
+        const aliasOptions = interaction.options.get('name')?.value;
         return aliasOptions !== undefined ? String(aliasOptions).trim() : null;
       })();
 
       const sevenTVUrlToSevenNotInSet_ = await sevenTVUrlToSevenTVNotInSet(url);
       if (sevenTVUrlToSevenNotInSet_ === undefined) {
         await defer;
-        await interaction.editReply('invalid url');
+        await interaction.editReply('Invalid URL.');
 
         return;
       }
 
       if (guild.emoteMatcher.matchSingleExact(alias ?? sevenTVUrlToSevenNotInSet_.name)) {
         await defer;
-        await interaction.editReply('theres already an emote with the same name');
+        await interaction.editReply('There is already an emote with the same name.');
 
         return;
       }
@@ -55,7 +55,7 @@ export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<Add
       const addedEmotes = addedEmotesDatabase.getAll(guild.id);
       if (addedEmotes.some((addedEmote_) => addedEmote_.url === addedEmote.url)) {
         await defer;
-        await interaction.editReply('theres already an emote with the same url');
+        await interaction.editReply('There is already an emote with the same URL.');
 
         return;
       }
@@ -74,7 +74,7 @@ export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<Add
 
       await defer;
       await interaction.editReply(
-        `added emote ${sevenTVUrlToSevenNotInSet_.name}${alias !== null ? ` with alias ${alias}` : ''}`
+        `Added emote ${sevenTVUrlToSevenNotInSet_.name}${alias !== null ? ` with the name ${alias}` : ''}.`
       );
     } catch (error) {
       console.log(
@@ -82,7 +82,7 @@ export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<Add
       );
 
       await defer;
-      await interaction.editReply('failed to add emote');
+      await interaction.editReply('Failed to add emote.');
     }
   };
 }
