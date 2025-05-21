@@ -97,11 +97,20 @@ const chatgpt: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder(
   .setDescription('Send a prompt to ChatGPT and receive a response')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option.setName('prompt').setDescription('The prompt to send').setRequired(true)
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('image').setDescription('The link to an image for ChatGPT to analyse')
+  )
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option
+      .setName('instruction')
+      .setDescription('High-level instruction for controlling response. Default: no instruction')
+      .addChoices({ name: 'Be concise', value: 'Be concise.' })
   );
 
 const gemini: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName('gemini')
-  .setDescription('Send a prompt to ChatGPT and receive a response')
+  .setDescription('Send a prompt to Gemini and receive a response')
   .addStringOption((option: ReadonlySlashCommandStringOption) =>
     option.setName('prompt').setDescription('The prompt to send').setRequired(true)
   );

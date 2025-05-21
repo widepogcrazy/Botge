@@ -7,7 +7,7 @@ const MAXDISCORDMESSAGELENGTH = 2000;
 export function geminiHandler(googleGenAi: Readonly<GoogleGenAI> | undefined) {
   return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     if (googleGenAi === undefined) {
-      await interaction.reply('gemini command is not available in this server.');
+      await interaction.reply('Gemini command is not available right now.');
       return;
     }
 
@@ -19,32 +19,27 @@ export function geminiHandler(googleGenAi: Readonly<GoogleGenAI> | undefined) {
       const response = await googleGenAi.models.generateContent({
         model: 'gemini-2.5-flash-preview-04-17',
         contents: prompt,
-        config: { maxOutputTokens: 500 }
+        config: { maxOutputTokens: 400 }
       });
       const messageContent = response.text;
 
-      await defer;
       if (messageContent === undefined) {
-        await interaction.editReply('gemini returned empty response.');
+        await defer;
+        await interaction.editReply('Gemini returned empty response.');
         return;
       }
-      if (messageContent.length > MAXDISCORDMESSAGELENGTH) {
-        await defer;
-        await interaction.editReply(messageContent.slice(0, MAXDISCORDMESSAGELENGTH - 5) + ' ...');
 
-        const followUp = '... ' + messageContent.slice(MAXDISCORDMESSAGELENGTH - 5);
-        if (followUp.length > MAXDISCORDMESSAGELENGTH)
-          await interaction.followUp(followUp.slice(0, MAXDISCORDMESSAGELENGTH - 5) + ' ...');
-        else await interaction.followUp(followUp);
-      } else {
-        await defer;
-        await interaction.editReply(messageContent);
-      }
+      const reply =
+        messageContent.length > MAXDISCORDMESSAGELENGTH
+          ? messageContent.slice(0, MAXDISCORDMESSAGELENGTH - 5) + ' ...'
+          : messageContent;
+      await defer;
+      await interaction.editReply(reply);
     } catch (error) {
       console.log(`Error at gemini --> ${error instanceof Error ? error.message : String(error)}`);
 
       await defer;
-      await interaction.editReply('failed to gemini.');
+      await interaction.editReply('Failed to Gemini.');
     }
   };
 }
