@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
-import type { GoogleGenAI , Content , Tool , HarmCategory, HarmBlockThreshold} from '@google/genai';
+import type { GoogleGenAI , Content , Tool ,} from '@google/genai';
 import type { Guild } from '../guild.js';
 
 const MAXDISCORDMESSAGELENGTH = 2000;
