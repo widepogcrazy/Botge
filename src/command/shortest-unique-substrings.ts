@@ -4,7 +4,7 @@ import type { EmoteMatcher } from '../emote-matcher.js';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.js';
 import type { Guild } from '../guild.js';
 
-function getAllSubstrings(str: string): readonly string[] {
+export function getAllSubstrings(str: string): readonly string[] {
   const result: string[] = [];
 
   for (let i = 0; i < str.length; i++) {

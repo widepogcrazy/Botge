@@ -204,6 +204,8 @@ export class BaseMessageBuilder<
     for (const [index, arrayItem] of this.#array.entries()) {
       const identifier = this.#getIdentifierFunction(arrayItem);
       if (identifier === jumpTo) {
+        if (this.#currentIndex === index) return undefined;
+
         this.#currentIndex = index;
         return this.current();
       }
@@ -212,6 +214,8 @@ export class BaseMessageBuilder<
     for (const [index, arrayItem] of this.#array.entries()) {
       const identifier = this.#getIdentifierFunction(arrayItem);
       if (identifier.toLowerCase() === jumpTo.toLowerCase()) {
+        if (this.#currentIndex === index) return undefined;
+
         this.#currentIndex = index;
         return this.current();
       }
@@ -220,6 +224,8 @@ export class BaseMessageBuilder<
     for (const [index, arrayItem] of this.#array.entries()) {
       const identifier = this.#getIdentifierFunction(arrayItem);
       if (identifier.toLowerCase().includes(jumpTo.toLowerCase())) {
+        if (this.#currentIndex === index) return undefined;
+
         this.#currentIndex = index;
         return this.current();
       }

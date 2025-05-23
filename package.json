@@ -21,10 +21,12 @@
     "build": "tsc",
     "commandgeupdate": "tsc && node dist/update-commands.js",
     "lint": "eslint src",
+    "tests-lint": "eslint tests",
     "prepare": "husky || true",
     "prettier-format": "prettier --config .prettierrc . --write",
+    "tests-prettier-format": "prettier --config .prettierrc tests --write",
     "start": "tsc && node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest tests"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
@@ -48,6 +50,7 @@
     "prettier": "^3.5.3",
     "ts-essentials": "^10.0.4",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.32.1"
+    "typescript-eslint": "^8.32.1",
+    "vitest": "^3.1.4"
   }
 }
