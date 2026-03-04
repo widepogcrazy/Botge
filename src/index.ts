@@ -90,7 +90,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     REDDIT_CLIENT_ID,
     REDDIT_SECRET,
     MEILISEARCH_HOST,
-    MEILISEARCH_API_KEY,
+    MEILI_MASTER_KEY,
     LOCAL_CACHE_BASE,
     GEMINI_API_KEY
   } = process.env;
@@ -118,8 +118,8 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
       : undefined;
 
   const twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined =
-    MEILISEARCH_HOST !== undefined && MEILISEARCH_API_KEY !== undefined
-      ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILISEARCH_API_KEY }))
+    MEILISEARCH_HOST !== undefined && MEILI_MASTER_KEY !== undefined
+      ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILI_MASTER_KEY }))
       : undefined;
 
   const sqlJsStatic = await initSqlJs();

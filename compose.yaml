@@ -18,8 +18,9 @@ services:
       timeout: 5s
     volumes:
       - ./meili_data:/meili_data
+    env_file:
+      - .env
     environment:
-      - MEILI_MASTER_KEY=SAMPLE_MASTER_KEY
       - MEILI_NO_ANALYTICS=true
       - MEILI_EXPERIMENTAL_REDUCE_INDEXING_MEMORY_USAGE
       - MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
@@ -32,47 +33,24 @@ services:
     # Comment image and uncomment build, and context for local compose.
     # `docker compose up --build`
     # build:
-    #   context: .
+    #  context: .
     mem_limit: 512m
     restart: always
     volumes:
       - ./data:/app/data
       - ./tmp:/app/tmp
+    env_file:
+      - .env
     environment:
+      # Node
       - NODE_ENV=production
-
-      # discord
-      - APP_ID=
-      - DISCORD_TOKEN=
-
-      # OpenAI - optional
-      #- OPENAI_API_KEY=
-
-      # Twitch - optional
-      #- TWITCH_CLIENT_ID=
-      #- TWITCH_SECRET=
 
       # MeiliSearch
       - MEILISEARCH_HOST=http://meilisearch:7700
-      - MEILISEARCH_API_KEY=SAMPLE_MASTER_KEY
 
       # NGINX
       - LOCAL_CACHE_BASE=http://nginx:80
 
-      # clips - optional
-      - UPDATE_CLIPS_ON_STARTUP=true
-
-      # embed server for Twitch, example: https://embedserver.com/t/ with / at the end - optional
-      #- EMBED_SERVER_TWITCH=
-
-      # embed server for Reddit, example: https://embedserver.com/r without / at the end - optional
-      #- EMBED_SERVER_REDDIT=
-
-      # Gemini - optional
-      #- GEMINI_API_KEY=
-
-      # Discord emojis. format: <:emoteName1:emoteId1>,<:emoteName2:emoteId2>
-      #- DISCORD_EMOJIS=
-
-      # join voice channel
-      - JOIN_VOICE_CHANNEL=true
+      # Miscellaneous
+      - UPDATE_CLIPS_ON_STARTUP=false
+      - JOIN_VOICE_CHANNEL=false
