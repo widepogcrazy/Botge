@@ -29,11 +29,10 @@ services:
     depends_on:
       - nginx
       - meilisearch
-    image: ghcr.io/tresster/botge:main
-    # Comment image and uncomment build, and context for local compose.
-    # `docker compose up --build`
-    # build:
-    #  context: .
+    # Uncomment image, comment build and context for non-local compose.
+    # image: ghcr.io/tresster/botge:main
+    build:
+      context: .
     mem_limit: 512m
     restart: always
     volumes:
