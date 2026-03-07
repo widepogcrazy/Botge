@@ -42,7 +42,8 @@ export const SLASH_COMMAND_NAMES = {
 export const CONTEXT_MENU_COMMAND_NAMES = {
   chatGptExplain: 'ChatGPT Explain',
   addMedia: 'Add Media',
-  removeMedia: 'Remove Media'
+  removeMedia: 'Remove Media',
+  translate: 'Translate'
 } as const;
 
 export const PING_LIST = {
@@ -294,6 +295,11 @@ const removeMedia: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBui
   .setType(ApplicationCommandType.Message)
   .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
 
+const translateContextMenuCommand: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBuilder()
+  .setName(CONTEXT_MENU_COMMAND_NAMES.translate)
+  .setType(ApplicationCommandType.Message)
+  .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
+
 export const commands: readonly (
   | Readonly<RESTPostAPIChatInputApplicationCommandsJSONBody>
   | Readonly<RESTPostAPIContextMenuApplicationCommandsJSONBody>
@@ -318,5 +324,5 @@ export const commands: readonly (
     mediaList.toJSON(),
     drama.toJSON()
   ],
-  ...[chatGptExplain.toJSON(), addMedia.toJSON(), removeMedia.toJSON()]
+  ...[chatGptExplain.toJSON(), addMedia.toJSON(), removeMedia.toJSON(), translateContextMenuCommand.toJSON()]
 ];

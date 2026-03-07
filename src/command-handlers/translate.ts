@@ -9,7 +9,7 @@ import type { Guild } from '../guild.ts';
 export function translateHandler(translator: ReadonlyTranslator | undefined) {
   return async (interaction: ChatInputCommandInteraction, guild: Readonly<Guild>): Promise<void> => {
     if (translator === undefined) {
-      void interaction.reply('translate command is not available in this server.');
+      void interaction.reply('Translate command is not available right now.');
       return;
     }
 
@@ -17,14 +17,13 @@ export function translateHandler(translator: ReadonlyTranslator | undefined) {
     try {
       const text = getOptionValueWithoutUndefined<string>(interaction, 'text');
 
-      // Let DeepL auto-detect the source language by passing null
-      const result = await translator.translateText(text, null, 'en-US', {
-        modelType: 'latency_optimized',
-        formality: 'prefer_less'
+      const textResult = await translator.translateText(text, null, 'en-US', {
+        modelType: 'prefer_quality_optimized',
+        formality: 'default'
       });
 
       await defer;
-      await interaction.editReply(result.text);
+      await interaction.editReply(textResult.text);
     } catch (error: unknown) {
       console.error(`Error at translate --> ${error instanceof Error ? error.message : String(error)}`);
 

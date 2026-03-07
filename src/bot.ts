@@ -349,7 +349,7 @@ export class Bot {
       }
 
       if (interaction.isMessageContextMenuCommand()) {
-        void messageContextMenuCommandHandler(this.#openai, this.#mediaDatabase)(interaction);
+        void messageContextMenuCommandHandler(this.#openai, this.#mediaDatabase, this.#translator)(interaction);
         return;
       }
 

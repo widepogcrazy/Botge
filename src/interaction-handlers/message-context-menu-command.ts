@@ -16,6 +16,7 @@ import type {
   Media,
   ReadonlyOpenAI,
   ReadonlyEmbed,
+  ReadonlyTranslator,
   ReadonlyAttachment,
   OpenAIResponseInput,
   OpenAIResponseInputImage
@@ -84,14 +85,10 @@ function getMediaUrlFromMessage(message: Message): getMediaUrlFromMessageReturnT
 
 export function messageContextMenuCommandHandler(
   openai: ReadonlyOpenAI | undefined,
-  mediaDatabase: Readonly<MediaDatabase>
+  mediaDatabase: Readonly<MediaDatabase>,
+  translator: ReadonlyTranslator | undefined
 ) {
   return async (interaction: MessageContextMenuCommandInteraction): Promise<void> => {
-    if (openai === undefined) {
-      await interaction.reply('ChatGPT command is not available right now.');
-      return;
-    }
-
     const defer =
       interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.addMedia &&
       interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.removeMedia
@@ -100,6 +97,12 @@ export function messageContextMenuCommandHandler(
 
     try {
       if (interaction.commandName === CONTEXT_MENU_COMMAND_NAMES.chatGptExplain) {
+        if (openai === undefined) {
+          await defer;
+          await interaction.editReply('ChatGPT command is not available right now.');
+          return;
+        }
+
         const { content } = interaction.targetMessage;
         const instructions = ((): string => {
           let instruction = 'Be concise.';
@@ -155,6 +158,7 @@ export function messageContextMenuCommandHandler(
           messageContent.length > MAX_DISCORD_MESSAGE_LENGTH
             ? messageContent.slice(0, MAX_DISCORD_MESSAGE_LENGTH - 5) + ' ...'
             : messageContent;
+
         await defer;
         await interaction.editReply(reply);
       } else if (interaction.commandName === CONTEXT_MENU_COMMAND_NAMES.addMedia) {
@@ -261,6 +265,22 @@ export function messageContextMenuCommandHandler(
 
         mediaDatabase.delete(userId, { name: mediaName, url: mediaUrl });
         await modalSubmitInteraction.reply({ content: `Removed media ${mediaName}.`, flags: MessageFlags.Ephemeral });
+      } else if (interaction.commandName === CONTEXT_MENU_COMMAND_NAMES.translate) {
+        if (translator === undefined) {
+          await defer;
+          await interaction.editReply('Translate is not available right now.');
+          return;
+        }
+
+        const { content } = interaction.targetMessage;
+
+        const textResult = await translator.translateText(content, null, 'en-US', {
+          modelType: 'prefer_quality_optimized',
+          formality: 'default'
+        });
+
+        await defer;
+        await interaction.editReply(textResult.text);
       }
     } catch (error) {
       console.log(`Error at contextMenuCommand --> ${error instanceof Error ? error.stack : String(error)}`);
