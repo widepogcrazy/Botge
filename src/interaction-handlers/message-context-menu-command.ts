@@ -14,6 +14,7 @@ import {
 
 import type {
   Media,
+  Quote,
   ReadonlyOpenAI,
   ReadonlyEmbed,
   ReadonlyTranslator,
@@ -22,6 +23,7 @@ import type {
   OpenAIResponseInputImage
 } from '../types.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
+import type { QuoteDatabase } from '../api/quote-database.ts';
 import { CONTEXT_MENU_COMMAND_NAMES } from '../commands.ts';
 
 const MAX_DISCORD_MESSAGE_LENGTH = 2000 as const;
@@ -36,10 +38,18 @@ const DISCORD_EMOJIS_JOINED = ((): string | undefined => {
 const ADD_MEDIA_MODAL_BASE_CUSTOM_ID = 'addMediaModal' as const;
 const ADD_MEDIA_MODAL_NAME_TEXT_INPUT_CUSTOM_ID = 'addMediaModalNameTextInput' as const;
 const REMOVE_MEDIA_MODAL_BASE_CUSTOM_ID = 'removeMediaModal' as const;
+
+const ADD_QUOTE_MODAL_BASE_CUSTOM_ID = 'addQuoteModal' as const;
+const ADD_QUOTE_MODAL_NAME_TEXT_INPUT_CUSTOM_ID = 'addQuoteModalNameTextInput' as const;
+const REMOVE_QUOTE_MODAL_BASE_CUSTOM_ID = 'removeQuoteModal' as const;
+
 const MODAL_CUSTOM_ID_SEPARATOR = '-' as const;
 
 let ADD_MEDIA_MODAL_COUNTER = 0;
 let REMOVE_MEDIA_MODAL_COUNTER = 0;
+
+let ADD_QUOTE_MODAL_COUNTER = 0;
+let REMOVE_QUOTE_MODAL_COUNTER = 0;
 
 type getMediaUrlFromMessageReturnType =
   | { readonly type: 'success'; readonly mediaUrl: string }
@@ -86,12 +96,15 @@ function getMediaUrlFromMessage(message: Message): getMediaUrlFromMessageReturnT
 export function messageContextMenuCommandHandler(
   openai: ReadonlyOpenAI | undefined,
   mediaDatabase: Readonly<MediaDatabase>,
+  quoteDatabase: Readonly<QuoteDatabase>,
   translator: ReadonlyTranslator | undefined
 ) {
   return async (interaction: MessageContextMenuCommandInteraction): Promise<void> => {
     const defer =
       interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.addMedia &&
-      interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.removeMedia
+      interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.removeMedia &&
+      interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.addQuote &&
+      interaction.commandName !== CONTEXT_MENU_COMMAND_NAMES.removeQuote
         ? interaction.deferReply()
         : undefined;
 
@@ -281,6 +294,90 @@ export function messageContextMenuCommandHandler(
 
         await defer;
         await interaction.editReply(textResult.text);
+      } else if (interaction.commandName === CONTEXT_MENU_COMMAND_NAMES.addQuote) {
+        const userId = interaction.user.id;
+        const { content } = interaction.targetMessage;
+        if (quoteDatabase.quoteContentExists(userId, content)) {
+          await interaction.reply({
+            content: 'There already is a quote added with this content.',
+            flags: MessageFlags.Ephemeral
+          });
+          return;
+        }
+
+        const modalCustomId = `${ADD_QUOTE_MODAL_BASE_CUSTOM_ID}${MODAL_CUSTOM_ID_SEPARATOR}${ADD_QUOTE_MODAL_COUNTER++}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalCustomId)
+          .setTitle('Add Quote')
+          .addLabelComponents(
+            new LabelBuilder()
+              .setLabel('Name')
+              .setDescription('The name of the quote.')
+              .setTextInputComponent(
+                new TextInputBuilder()
+                  .setCustomId(ADD_QUOTE_MODAL_NAME_TEXT_INPUT_CUSTOM_ID)
+                  .setMaxLength(32)
+                  .setStyle(TextInputStyle.Short)
+                  .setPlaceholder('namege')
+                  .setRequired(true)
+              )
+          );
+        await interaction.showModal(modal);
+
+        const modalSubmitInteraction = await interaction
+          .awaitModalSubmit({
+            filter: (modalSubmitInteraction_: ModalSubmitInteraction): boolean =>
+              modalSubmitInteraction_.customId === modalCustomId,
+            time: 60000
+          })
+          .catch(() => undefined); //timeout catch
+        if (modalSubmitInteraction === undefined) return;
+
+        const quoteName = modalSubmitInteraction.fields.getTextInputValue(ADD_QUOTE_MODAL_NAME_TEXT_INPUT_CUSTOM_ID);
+        if (quoteDatabase.quoteNameExists(userId, quoteName)) {
+          await modalSubmitInteraction.reply({
+            content: 'There already is a quote added with this name.',
+            flags: MessageFlags.Ephemeral
+          });
+          return;
+        }
+
+        const quote: Quote = { content: content, name: quoteName, dateAdded: new Date(Date.now()) };
+        quoteDatabase.insert(userId, quote);
+        await modalSubmitInteraction.reply({
+          content: `Added quote with the name ${quoteName}.`,
+          flags: MessageFlags.Ephemeral
+        });
+      } else if (interaction.commandName === CONTEXT_MENU_COMMAND_NAMES.removeQuote) {
+        const userId = interaction.user.id;
+        const { content } = interaction.targetMessage;
+        const quoteName = quoteDatabase.getQuoteName(userId, content);
+        if (quoteName === undefined) {
+          await interaction.reply({
+            content: 'You do not have a quote added with this link.',
+            flags: MessageFlags.Ephemeral
+          });
+          return;
+        }
+
+        const modalCustomId = `${REMOVE_QUOTE_MODAL_BASE_CUSTOM_ID}${MODAL_CUSTOM_ID_SEPARATOR}${REMOVE_QUOTE_MODAL_COUNTER++}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalCustomId)
+          .setTitle('Are you sure?')
+          .addTextDisplayComponents(new TextDisplayBuilder().setContent(`You are about to delete '${quoteName}'.`));
+        await interaction.showModal(modal);
+
+        const modalSubmitInteraction = await interaction
+          .awaitModalSubmit({
+            filter: (modalSubmitInteraction_: ModalSubmitInteraction): boolean =>
+              modalSubmitInteraction_.customId === modalCustomId,
+            time: 30000
+          })
+          .catch(() => undefined); //timeout catch
+        if (modalSubmitInteraction === undefined) return;
+
+        quoteDatabase.delete(userId, { name: quoteName, content: content });
+        await modalSubmitInteraction.reply({ content: `Removed quote ${quoteName}.`, flags: MessageFlags.Ephemeral });
       }
     } catch (error) {
       console.log(`Error at contextMenuCommand --> ${error instanceof Error ? error.stack : String(error)}`);

@@ -43,11 +43,17 @@ import {
   DELETE_MEDIA_BUTTON_BASE_CUSTOM_ID,
   RENAME_MEDIA_BUTTON_BASE_CUSTOM_ID
 } from '../message-builders/media-message-builder.js';
+import {
+  QuoteMessageBuilder,
+  DELETE_QUOTE_BUTTON_BASE_CUSTOM_ID,
+  RENAME_QUOTE_BUTTON_BASE_CUSTOM_ID
+} from '../message-builders/quote-message-builder.ts';
 import { getSevenTvEmoteSetLinkFromSevenTvApiUlr } from '../utils/interaction-handlers/get-api-url.ts';
 import { booleanToAllowed } from '../utils/boolean-to-string.ts';
 import type { PermittedRoleIdsDatabase } from '../api/permitted-role-ids-database.ts';
 import type { AddedEmotesDatabase } from '../api/added-emotes-database.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
+import type { QuoteDatabase } from '../api/quote-database.ts';
 import type { PingsDatabase } from '../api/ping-database.ts';
 import {
   SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID,
@@ -61,6 +67,7 @@ import type {
   TwitchClipMessageBuilderTransformFunctionReturnType,
   EmoteMessageBuilderTransformFunctionReturnType,
   MediaMessageBuilderTransformFunctionReturnType,
+  QuoteMessageBuilderTransformFunctionReturnType,
   PingForPingMeMessageBuilderReplies,
   PingForPingListMessageBuilderTransformFunctionReturnType
 } from '../types.ts';
@@ -84,12 +91,18 @@ const RENAME_MEDIA_MODAL_BASE_CUSTOM_ID = 'renameMediaModal' as const;
 const RENAME_MEDIA_MODAL_NAME_TEXT_INPUT_CUSTOM_ID = 'renameMediaModalNameTextInput' as const;
 const RENAME_MEDIA_MODAL_CUSTOM_ID_SEPARATOR = '-' as const;
 
+const RENAME_QUOTE_MODAL_BASE_CUSTOM_ID = 'renameQuoteModal' as const;
+const RENAME_QUOTE_MODAL_NAME_TEXT_INPUT_CUSTOM_ID = 'renameQuoteModalNameTextInput' as const;
+const RENAME_QUOTE_MODAL_CUSTOM_ID_SEPARATOR = '-' as const;
+
 let RENAME_MEDIA_MODAL_COUNTER = 0;
+let RENAME_QUOTE_MODAL_COUNTER = 0;
 
 export function buttonHandler(
   twitchClipMessageBuilders: readonly Readonly<TwitchClipMessageBuilder>[],
   emoteMessageBuilders: readonly Readonly<EmoteMessageBuilder>[],
   mediaMessageBuilders: readonly Readonly<MediaMessageBuilder>[],
+  quoteMessageBuilders: readonly Readonly<QuoteMessageBuilder>[],
   pingForPingMeMessageBuilders: Readonly<PingForPingMeMessageBuilder>[],
   pingForPingListMessageBuilders: Readonly<PingForPingListMessageBuilder>[],
   guild: Readonly<Guild> | undefined,
@@ -98,6 +111,7 @@ export function buttonHandler(
   permittedRoleIdsDatabase: Readonly<PermittedRoleIdsDatabase>,
   pingsDataBase: Readonly<PingsDatabase>,
   mediaDatabase: Readonly<MediaDatabase>,
+  quoteDatabase: Readonly<QuoteDatabase>,
   client: Client
 ) {
   return async (interaction: ButtonInteraction): Promise<EmoteMessageBuilder | undefined> => {
@@ -310,11 +324,13 @@ export function buttonHandler(
         | readonly Readonly<TwitchClipMessageBuilder>[]
         | readonly Readonly<EmoteMessageBuilder>[]
         | readonly Readonly<MediaMessageBuilder>[]
+        | readonly Readonly<QuoteMessageBuilder>[]
         | readonly Readonly<PingForPingListMessageBuilder>[]
         | undefined => {
         if (messageBuilderType === TwitchClipMessageBuilder.messageBuilderType) return twitchClipMessageBuilders;
         else if (messageBuilderType === EmoteMessageBuilder.messageBuilderType) return emoteMessageBuilders;
         else if (messageBuilderType === MediaMessageBuilder.messageBuilderType) return mediaMessageBuilders;
+        else if (messageBuilderType === QuoteMessageBuilder.messageBuilderType) return quoteMessageBuilders;
         else if (messageBuilderType === PingForPingListMessageBuilder.messageBuilderType)
           return pingForPingListMessageBuilders;
         return undefined;
@@ -330,6 +346,7 @@ export function buttonHandler(
             | Readonly<TwitchClipMessageBuilder>
             | Readonly<EmoteMessageBuilder>
             | Readonly<MediaMessageBuilder>
+            | Readonly<QuoteMessageBuilder>
             | Readonly<PingForPingListMessageBuilder>
         ) => messageBuilder_.counter === counter
       );
@@ -349,6 +366,7 @@ export function buttonHandler(
         | EmoteMessageBuilderTransformFunctionReturnType
         | TwitchClipMessageBuilderTransformFunctionReturnType
         | MediaMessageBuilderTransformFunctionReturnType
+        | QuoteMessageBuilderTransformFunctionReturnType
         | PingForPingListMessageBuilderTransformFunctionReturnType
         | undefined = undefined;
 
@@ -423,6 +441,16 @@ export function buttonHandler(
         } else {
           reply = undefined;
         }
+      } else if (baseCustomId === DELETE_QUOTE_BUTTON_BASE_CUSTOM_ID) {
+        const messageBuilder_ = messageBuilder as Readonly<QuoteMessageBuilder>;
+        const { currentQuote } = messageBuilder_;
+
+        if (currentQuote !== undefined) {
+          quoteDatabase.delete(interaction.user.id, currentQuote);
+          reply = messageBuilder_.markCurrentAsDeleted();
+        } else {
+          reply = undefined;
+        }
       } else if (baseCustomId === RENAME_MEDIA_BUTTON_BASE_CUSTOM_ID) {
         const messageBuilder_ = messageBuilder as Readonly<MediaMessageBuilder>;
         const { currentMedia } = messageBuilder_;
@@ -469,6 +497,55 @@ export function buttonHandler(
         mediaDatabase.rename(userId, currentMedia.url, mediaName);
         await modalSubmitInteraction.reply({
           content: `Renamed media to ${mediaName}.`,
+          flags: MessageFlags.Ephemeral
+        });
+        return undefined;
+      } else if (baseCustomId === RENAME_QUOTE_BUTTON_BASE_CUSTOM_ID) {
+        const messageBuilder_ = messageBuilder as Readonly<QuoteMessageBuilder>;
+        const { currentQuote } = messageBuilder_;
+
+        if (currentQuote === undefined) return undefined;
+        const modalCustomId = `${RENAME_QUOTE_MODAL_BASE_CUSTOM_ID}${RENAME_QUOTE_MODAL_CUSTOM_ID_SEPARATOR}${RENAME_QUOTE_MODAL_COUNTER++}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalCustomId)
+          .setTitle('Rename Quote')
+          .addLabelComponents(
+            new LabelBuilder()
+              .setLabel('New Name')
+              .setDescription('The new name of the quote.')
+              .setTextInputComponent(
+                new TextInputBuilder()
+                  .setCustomId(RENAME_QUOTE_MODAL_NAME_TEXT_INPUT_CUSTOM_ID)
+                  .setMaxLength(32)
+                  .setStyle(TextInputStyle.Short)
+                  .setPlaceholder('namege')
+                  .setRequired(true)
+              )
+          );
+        await interaction.showModal(modal);
+
+        const modalSubmitInteraction = await interaction
+          .awaitModalSubmit({
+            filter: (modalSubmitInteraction_: ModalSubmitInteraction): boolean =>
+              modalSubmitInteraction_.customId === modalCustomId,
+            time: 60000
+          })
+          .catch(() => undefined); //timeout catch
+        if (modalSubmitInteraction === undefined) return undefined;
+
+        const userId = modalSubmitInteraction.user.id;
+        const quoteName = modalSubmitInteraction.fields.getTextInputValue(RENAME_QUOTE_MODAL_NAME_TEXT_INPUT_CUSTOM_ID);
+        if (quoteDatabase.quoteNameExists(userId, quoteName)) {
+          await modalSubmitInteraction.reply({
+            content: 'There already is a quote added with this name.',
+            flags: MessageFlags.Ephemeral
+          });
+          return undefined;
+        }
+
+        quoteDatabase.rename(userId, currentQuote.content, quoteName);
+        await modalSubmitInteraction.reply({
+          content: `Renamed quote to ${quoteName}.`,
           flags: MessageFlags.Ephemeral
         });
         return undefined;

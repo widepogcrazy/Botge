@@ -45,6 +45,7 @@ import { updateCommands } from './update-commands-docker.ts';
 import type { Guild } from './guild.ts';
 import { User } from './user.js';
 import { Bot } from './bot.ts';
+import { QuoteDatabase } from './api/quote-database.js';
 
 /**
  * Ensures that directories exist.
@@ -139,6 +140,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     );
   const usersDatabase: Readonly<UsersDatabase> = new UsersDatabase(DATABASE_ENDPOINTS.users, sqlJsStatic);
   const mediaDatabase: Readonly<MediaDatabase> = new MediaDatabase(DATABASE_ENDPOINTS.media, sqlJsStatic);
+  const quoteDatabase: Readonly<QuoteDatabase> = new QuoteDatabase(DATABASE_ENDPOINTS.quote, sqlJsStatic);
 
   const cachedUrl: Readonly<CachedUrl> = new CachedUrl(LOCAL_CACHE_BASE);
 
@@ -190,6 +192,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     broadcasterNameAndPersonalEmoteSetsDatabase,
     usersDatabase,
     mediaDatabase,
+    quoteDatabase,
     cachedUrl,
     guilds,
     users,

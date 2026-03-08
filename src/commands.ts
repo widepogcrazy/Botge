@@ -36,14 +36,18 @@ export const SLASH_COMMAND_NAMES = {
   pingList: 'pinglist',
   media: 'media',
   mediaList: 'medialist',
-  drama: 'drama'
+  drama: 'drama',
+  quote: 'quote',
+  quoteList: 'quotelist'
 } as const;
 
 export const CONTEXT_MENU_COMMAND_NAMES = {
   chatGptExplain: 'ChatGPT Explain',
   addMedia: 'Add Media',
   removeMedia: 'Remove Media',
-  translate: 'Translate'
+  translate: 'Translate',
+  addQuote: 'Add Quote',
+  removeQuote: 'Remove Quote'
 } as const;
 
 export const PING_LIST = {
@@ -54,7 +58,7 @@ export const PING_LIST = {
   timezone: 'timezone'
 } as const;
 
-export const MEDIA_LIST = {
+export const MEDIA_LIST_AND_QUOTE_LIST = {
   sortBy: {
     alphabetical: 'alphabetical'
   }
@@ -271,13 +275,32 @@ const mediaList: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilde
     option
       .setName('sortby')
       .setDescription('Sort. Default: date added (newest first)')
-      .addChoices({ name: 'Alphabetical Order', value: MEDIA_LIST.sortBy.alphabetical })
+      .addChoices({ name: 'Alphabetical Order', value: MEDIA_LIST_AND_QUOTE_LIST.sortBy.alphabetical })
   )
   .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
 
 const drama: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName(SLASH_COMMAND_NAMES.drama)
   .setDescription('Get the top post from r/LivestreamFail')
+  .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
+
+const quote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName(SLASH_COMMAND_NAMES.quote)
+  .setDescription('Get a quote')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option.setName('name').setDescription("The quote's name").setRequired(true).setAutocomplete(true)
+  )
+  .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
+
+const quoteList: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
+  .setName(SLASH_COMMAND_NAMES.quoteList)
+  .setDescription('Quote list')
+  .addStringOption((option: ReadonlySlashCommandStringOption) =>
+    option
+      .setName('sortby')
+      .setDescription('Sort. Default: date added (newest first)')
+      .addChoices({ name: 'Alphabetical Order', value: MEDIA_LIST_AND_QUOTE_LIST.sortBy.alphabetical })
+  )
   .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
 
 const chatGptExplain: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBuilder()
@@ -297,6 +320,16 @@ const removeMedia: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBui
 
 const translateContextMenuCommand: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBuilder()
   .setName(CONTEXT_MENU_COMMAND_NAMES.translate)
+  .setType(ApplicationCommandType.Message)
+  .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
+
+const addQuote: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBuilder()
+  .setName(CONTEXT_MENU_COMMAND_NAMES.addQuote)
+  .setType(ApplicationCommandType.Message)
+  .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
+
+const removeQuote: ReadonlyContextMenuCommandBuilder = new ContextMenuCommandBuilder()
+  .setName(CONTEXT_MENU_COMMAND_NAMES.removeQuote)
   .setType(ApplicationCommandType.Message)
   .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
 
@@ -322,7 +355,16 @@ export const commands: readonly (
     pingList.toJSON(),
     media.toJSON(),
     mediaList.toJSON(),
-    drama.toJSON()
+    drama.toJSON(),
+    quote.toJSON(),
+    quoteList.toJSON()
   ],
-  ...[chatGptExplain.toJSON(), addMedia.toJSON(), removeMedia.toJSON(), translateContextMenuCommand.toJSON()]
+  ...[
+    chatGptExplain.toJSON(),
+    addMedia.toJSON(),
+    removeMedia.toJSON(),
+    translateContextMenuCommand.toJSON(),
+    addQuote.toJSON(),
+    removeQuote.toJSON()
+  ]
 ];

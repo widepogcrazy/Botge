@@ -197,6 +197,12 @@ export type Media = {
   readonly tenorUrl?: string;
 };
 
+export type Quote = {
+  readonly content: string;
+  readonly name: string;
+  readonly dateAdded: Readonly<Date>;
+};
+
 export type EmoteMessageBuilderTransformFunctionReturnType = {
   readonly embeds: readonly ReadonlyEmbedBuilder[];
   readonly components: readonly ReadonlyActionRowBuilderMessageActionRowComponentBuilder[];
@@ -218,6 +224,11 @@ export type PingForPingListMessageBuilderTransformFunctionReturnType = {
 };
 
 export type MediaMessageBuilderTransformFunctionReturnType = {
+  readonly embeds: readonly ReadonlyEmbedBuilder[];
+  readonly components: readonly ReadonlyActionRowBuilderMessageActionRowComponentBuilder[];
+};
+
+export type QuoteMessageBuilderTransformFunctionReturnType = {
   readonly embeds: readonly ReadonlyEmbedBuilder[];
   readonly components: readonly ReadonlyActionRowBuilderMessageActionRowComponentBuilder[];
 };

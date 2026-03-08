@@ -10,18 +10,18 @@ import {
 } from 'discord.js';
 
 import type {
-  Media,
-  MediaMessageBuilderTransformFunctionReturnType,
+  Quote,
+  QuoteMessageBuilderTransformFunctionReturnType,
   ReadonlyActionRowBuilderMessageActionRowComponentBuilder
 } from '../types.ts';
 import { MEDIA_LIST_AND_QUOTE_LIST } from '../commands.ts';
 import { BaseMessageBuilder, getCustomId } from './base.ts';
 
-export const DELETE_MEDIA_BUTTON_BASE_CUSTOM_ID = 'deleteMediaButton' as const;
-export const RENAME_MEDIA_BUTTON_BASE_CUSTOM_ID = 'renameMediaButton' as const;
+export const DELETE_QUOTE_BUTTON_BASE_CUSTOM_ID = 'deleteQuoteButton' as const;
+export const RENAME_QUOTE_BUTTON_BASE_CUSTOM_ID = 'renameQuoteButton' as const;
 
-export class MediaMessageBuilder extends BaseMessageBuilder<Media, MediaMessageBuilderTransformFunctionReturnType> {
-  public static readonly messageBuilderType = 'Media' as const;
+export class QuoteMessageBuilder extends BaseMessageBuilder<Quote, QuoteMessageBuilderTransformFunctionReturnType> {
+  public static readonly messageBuilderType = 'Quote' as const;
   static #staticCounter = 0;
   readonly #extraRow: ReadonlyActionRowBuilderMessageActionRowComponentBuilder;
   readonly #markedAsDeletedArray: number[] = [];
@@ -29,11 +29,11 @@ export class MediaMessageBuilder extends BaseMessageBuilder<Media, MediaMessageB
 
   public constructor(
     interaction: ChatInputCommandInteraction,
-    mediaArray: readonly Media[],
+    quoteArray: readonly Quote[],
     sortedBy: string | undefined
   ) {
-    const transformFunction = (media: Media): MediaMessageBuilderTransformFunctionReturnType => {
-      const { name, url, dateAdded } = media;
+    const transformFunction = (quote: Quote): QuoteMessageBuilderTransformFunctionReturnType => {
+      const { name, content, dateAdded } = quote;
 
       const embed = new EmbedBuilder();
 
@@ -42,15 +42,11 @@ export class MediaMessageBuilder extends BaseMessageBuilder<Media, MediaMessageB
       embed
         .setColor('DarkButNotBlack')
         .setTitle(name)
-        .setURL(url)
         .addFields({ name: 'Date Added (UTC)', value: dateAdded.toUTCString() })
+        .addFields({ name: 'Content', value: content })
         .setFooter({
           text: `${this.currentIndex + 1}/${this.arrayLength}. ${this.#sortedByText === MEDIA_LIST_AND_QUOTE_LIST.sortBy.alphabetical ? 'Sorted alphabetically' : `Sorted by ${this.#sortedByText}`}.`
         });
-
-      const { tenorUrl } = media;
-      if (tenorUrl !== undefined) embed.setThumbnail(tenorUrl);
-      else embed.setThumbnail(url);
 
       return {
         embeds: [embed],
@@ -58,15 +54,15 @@ export class MediaMessageBuilder extends BaseMessageBuilder<Media, MediaMessageB
       };
     };
 
-    const getIdentifierFunction = (media: Media): string => {
-      return media.name;
+    const getIdentifierFunction = (quote: Quote): string => {
+      return quote.name;
     };
 
     super(
-      MediaMessageBuilder.#staticCounter++,
-      MediaMessageBuilder.messageBuilderType,
+      QuoteMessageBuilder.#staticCounter++,
+      QuoteMessageBuilder.messageBuilderType,
       interaction,
-      mediaArray,
+      quoteArray,
       transformFunction,
       getIdentifierFunction,
       'name'
@@ -76,27 +72,27 @@ export class MediaMessageBuilder extends BaseMessageBuilder<Media, MediaMessageB
     this.#extraRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId(
-          getCustomId(DELETE_MEDIA_BUTTON_BASE_CUSTOM_ID, MediaMessageBuilder.messageBuilderType, this.counter)
+          getCustomId(DELETE_QUOTE_BUTTON_BASE_CUSTOM_ID, QuoteMessageBuilder.messageBuilderType, this.counter)
         )
         .setLabel('Delete')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId(
-          getCustomId(RENAME_MEDIA_BUTTON_BASE_CUSTOM_ID, MediaMessageBuilder.messageBuilderType, this.counter)
+          getCustomId(RENAME_QUOTE_BUTTON_BASE_CUSTOM_ID, QuoteMessageBuilder.messageBuilderType, this.counter)
         )
         .setLabel('Rename')
         .setStyle(ButtonStyle.Secondary)
     );
   }
 
-  public get currentMedia(): Media | undefined {
+  public get currentQuote(): Quote | undefined {
     if (this.#markedAsDeletedArray.includes(this.currentIndex)) return undefined;
 
-    const currentMedia = this.currentItem;
-    return currentMedia;
+    const currentQuote = this.currentItem;
+    return currentQuote;
   }
 
-  public markCurrentAsDeleted(): MediaMessageBuilderTransformFunctionReturnType | undefined {
+  public markCurrentAsDeleted(): QuoteMessageBuilderTransformFunctionReturnType | undefined {
     if (this.#markedAsDeletedArray.includes(this.currentIndex)) return undefined;
 
     this.#markedAsDeletedArray.push(this.currentIndex);

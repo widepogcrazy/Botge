@@ -10,12 +10,13 @@ import { booleanToString, stringToBoolean } from '../utils/boolean-to-string.ts'
 import { getOptionValue } from '../utils/get-option-value.ts';
 import { getShortestUniqueSubstrings } from '../command-handlers/shortest-unique-substrings.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
+import type { QuoteDatabase } from '../api/quote-database.ts';
 import type { TwitchClip, ReadonlyHit, ReadonlyApplicationCommandOptionChoiceDataString, AssetInfo } from '../types.ts';
 import type { EmoteMatcher } from '../emote-matcher.ts';
 import { Platform } from '../enums.ts';
 import { SLASH_COMMAND_NAMES } from '../commands.ts';
 
-const MAX_OPTIONS_LENGTH = 10 as const; //THE MAXIMUM YOU CAN SET HERE IS 25
+const MAX_OPTIONS_LENGTH = 25 as const; //THE MAXIMUM YOU CAN SET HERE IS 25
 
 async function getHitsFromTwitchClipsMeilisearchIndex(
   twitchClipsMeiliSearchIndex: Index,
@@ -46,7 +47,8 @@ export function autocompleteHandler(
   twitchClipsMeiliSearchIndex: Index | undefined,
   uniqueCreatorNames: readonly string[] | undefined,
   uniqueGameIds: readonly string[] | undefined,
-  mediaDataBase: Readonly<MediaDatabase>
+  mediaDataBase: Readonly<MediaDatabase>,
+  quoteDataBase: Readonly<QuoteDatabase>
 ) {
   return async (interaction: AutocompleteInteraction): Promise<void> => {
     try {
@@ -317,6 +319,23 @@ export function autocompleteHandler(
             return {
               name: mediaName,
               value: mediaName
+            };
+          });
+
+          await interaction.respond(
+            options.slice(0, MAX_OPTIONS_LENGTH) as readonly ApplicationCommandOptionChoiceData<string>[]
+          );
+        }
+      } else if (interactionCommandName === SLASH_COMMAND_NAMES.quote) {
+        if (focusedOptionName === 'name') {
+          const quoteNames: readonly string[] = quoteDataBase
+            .getAllQuote(interaction.user.id)
+            .map((quote) => quote.name)
+            .filter((quoteName) => quoteName.includes(focusedOptionValue.trim().toLocaleLowerCase()));
+          const options: readonly ApplicationCommandOptionChoiceData<string>[] = quoteNames.map((quoteName) => {
+            return {
+              name: quoteName,
+              value: quoteName
             };
           });
 
