@@ -2,6 +2,49 @@
 
 # Changelog
 
+## [v2.8.3](https://github.com/Tresster/Botge/tree/v2.8.3) (2026-03-11)
+
+[Full Changelog](https://github.com/Tresster/Botge/compare/v2.8.2...v2.8.3)
+
+**Implemented enhancements:**
+
+- upgrade chatgpt version. [\#77](https://github.com/Tresster/Botge/issues/77)
+
+**Merged pull requests:**
+
+- Bump docker/metadata-action from 5.10.0 to 6.0.0 [\#142](https://github.com/Tresster/Botge/pull/142) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.32.5 to 4.32.6 [\#141](https://github.com/Tresster/Botge/pull/141) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/build-push-action from 6.19.2 to 7.0.0 [\#140](https://github.com/Tresster/Botge/pull/140) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/login-action from 3227f5311cb93ffd14d13e65d8cc400d30f4dd8a to db14339dbc0a1f0b184157be94b23a2138122354 [\#139](https://github.com/Tresster/Botge/pull/139) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.37 to v1.38 [\#138](https://github.com/Tresster/Botge/pull/138) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump node from 25.7.0-alpine to 25.8.0-alpine [\#137](https://github.com/Tresster/Botge/pull/137) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/attest-build-provenance from 3.2.0 to 4.1.0 [\#135](https://github.com/Tresster/Botge/pull/135) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.32.4 to 4.32.5 [\#134](https://github.com/Tresster/Botge/pull/134) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.36 to v1.37 [\#133](https://github.com/Tresster/Botge/pull/133) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.32.2 to 4.32.4 [\#132](https://github.com/Tresster/Botge/pull/132) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.35 to v1.36 [\#131](https://github.com/Tresster/Botge/pull/131) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/build-push-action from 8c1e8f8e5bf845ba3773a14f3967965548a2341e to 10e90e3645eae34f1e60eeb005ba3a3d33f178e8 [\#130](https://github.com/Tresster/Botge/pull/130) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump node from 25.6.0-alpine to 25.6.1-alpine [\#128](https://github.com/Tresster/Botge/pull/128) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.32.0 to 4.32.2 [\#127](https://github.com/Tresster/Botge/pull/127) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump nginx from 1.29.4-alpine to 1.29.5-alpine [\#126](https://github.com/Tresster/Botge/pull/126) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/build-push-action from 64c9b141502b80dbbd71e008a0130ad330f480f8 to 8c1e8f8e5bf845ba3773a14f3967965548a2341e [\#123](https://github.com/Tresster/Botge/pull/123) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/attest-build-provenance from 3.1.0 to 3.2.0 [\#122](https://github.com/Tresster/Botge/pull/122) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/login-action from 0567fa5ae8c9a197cb207537dc5cbb43ca3d803f to 3227f5311cb93ffd14d13e65d8cc400d30f4dd8a [\#121](https://github.com/Tresster/Botge/pull/121) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.31.11 to 4.32.0 [\#120](https://github.com/Tresster/Botge/pull/120) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.34 to v1.35 [\#119](https://github.com/Tresster/Botge/pull/119) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.31.10 to 4.31.11 [\#117](https://github.com/Tresster/Botge/pull/117) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump node from 25.3.0-alpine to 25.4.0-alpine [\#116](https://github.com/Tresster/Botge/pull/116) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.33 to v1.34 [\#115](https://github.com/Tresster/Botge/pull/115) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/checkout from 6.0.1 to 6.0.2 [\#114](https://github.com/Tresster/Botge/pull/114) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump lodash from 4.17.21 to 4.17.23 in the npm_and_yarn group across 1 directory [\#113](https://github.com/Tresster/Botge/pull/113) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/login-action from 916386b00027d425839f8da46d302dab33f5875b to 0567fa5ae8c9a197cb207537dc5cbb43ca3d803f [\#110](https://github.com/Tresster/Botge/pull/110) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump node from 25.2.1-alpine to 25.3.0-alpine [\#109](https://github.com/Tresster/Botge/pull/109) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.32 to v1.33 [\#108](https://github.com/Tresster/Botge/pull/108) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/login-action from 6862ffc5ab2cdb4405cf318a62a6f4c066e2298b to 916386b00027d425839f8da46d302dab33f5875b [\#106](https://github.com/Tresster/Botge/pull/106) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump github/codeql-action from 4.31.9 to 4.31.10 [\#105](https://github.com/Tresster/Botge/pull/105) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump docker/build-push-action from 9e436ba9f2d7bcd1d038c8e55d039d37896ddc5d to 64c9b141502b80dbbd71e008a0130ad330f480f8 [\#104](https://github.com/Tresster/Botge/pull/104) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump getmeili/meilisearch from v1.31 to v1.32 [\#103](https://github.com/Tresster/Botge/pull/103) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v2.8.2](https://github.com/Tresster/Botge/tree/v2.8.2) (2025-12-31)
 
 [Full Changelog](https://github.com/Tresster/Botge/compare/v2.8.1...v2.8.2)
