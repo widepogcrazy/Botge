@@ -5,6 +5,7 @@ import { setTimeout } from 'node:timers/promises';
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import type { Guild } from '../guild.ts';
 
 const MAXIMUM_DURATION_SECONDS = 600 as const;
@@ -51,7 +52,7 @@ export function transientHandler() {
       await setTimeout(duration * 1000);
       await interaction.deleteReply();
     } catch (error: unknown) {
-      console.log(`Error at transientHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at transientHandler');
     }
   };
 }

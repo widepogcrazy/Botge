@@ -1,10 +1,11 @@
 /** @format */
 
 import { defineConfig, type ViteUserConfig } from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 const viteUserConfig: ViteUserConfig = defineConfig({
-  plugins: [tsconfigPaths({ parseNative: true })],
+  resolve: {
+    tsconfigPaths: true
+  },
   test: {
     name: { label: 'Testge', color: 'cyan' },
     logHeapUsage: true

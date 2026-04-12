@@ -2,8 +2,9 @@
 
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 
-import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.ts';
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
+import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.ts';
 import type { TwitchClip, ReadonlyHit } from '../types.ts';
 import type { Guild } from '../guild.ts';
 
@@ -99,7 +100,7 @@ export function clipHandler(twitchClipMessageBuilders: TwitchClipMessageBuilder[
       await interaction.editReply(reply);
       twitchClipMessageBuilders.push(twitchClipMessageBuilder);
     } catch (error) {
-      console.log(`Error at clipHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at clipHandler');
 
       await defer;
       await interaction.editReply('Failed to get clip.');

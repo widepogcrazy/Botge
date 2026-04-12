@@ -3,13 +3,14 @@
 import type { Job } from 'node-schedule';
 import type { ChatInputCommandInteraction, Client, TextChannel } from 'discord.js';
 
-import { PingForPingListMessageBuilder } from '../message-builders/ping-for-ping-list-message-builder.ts';
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
+import { PingForPingListMessageBuilder } from '../message-builders/ping-for-ping-list-message-builder.ts';
 import type { PingsDatabase } from '../api/ping-database.ts';
 import { PING_LIST } from '../commands.ts';
 import type { Guild } from '../guild.ts';
 import { PingForPingMeMessageBuilder } from '../message-builders/ping-for-ping-me-message-builder.ts';
-import { daysAndHoursAndMinutesToMilliseconds } from './pingme.ts';
+import { daysAndHoursAndMinutesToMilliseconds } from './ping-me.ts';
 import type { Ping } from '../types.ts';
 
 export function pingListHandler(
@@ -87,7 +88,7 @@ export function pingListHandler(
       await interaction.editReply(reply);
       pingForPingListMessageBuilders.push(pingForPingListMessageBuilder);
     } catch (error) {
-      console.log(`Error at pingListHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at pingListHandler');
 
       await defer;
       await interaction.editReply('Failed to show ping list.');

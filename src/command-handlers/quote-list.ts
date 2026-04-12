@@ -2,8 +2,9 @@
 
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 
-import { QuoteMessageBuilder } from '../message-builders/quote-message-builder.ts';
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
+import { QuoteMessageBuilder } from '../message-builders/quote-message-builder.ts';
 import type { QuoteDatabase } from '../api/quote-database.ts';
 import type { Guild } from '../guild.ts';
 import type { Quote } from '../types.ts';
@@ -39,7 +40,7 @@ export function quoteListHandler(
       await interaction.editReply(reply);
       quoteMessageBuilders.push(quoteMessageBuilder);
     } catch (error) {
-      console.log(`Error at quoteListHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at quoteListHandler');
 
       await defer;
       await interaction.editReply('Failed to show quote list.');

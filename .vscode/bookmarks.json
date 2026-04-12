@@ -4,22 +4,22 @@
 			"path": "src/index.ts",
 			"bookmarks": [
 				{
-					"line": 83,
+					"line": 85,
 					"column": 0,
 					"label": "bot"
 				},
 				{
-					"line": 202,
+					"line": 206,
 					"column": 0,
 					"label": "functions"
 				},
 				{
-					"line": 266,
+					"line": 264,
 					"column": 0,
 					"label": "schedules"
 				},
 				{
-					"line": 297,
+					"line": 295,
 					"column": 0,
 					"label": "registerHandlers"
 				}
@@ -29,22 +29,22 @@
 			"path": "src/bot.ts",
 			"bookmarks": [
 				{
-					"line": 60,
+					"line": 65,
 					"column": 0,
 					"label": "bot"
 				},
 				{
-					"line": 122,
+					"line": 131,
 					"column": 0,
 					"label": "commandHandlers"
 				},
 				{
-					"line": 185,
+					"line": 196,
 					"column": 0,
 					"label": "registerHandlers"
 				},
 				{
-					"line": 376,
+					"line": 395,
 					"column": 0,
 					"label": "functions"
 				}
@@ -74,22 +74,22 @@
 			"path": "src/command-handlers/emote.ts",
 			"bookmarks": [
 				{
-					"line": 38,
+					"line": 39,
 					"column": 0,
 					"label": "horizontalStackElements"
 				},
 				{
-					"line": 144,
+					"line": 145,
 					"column": 0,
 					"label": "emoteHandler"
 				},
 				{
-					"line": 183,
+					"line": 184,
 					"column": 0,
 					"label": "emoteListHandler"
 				},
 				{
-					"line": 226,
+					"line": 227,
 					"column": 0,
 					"label": "emotesHandler"
 				}
@@ -99,32 +99,32 @@
 			"path": "src/interaction-handlers/autocomplete.ts",
 			"bookmarks": [
 				{
-					"line": 57,
+					"line": 60,
 					"column": 0,
 					"label": "emote"
 				},
 				{
-					"line": 92,
+					"line": 95,
 					"column": 0,
 					"label": "emoteList"
 				},
 				{
-					"line": 169,
+					"line": 172,
 					"column": 0,
 					"label": "clip"
 				},
 				{
-					"line": 250,
+					"line": 253,
 					"column": 0,
 					"label": "shortestUniqueSubstrings"
 				},
 				{
-					"line": 290,
+					"line": 293,
 					"column": 0,
 					"label": "pingList"
 				},
 				{
-					"line": 309,
+					"line": 312,
 					"column": 0,
 					"label": "media"
 				}
@@ -134,52 +134,52 @@
 			"path": "src/interaction-handlers/button.ts",
 			"bookmarks": [
 				{
-					"line": 106,
+					"line": 121,
 					"column": 0,
 					"label": "CONFIGURATION_USER"
 				},
 				{
-					"line": 129,
+					"line": 144,
 					"column": 0,
 					"label": "PERMITTED_ROLES"
 				},
 				{
-					"line": 160,
+					"line": 175,
 					"column": 0,
 					"label": "ALLOW_EVERYONE_TO_ADD_EMOTE"
 				},
 				{
-					"line": 172,
+					"line": 187,
 					"column": 0,
 					"label": "ADDED_EMOTE_DELETION_MENU"
 				},
 				{
-					"line": 196,
+					"line": 211,
 					"column": 0,
 					"label": "CONFIGURATION_GUILD"
 				},
 				{
-					"line": 232,
+					"line": 247,
 					"column": 0,
 					"label": "messageBuilderType"
 				},
 				{
-					"line": 308,
+					"line": 323,
 					"column": 0,
 					"label": "messageBuilders"
 				},
 				{
-					"line": 340,
+					"line": 358,
 					"column": 0,
 					"label": "messageBuilder"
 				},
 				{
-					"line": 347,
+					"line": 365,
 					"column": 0,
 					"label": "reply"
 				},
 				{
-					"line": 480,
+					"line": 558,
 					"column": 0,
 					"label": "editReply"
 				}
@@ -189,52 +189,52 @@
 			"path": "src/interaction-handlers/modal-submit.ts",
 			"bookmarks": [
 				{
-					"line": 50,
+					"line": 51,
 					"column": 0,
 					"label": "deferReply"
 				},
 				{
-					"line": 56,
+					"line": 57,
 					"column": 0,
 					"label": "ASSIGN_GUILD_MODAL"
 				},
 				{
-					"line": 90,
+					"line": 91,
 					"column": 0,
 					"label": "ASSIGN_EMOTE_SETS"
 				},
 				{
-					"line": 197,
+					"line": 198,
 					"column": 0,
 					"label": "messageBuilderType"
 				},
 				{
-					"line": 198,
+					"line": 199,
 					"column": 0,
 					"label": "messageBuilders"
 				},
 				{
-					"line": 225,
+					"line": 226,
 					"column": 0,
 					"label": "messageBuilder"
 				}
 			]
 		},
 		{
-			"path": "src/command-handlers/pingme.ts",
+			"path": "src/command-handlers/ping-me.ts",
 			"bookmarks": [
 				{
-					"line": 24,
+					"line": 25,
 					"column": 0,
 					"label": "getOptionValues"
 				},
 				{
-					"line": 70,
+					"line": 71,
 					"column": 0,
 					"label": "channel"
 				},
 				{
-					"line": 113,
+					"line": 114,
 					"column": 0,
 					"label": "pingMessageBuilder"
 				}
@@ -244,17 +244,17 @@
 			"path": "src/command-handlers/shortest-unique-substrings.ts",
 			"bookmarks": [
 				{
-					"line": 9,
+					"line": 10,
 					"column": 0,
 					"label": "getAllSubstrings"
 				},
 				{
-					"line": 21,
+					"line": 22,
 					"column": 0,
 					"label": "getShortestUniqueSubstrings"
 				},
 				{
-					"line": 52,
+					"line": 53,
 					"column": 0,
 					"label": "shortestUniqueSubstringsHandler"
 				}
@@ -264,17 +264,17 @@
 			"path": "src/command-handlers/steam.ts",
 			"bookmarks": [
 				{
-					"line": 8,
+					"line": 9,
 					"column": 0,
 					"label": "NumberOfCurrentPlayers"
 				},
 				{
-					"line": 14,
+					"line": 15,
 					"column": 0,
 					"label": "functions"
 				},
 				{
-					"line": 38,
+					"line": 39,
 					"column": 0,
 					"label": "steamHandler"
 				}
@@ -284,29 +284,24 @@
 			"path": "src/interaction-handlers/message-context-menu-command.ts",
 			"bookmarks": [
 				{
-					"line": 47,
+					"line": 58,
 					"column": 0,
 					"label": "getMediaUrlFromMessage"
 				},
 				{
-					"line": 85,
+					"line": 96,
 					"column": 0,
 					"label": "messageContextMenuCommandHandler"
 				},
 				{
-					"line": 162,
+					"line": 177,
 					"column": 0,
 					"label": "addMedia"
 				},
 				{
-					"line": 226,
+					"line": 241,
 					"column": 0,
 					"label": "removeMedia"
-				},
-				{
-					"line": 99,
-					"column": 1,
-					"label": ""
 				}
 			]
 		},
@@ -349,12 +344,12 @@
 			"path": "src/message-builders/ping-for-ping-me-message-builder.ts",
 			"bookmarks": [
 				{
-					"line": 22,
+					"line": 23,
 					"column": 0,
 					"label": "enum"
 				},
 				{
-					"line": 27,
+					"line": 28,
 					"column": 0,
 					"label": "exportFunctions"
 				},
@@ -394,17 +389,17 @@
 					"label": "COMMAND_NAMES"
 				},
 				{
-					"line": 62,
+					"line": 66,
 					"column": 0,
 					"label": "slashCommands"
 				},
 				{
-					"line": 279,
+					"line": 305,
 					"column": 0,
 					"label": "contextMenuCommands"
 				},
 				{
-					"line": 294,
+					"line": 335,
 					"column": 0,
 					"label": "commands"
 				}
@@ -474,9 +469,14 @@
 					"label": "media"
 				},
 				{
-					"line": 199,
+					"line": 205,
 					"column": 0,
-					"label": "messageBuilders"
+					"label": "messageBuilderTransformFunctionReturnTypes"
+				},
+				{
+					"line": 241,
+					"column": 0,
+					"label": "declareModule"
 				}
 			]
 		}

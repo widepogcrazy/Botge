@@ -2,12 +2,13 @@
 
 import { MessageFlags, type RoleSelectMenuInteraction } from 'discord.js';
 
+import type { PermittedRoleIdsDatabase } from '../api/permitted-role-ids-database.ts';
+import { logError } from '../utils/log-error.ts';
+import type { Guild } from '../guild.ts';
 import {
   SELECT_SETTINGS_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID,
   SELECT_ADD_EMOTE_PERMITTED_ROLES_ROLE_SELECT_MENU_CUSTOM_ID
 } from './button.ts';
-import type { Guild } from '../guild.ts';
-import type { PermittedRoleIdsDatabase } from '../api/permitted-role-ids-database.ts';
 
 export function roleSelectMenuHandler(
   guild: Readonly<Guild>,
@@ -38,7 +39,8 @@ export function roleSelectMenuHandler(
         await interaction.editReply('Permitted roles changed.');
       }
     } catch (error) {
-      console.log(`Error at roleSelectMenu --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at roleSelectMenuHandler');
+
       await defer;
       await interaction.editReply('Failed to show role select menu or failed to change permitted roles.');
     }

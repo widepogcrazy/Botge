@@ -13,6 +13,7 @@ import {
 
 import { permitted, administrator, owner, globalAdministrator } from '../utils/command-handlers/permitted.ts';
 import { booleanToAllowed } from '../utils/boolean-to-string.ts';
+import { logError } from '../utils/log-error.ts';
 import type { Guild } from '../guild.ts';
 
 export const SETTINGS_PERMITTED_ROLES_BUTTON_CUSTOM_ID = 'settingsPermittedRolesButton' as const;
@@ -85,7 +86,7 @@ export function settingsHandler() {
       await defer;
       await interaction.editReply({ components: [row] });
     } catch (error) {
-      console.log(`Error at settings --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at settingsHandler');
 
       await defer;
       await interaction.editReply('Failed to output settings.');

@@ -3,10 +3,10 @@
 import { HarmBlockThreshold, HarmCategory } from '@google/genai';
 import type { ChatInputCommandInteraction } from 'discord.js';
 
-import type { Guild } from '../guild.ts';
-import type { ReadonlyGoogleGenAI } from '../types.ts';
-
 import { getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
+import type { ReadonlyGoogleGenAI } from '../types.ts';
+import type { Guild } from '../guild.ts';
 
 const MAX_DISCORD_MESSAGE_LENGTH = 2000 as const;
 
@@ -84,7 +84,7 @@ export function geminiHandler(googleGenAI: ReadonlyGoogleGenAI | undefined) {
       await defer;
       await interaction.editReply(reply);
     } catch (error) {
-      console.log(`Error at gemini --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at geminiHandler');
 
       await defer;
       await interaction.editReply('Failed to Gemini.');

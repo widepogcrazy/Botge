@@ -24,6 +24,7 @@ import type {
 } from '../types.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
 import type { QuoteDatabase } from '../api/quote-database.ts';
+import { logError } from '../utils/log-error.ts';
 import { CONTEXT_MENU_COMMAND_NAMES } from '../commands.ts';
 
 const MAX_DISCORD_MESSAGE_LENGTH = 2000 as const;
@@ -380,7 +381,7 @@ export function messageContextMenuCommandHandler(
         await modalSubmitInteraction.reply({ content: `Removed quote ${quoteName}.`, flags: MessageFlags.Ephemeral });
       }
     } catch (error) {
-      console.log(`Error at contextMenuCommand --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at contextMenuCommandHandler');
 
       await defer;
       await interaction.editReply('Failed to provide output.');

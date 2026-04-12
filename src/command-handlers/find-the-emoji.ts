@@ -3,6 +3,7 @@
 import type { ChatInputCommandInteraction, GuildEmoji } from 'discord.js';
 
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import type { Guild } from '../guild.ts';
 
 const DEFAULT_SIZE = 5 as const;
@@ -92,7 +93,7 @@ export function findTheEmojiHandler() {
       await defer;
       await interaction.editReply(reply);
     } catch (error) {
-      console.log(`Error at findTheEmoji --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at findTheEmojiHandler');
 
       await defer;
       await interaction.editReply('Failed to generate the find the emoji grid.');

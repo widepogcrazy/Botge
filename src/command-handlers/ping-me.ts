@@ -2,8 +2,9 @@
 
 import type { PermissionsBitField, Client, ChatInputCommandInteraction, TextChannel } from 'discord.js';
 
-import { PingForPingMeMessageBuilder } from '../message-builders/ping-for-ping-me-message-builder.ts';
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
+import { PingForPingMeMessageBuilder } from '../message-builders/ping-for-ping-me-message-builder.ts';
 import type { PingsDatabase } from '../api/ping-database.ts';
 import type { Guild } from '../guild.ts';
 import type { Ping } from '../types.ts';
@@ -126,7 +127,7 @@ export function pingMeHandler(
       await interaction.editReply(reply);
       pingMessageBuilders.push(pingMessageBuilder);
     } catch (error) {
-      console.log(`Error at pingMe --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at pingMeHandler');
 
       await defer;
       await interaction.editReply('Failed to register the ping.');

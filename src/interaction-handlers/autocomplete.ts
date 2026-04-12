@@ -8,6 +8,7 @@ import type { AutocompleteInteraction, ApplicationCommandOptionChoiceData } from
 import { platformStrings, platformToString, stringToPlatform } from '../utils/platform-to-string.ts';
 import { booleanToString, stringToBoolean } from '../utils/boolean-to-string.ts';
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import { getShortestUniqueSubstrings } from '../command-handlers/shortest-unique-substrings.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
 import type { QuoteDatabase } from '../api/quote-database.ts';
@@ -345,7 +346,7 @@ export function autocompleteHandler(
         }
       }
     } catch (error) {
-      console.log(`Error at autocomplete --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at autocompleteHandler');
     }
   };
 }

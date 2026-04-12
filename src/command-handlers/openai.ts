@@ -3,6 +3,7 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 import { getOptionValue, getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import type { ReadonlyOpenAI, OpenAIResponseInput } from '../types.ts';
 import type { Guild } from '../guild.ts';
 
@@ -86,7 +87,7 @@ export function chatgptHandler(openai: ReadonlyOpenAI | undefined) {
       await defer;
       await interaction.editReply(reply);
     } catch (error) {
-      console.log(`Error at chatgpt --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at chatgpt');
 
       await defer;
       await interaction.editReply('Failed to ChatGPT.');

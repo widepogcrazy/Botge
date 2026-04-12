@@ -2,7 +2,7 @@
 
 import { EmbedBuilder, type ChatInputCommandInteraction, type ButtonInteraction } from 'discord.js';
 
-import { daysAndHoursAndMinutesToMilliseconds } from '../command-handlers/pingme.ts';
+import { daysAndHoursAndMinutesToMilliseconds } from '../command-handlers/ping-me.ts';
 import { booleanToString } from '../utils/boolean-to-string.ts';
 import type { PingForPingListMessageBuilderTransformFunctionReturnType } from '../types.ts';
 import { BaseMessageBuilder } from './base.ts';

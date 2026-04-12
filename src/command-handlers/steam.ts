@@ -3,6 +3,7 @@
 import fetch, { type Response } from 'node-fetch';
 import type { ChatInputCommandInteraction } from 'discord.js';
 
+import { logError } from '../utils/log-error.ts';
 import { GUILD_ID_CUTEDOG } from '../guilds.ts';
 import type { Guild } from '../guild.ts';
 
@@ -104,7 +105,7 @@ export function steamHandler(gameId: string) {
       await defer;
       await interaction.editReply(replyText);
     } catch (error) {
-      console.log(`Error at steam --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at steamHandler');
 
       await defer;
       await interaction.editReply('something went wrong.');

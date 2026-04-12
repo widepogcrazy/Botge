@@ -3,6 +3,7 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 import { getOptionValue, getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.ts';
 import type { EmoteMatcher } from '../emote-matcher.ts';
 import type { Guild } from '../guild.ts';
@@ -111,9 +112,7 @@ export function shortestUniqueSubstringsHandler(emoteMessageBuilders: EmoteMessa
       await interaction.editReply(message.trim());
       return;
     } catch (error) {
-      console.log(
-        `Error at shortestUniqueSubstringsHandler --> ${error instanceof Error ? error.stack : String(error)}`
-      );
+      logError(error, 'Error at shortestUniqueSubstringsHandler');
 
       await defer;
       await interaction.editReply('failed to provide shortest unique substrings.');
