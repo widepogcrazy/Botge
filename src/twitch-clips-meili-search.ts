@@ -1,6 +1,6 @@
 /** @format */
 
-import type { MeiliSearch, Index } from 'meilisearch';
+import type { Meilisearch, Index } from 'meilisearch';
 
 const INDEX_NAME = 'twitchClips' as const;
 
@@ -11,9 +11,9 @@ function getIndexName(guildId: string): string {
 const MAX_TOTAL_HITS = 3000;
 
 export class TwitchClipsMeiliSearch {
-  readonly #meiliSearch: Readonly<MeiliSearch>;
+  readonly #meiliSearch: Readonly<Meilisearch>;
 
-  public constructor(meiliSearch: MeiliSearch) {
+  public constructor(meiliSearch: Meilisearch) {
     this.#meiliSearch = meiliSearch;
   }
 

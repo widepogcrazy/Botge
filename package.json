@@ -42,16 +42,16 @@
     "test": "vitest tests"
   },
   "dependencies": {
-    "@discordjs/voice": "^0.19.1",
-    "@google/genai": "1.45.0",
+    "@discordjs/voice": "^0.19.2",
+    "@google/genai": "1.49.0",
     "@twemoji/api": "^17.0.2",
-    "deepl-node": "^1.24.0",
-    "discord.js": "^14.25.1",
+    "deepl-node": "^1.26.0",
+    "discord.js": "^14.26.2",
     "fs-extra": "^11.3.4",
-    "meilisearch": "^0.55.0",
+    "meilisearch": "^0.57.0",
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
-    "openai": "6.29.0",
+    "openai": "6.34.0",
     "sql.js": "1.14.1",
     "timezones-list": "^3.1.0"
   },
@@ -60,22 +60,22 @@
     "@microsoft/tsdoc-config": "0.18.1",
     "@types/fs-extra": "^11.0.4",
     "@types/node-schedule": "^2.1.8",
-    "@types/sql.js": "1.4.9",
-    "eslint": "10.0.3",
+    "@types/sql.js": "1.4.11",
+    "eslint": "10.2.0",
     "eslint-plugin-tsdoc": "0.5.2",
     "husky": "^9.1.7",
     "markdownlint": "0.40.0",
-    "prettier": "^3.8.1",
-    "prettier-plugin-sh": "0.18.0",
+    "prettier": "^3.8.2",
+    "prettier-plugin-sh": "0.18.1",
     "ts-essentials": "^10.1.1",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "8.57.0",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "8.58.1",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.4"
   },
   "engines": {
-    "node": "v25.8.0",
-    "npm": ">=11.11.0"
+    "node": "v25.9.0",
+    "npm": ">=11.12.1"
   },
   "os": [
     "linux",

@@ -64,7 +64,7 @@ const config: readonly Config[] = defineConfig([
           allow: [
             { from: 'lib', name: 'Array' },
             { from: 'package', name: 'RequestInit', package: 'node-fetch' },
-            { from: 'package', name: ['MeiliSearch', 'Index'], package: 'meilisearch' },
+            { from: 'package', name: ['Meilisearch', 'Index'], package: 'meilisearch' },
             {
               from: 'package',
               name: [

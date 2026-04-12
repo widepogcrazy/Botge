@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import { ensureDir, type Dirent } from 'fs-extra';
 
 import { GoogleGenAI } from '@google/genai';
-import { MeiliSearch } from 'meilisearch';
+import { Meilisearch } from 'meilisearch';
 import { Translator } from 'deepl-node';
 import OpenAI from 'openai';
 import { Client, GatewayIntentBits } from 'discord.js';
@@ -120,7 +120,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
 
   const twitchClipsMeiliSearch: Readonly<TwitchClipsMeiliSearch> | undefined =
     MEILISEARCH_HOST !== undefined && MEILI_MASTER_KEY !== undefined
-      ? new TwitchClipsMeiliSearch(new MeiliSearch({ host: MEILISEARCH_HOST, apiKey: MEILI_MASTER_KEY }))
+      ? new TwitchClipsMeiliSearch(new Meilisearch({ host: MEILISEARCH_HOST, apiKey: MEILI_MASTER_KEY }))
       : undefined;
 
   const sqlJsStatic = await initSqlJs();
