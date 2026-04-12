@@ -92,7 +92,7 @@ export function findTheEmojiHandler() {
       await defer;
       await interaction.editReply(reply);
     } catch (error) {
-      console.log(`Error at findTheEmoji --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at findTheEmoji --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to generate the find the emoji grid.');

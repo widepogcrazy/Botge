@@ -104,7 +104,7 @@ export function steamHandler(gameId: string) {
       await defer;
       await interaction.editReply(replyText);
     } catch (error) {
-      console.log(`Error at steam --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at steam --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('something went wrong.');

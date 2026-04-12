@@ -345,7 +345,7 @@ export function autocompleteHandler(
         }
       }
     } catch (error) {
-      console.log(`Error at autocomplete --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at autocomplete --> ${error instanceof Error ? error.stack : String(error)}`);
     }
   };
 }

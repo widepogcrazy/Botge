@@ -558,7 +558,7 @@ export function buttonHandler(
       await messageBuilderInteraction.editReply(reply);
       return undefined;
     } catch (error) {
-      console.log(`Error at button --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at button --> ${error instanceof Error ? error.stack : String(error)}`);
       return undefined;
     }
   };

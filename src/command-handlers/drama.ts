@@ -30,7 +30,7 @@ export function dramaHandler(redditApi: Readonly<RedditApi> | undefined) {
       await defer;
       await interaction.editReply(`Can't get drama right now.`);
     } catch (error) {
-      console.log(`Error at dramaHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at dramaHandler --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to get drama.');

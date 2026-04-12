@@ -51,7 +51,7 @@ export function transientHandler() {
       await setTimeout(duration * 1000);
       await interaction.deleteReply();
     } catch (error: unknown) {
-      console.log(`Error at transientHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at transientHandler --> ${error instanceof Error ? error.stack : String(error)}`);
     }
   };
 }

@@ -77,9 +77,7 @@ export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<Add
         `Added emote ${sevenTVUrlToSevenNotInSet_.name}${name !== null ? ` with the name ${name}` : ''}.`
       );
     } catch (error) {
-      console.log(
-        `Error at addEmoteHandlerSevenNotInSet --> ${error instanceof Error ? error.message : String(error)}`
-      );
+      console.log(`Error at addEmoteHandlerSevenNotInSet --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to add emote.');

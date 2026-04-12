@@ -85,7 +85,7 @@ export function settingsHandler() {
       await defer;
       await interaction.editReply({ components: [row] });
     } catch (error) {
-      console.log(`Error at settings --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at settings --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to output settings.');

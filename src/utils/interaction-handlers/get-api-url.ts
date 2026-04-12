@@ -45,7 +45,7 @@ export async function getBttvApiUrlFromBroadcasterName(
   twitchApi: Readonly<TwitchApi> | undefined
 ): Promise<ApiUrlMessage> {
   if (twitchApi === undefined)
-    return { type: 'error', message: 'The bot is unable to get broadcastername from Twitch at this time.' };
+    return { type: 'error', message: 'The bot is unable to get broadcaster name from Twitch at this time.' };
 
   const users = await twitchApi.users([broadcasterName]).catch(() => undefined);
   if (users === undefined) return { type: 'error', message: 'Unknown error at getting broadcaster id from Twitch.' };

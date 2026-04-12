@@ -283,7 +283,7 @@ export function modalSubmitHandler(
       if (reply === undefined) return;
       await messageBuilderInteraction.editReply(reply);
     } catch (error) {
-      console.log(`Error at modalSubmit --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at modalSubmit --> ${error instanceof Error ? error.stack : String(error)}`);
       if (deferReply !== undefined) {
         await deferReply;
         await interaction.editReply('Something went wrong. Please try again later.');

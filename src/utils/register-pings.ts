@@ -50,7 +50,7 @@ export async function registerPings(
           );
           if (scheduledJobIndex !== -1) scheduledJobs.splice(scheduledJobIndex, 1);
         } catch (error) {
-          console.log(`Error at a scheduled job --> ${error instanceof Error ? error.message : String(error)}`);
+          console.log(`Error at a scheduled job --> ${error instanceof Error ? error.stack : String(error)}`);
         }
       });
       scheduledJobs.push(scheduledJob);

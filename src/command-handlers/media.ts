@@ -27,7 +27,7 @@ export function mediaHandler(mediaDataBase: Readonly<MediaDatabase>) {
 
       await interaction.reply(mediaUrl);
     } catch (error) {
-      console.log(`Error at mediaHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at mediaHandler --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await interaction.reply({
         content: 'Something went wrong. Please try again later.',

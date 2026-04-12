@@ -86,7 +86,7 @@ export function chatgptHandler(openai: ReadonlyOpenAI | undefined) {
       await defer;
       await interaction.editReply(reply);
     } catch (error) {
-      console.log(`Error at chatgpt --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at chatgpt --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to ChatGPT.');

@@ -126,7 +126,7 @@ export function pingMeHandler(
       await interaction.editReply(reply);
       pingMessageBuilders.push(pingMessageBuilder);
     } catch (error) {
-      console.log(`Error at pingMe --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at pingMe --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to register the ping.');

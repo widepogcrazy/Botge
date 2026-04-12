@@ -27,7 +27,7 @@ export function quoteHandler(quoteDataBase: Readonly<QuoteDatabase>) {
 
       await interaction.reply(quoteContent);
     } catch (error) {
-      console.log(`Error at quoteHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at quoteHandler --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await interaction.reply({
         content: 'Something went wrong. Please try again later.',

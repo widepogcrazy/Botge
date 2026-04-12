@@ -51,7 +51,7 @@ export function messageCreateHandler() {
         await message.reply({ content: mediaUrl, allowedMentions: { repliedUser: false } });
       }
     } catch (error) {
-      console.log(`Error at messageCreateHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at messageCreateHandler --> ${error instanceof Error ? error.stack : String(error)}`);
     }
   };
 }

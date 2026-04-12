@@ -222,7 +222,7 @@ export class Bot {
           }
         }
       } catch (error) {
-        console.log(`Error at joining voice channel --> ${error instanceof Error ? error.message : String(error)}`);
+        console.log(`Error at joining voice channel --> ${error instanceof Error ? error.stack : String(error)}`);
       }
 
       console.log(`Logged in as ${user.tag}!`);

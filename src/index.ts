@@ -212,9 +212,7 @@ function closeFunction(): void {
     bot.usersDatabase.close();
     bot.mediaDatabase.close();
   } catch (error) {
-    console.log(
-      `Error at closeFunction - closing databases: ${error instanceof Error ? error.message : String(error)}`
-    );
+    console.log(`Error at closeFunction - closing databases: ${error instanceof Error ? error.stack : String(error)}`);
   }
 
   try {
@@ -224,7 +222,7 @@ function closeFunction(): void {
     user.setStatus('invisible');
   } catch (error) {
     console.log(
-      `Error at closeFunction - setting invisible status: ${error instanceof Error ? error.message : String(error)}`
+      `Error at closeFunction - setting invisible status: ${error instanceof Error ? error.stack : String(error)}`
     );
   }
 
@@ -234,7 +232,7 @@ function closeFunction(): void {
     });
   } catch (error) {
     console.log(
-      `Error at closeFunction - destroying voice connections: ${error instanceof Error ? error.message : String(error)}`
+      `Error at closeFunction - destroying voice connections: ${error instanceof Error ? error.stack : String(error)}`
     );
   }
 }
@@ -259,7 +257,7 @@ process.on('uncaughtException', (error: Readonly<Error>): void => {
 });
 
 process.on('unhandledRejection', (error): void => {
-  console.log(`unhandledRejection: ${error instanceof Error ? error.message : String(error)}`);
+  console.log(`unhandledRejection: ${error instanceof Error ? error.stack : String(error)}`);
 });
 
 const refreshClipsOrRefreshUniqueCreatorNamesAndGameIds: readonly Promise<void>[] =

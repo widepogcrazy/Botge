@@ -99,7 +99,7 @@ export function clipHandler(twitchClipMessageBuilders: TwitchClipMessageBuilder[
       await interaction.editReply(reply);
       twitchClipMessageBuilders.push(twitchClipMessageBuilder);
     } catch (error) {
-      console.log(`Error at clipHandler --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at clipHandler --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to get clip.');

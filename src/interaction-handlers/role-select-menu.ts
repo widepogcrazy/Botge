@@ -38,7 +38,7 @@ export function roleSelectMenuHandler(
         await interaction.editReply('Permitted roles changed.');
       }
     } catch (error) {
-      console.log(`Error at roleSelectMenu --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at roleSelectMenu --> ${error instanceof Error ? error.stack : String(error)}`);
       await defer;
       await interaction.editReply('Failed to show role select menu or failed to change permitted roles.');
     }

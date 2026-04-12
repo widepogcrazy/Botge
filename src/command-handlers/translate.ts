@@ -25,7 +25,7 @@ export function translateHandler(translator: ReadonlyTranslator | undefined) {
       await defer;
       await interaction.editReply(textResult.text);
     } catch (error: unknown) {
-      console.error(`Error at translate --> ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`Error at translate --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to translate.');

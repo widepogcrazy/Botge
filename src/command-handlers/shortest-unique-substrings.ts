@@ -112,7 +112,7 @@ export function shortestUniqueSubstringsHandler(emoteMessageBuilders: EmoteMessa
       return;
     } catch (error) {
       console.log(
-        `Error at shortestUniqueSubstringsHandler --> ${error instanceof Error ? error.message : String(error)}`
+        `Error at shortestUniqueSubstringsHandler --> ${error instanceof Error ? error.stack : String(error)}`
       );
 
       await defer;

@@ -84,7 +84,7 @@ export function geminiHandler(googleGenAI: ReadonlyGoogleGenAI | undefined) {
       await defer;
       await interaction.editReply(reply);
     } catch (error) {
-      console.log(`Error at gemini --> ${error instanceof Error ? error.message : String(error)}`);
+      console.log(`Error at gemini --> ${error instanceof Error ? error.stack : String(error)}`);
 
       await defer;
       await interaction.editReply('Failed to Gemini.');
