@@ -32,7 +32,6 @@ WORKDIR /app
 LABEL org.opencontainers.image.title="Botge" \
   org.opencontainers.image.version="2.8.3" \
   org.opencontainers.image.description="Search emotes, clips, use zero-width emotes and other such commands." \
-  org.opencontainers.image.url="https://botge.gitbook.io" \
   org.opencontainers.image.source="https://github.com/Mrewy/Botge" \
   org.opencontainers.image.licenses="MIT" \
   org.opencontainers.image.authors="Mrewy" \

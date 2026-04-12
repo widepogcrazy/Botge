@@ -44,20 +44,17 @@ With built-in [DeepL Translation](https://www.deepl.com/en/products/translator),
 
 Add the bot by [invitation link](https://discord.com/oauth2/authorize?client_id=1298983961992757328).
 
-Usage of Botge is straightforward if you are familiar with Discord bot usage.  
-Read about advanced usage on the [website](https://botge.gitbook.io/botge/getting-started/usage).
+Usage of Botge is straightforward if you are familiar with Discord bot usage.
 
 ## Configuration
 
 Configure the bot in the `/settings` command.
 
-Further help in configuration is available on the [website](https://botge.gitbook.io/botge/getting-started/configuration).
-
 ## Documentation
 
 ![Docker docks](docs/Docker.png)
 
-More documentation is available on the [website](https://botge.gitbook.io/botge/documentation/documentation) and in the [docs](docs) folder.
+More documentation is available in the [docs](docs) folder.
 
 ## License
 
