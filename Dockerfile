@@ -33,10 +33,10 @@ LABEL org.opencontainers.image.title="Botge" \
   org.opencontainers.image.version="2.8.3" \
   org.opencontainers.image.description="Search emotes, clips, use zero-width emotes and other such commands." \
   org.opencontainers.image.url="https://botge.gitbook.io" \
-  org.opencontainers.image.source="https://github.com/Tresster/Botge" \
+  org.opencontainers.image.source="https://github.com/Mrewy/Botge" \
   org.opencontainers.image.licenses="MIT" \
-  org.opencontainers.image.authors="Tresster" \
-  org.opencontainers.image.documentation="https://github.com/Tresster/Botge/tree/main/docs"
+  org.opencontainers.image.authors="Mrewy" \
+  org.opencontainers.image.documentation="https://github.com/Mrewy/Botge/tree/main/docs"
 
 RUN apk add --no-cache ffmpeg
 COPY --from=node-dependencies /app/node_modules ./node_modules

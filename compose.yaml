@@ -30,7 +30,7 @@ services:
       - nginx
       - meilisearch
     # Uncomment image, comment build and context for non-local compose.
-    # image: ghcr.io/tresster/botge:main
+    # image: ghcr.io/Mrewy/botge:main
     build:
       context: .
     mem_limit: 512m

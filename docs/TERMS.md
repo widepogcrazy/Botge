@@ -2,7 +2,7 @@
 
 # Terms of Service
 
-By using **Botge** (“the Bot,” “the Software,” or “the Service”), you agree to these Terms of Service (“Terms”) and [Privacy Policy](https://github.com/Tresster/Botge/blob/main/PRIVACY.md).  
+By using **Botge** (“the Bot,” “the Software,” or “the Service”), you agree to these Terms of Service (“Terms”) and [Privacy Policy](https://github.com/Mrewy/Botge/blob/main/PRIVACY.md).  
 If you do not agree, please discontinue use of the Service.
 
 ## Compliance with Discord Policies

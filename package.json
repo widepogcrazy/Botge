@@ -10,18 +10,18 @@
   ],
   "homepage": "https://botge.gitbook.io",
   "bugs": {
-    "url": "https://github.com/Tresster/Botge/issues"
+    "url": "https://github.com/Mrewy/Botge/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tresster/Botge.git"
+    "url": "git+https://github.com/Mrewy/Botge.git"
   },
   "funding": {
     "type": "github",
-    "url": "https://github.com/sponsors/Tresster"
+    "url": "https://github.com/sponsors/Mrewy"
   },
   "license": "MIT",
-  "author": "Tresster",
+  "author": "Mrewy",
   "contributors": [
     "gentlebob",
     "widepogcrazy",
