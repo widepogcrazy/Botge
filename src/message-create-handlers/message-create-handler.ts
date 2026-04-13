@@ -9,8 +9,9 @@ import { logError } from '../utils/log-error.ts';
 import { GUILD_ID_CUTEDOG } from '../guilds.ts';
 import type { Guild } from '../guild.ts';
 import { MEDIA_COMMAND_IDENTIFIER, mediaMessageCreateHandler } from './media-message-create-handler.ts';
+import { ollamaMessageCreateHandler } from './ollama-message-create-handler.ts';
 
-export function messageCreateHandler() {
+export function messageCreateHandler(clientUserId: string | null) {
   return async (
     cachedUrl: Readonly<CachedUrl>,
     message: OmitPartialGroupDMChannel<Message>,
@@ -19,13 +20,16 @@ export function messageCreateHandler() {
   ): Promise<void> => {
     try {
       const { content } = message;
-      if (!content.startsWith(EMOTE_COMMAND_IDENTIFIER) && !content.startsWith(MEDIA_COMMAND_IDENTIFIER)) return;
       if (content[EMOTE_COMMAND_IDENTIFIER.length] === ' ') return;
 
       if (content.startsWith(EMOTE_COMMAND_IDENTIFIER)) {
         await emotesHandler(cachedUrl)(guild, undefined, message);
       } else if (content.startsWith(MEDIA_COMMAND_IDENTIFIER)) {
         await mediaMessageCreateHandler(message, guild, mediaDataBase);
+      }
+
+      if (clientUserId !== null) {
+        await ollamaMessageCreateHandler(message);
       }
     } catch (error) {
       logError(error, 'Error at messageCreateHandler');

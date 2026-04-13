@@ -245,7 +245,7 @@ export class Bot {
           return newGuildWithoutPersonalEmotes_;
         })());
 
-      void messageCreateHandler()(this.#cachedUrl, message, guild, this.#mediaDatabase);
+      void messageCreateHandler(this.#client.user?.id ?? null)(this.#cachedUrl, message, guild, this.#mediaDatabase);
     });
 
     //interaction
