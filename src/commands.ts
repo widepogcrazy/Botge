@@ -25,7 +25,6 @@ export const SLASH_COMMAND_NAMES = {
   clip: 'clip',
   addEmote: 'addemote',
   chatGpt: 'chatgpt',
-  gemini: 'gemini',
   translate: 'translate',
   shortestUniqueSubstrings: 'shortestuniquesubstrings',
   transient: 'transient',
@@ -36,7 +35,6 @@ export const SLASH_COMMAND_NAMES = {
   pingList: 'pinglist',
   media: 'media',
   mediaList: 'medialist',
-  drama: 'drama',
   quote: 'quote',
   quoteList: 'quotelist'
 } as const;
@@ -168,13 +166,6 @@ const chatgpt: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder(
   )
   .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
 
-const gemini: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
-  .setName(SLASH_COMMAND_NAMES.gemini)
-  .setDescription('Send a prompt to Gemini and receive a response')
-  .addStringOption((option: ReadonlySlashCommandStringOption) =>
-    option.setName('prompt').setDescription('The prompt to send').setRequired(true)
-  );
-
 const translate: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName(SLASH_COMMAND_NAMES.translate)
   .setDescription('Translate text to english. Auto-detects language')
@@ -279,11 +270,6 @@ const mediaList: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilde
   )
   .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
 
-const drama: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
-  .setName(SLASH_COMMAND_NAMES.drama)
-  .setDescription('Get the top post from r/LivestreamFail')
-  .setContexts(InteractionContextType.Guild, InteractionContextType.PrivateChannel);
-
 const quote: ReadonlySlashCommandOptionsOnlyBuilder = new SlashCommandBuilder()
   .setName(SLASH_COMMAND_NAMES.quote)
   .setDescription('Get a quote')
@@ -344,7 +330,6 @@ export const commands: readonly (
     clip.toJSON(),
     addemote.toJSON(),
     chatgpt.toJSON(),
-    gemini.toJSON(),
     translate.toJSON(),
     shortestUniqueSubstrings.toJSON(),
     transient.toJSON(),
@@ -355,7 +340,6 @@ export const commands: readonly (
     pingList.toJSON(),
     media.toJSON(),
     mediaList.toJSON(),
-    drama.toJSON(),
     quote.toJSON(),
     quoteList.toJSON()
   ],
