@@ -18,12 +18,10 @@ import { transientHandler } from './command-handlers/transient.ts';
 import { pingListHandler } from './command-handlers/ping-list.ts';
 import { settingsHandler } from './command-handlers/settings.ts';
 import { chatgptHandler } from './command-handlers/openai.ts';
-import { geminiHandler } from './command-handlers/gemini.ts';
 import { pingMeHandler } from './command-handlers/ping-me.ts';
 import { steamHandler } from './command-handlers/steam.ts';
 import { mediaHandler } from './command-handlers/media.ts';
 import { quoteHandler } from './command-handlers/quote.ts';
-import { dramaHandler } from './command-handlers/drama.ts';
 import { clipHandler } from './command-handlers/clip.ts';
 import type { BroadcasterNameAndPersonalEmoteSetsDatabase } from './api/broadcaster-name-and-personal-emote-sets-database.ts';
 import type { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.ts';
@@ -66,7 +64,6 @@ const CLEANUP_MINUTES = 10 as const;
 export class Bot {
   readonly #client: Client;
   readonly #openai: ReadonlyOpenAI | undefined;
-  readonly #googleGenAI: ReadonlyGoogleGenAI | undefined;
   readonly #translator: ReadonlyTranslator | undefined;
   readonly #twitchApi: Readonly<TwitchApi> | undefined;
   readonly #redditApi: Readonly<RedditApi> | undefined;
@@ -114,7 +111,6 @@ export class Bot {
   ) {
     this.#client = client;
     this.#openai = openai;
-    this.#googleGenAI = googleGenAI;
     this.#translator = translator;
     this.#twitchApi = twitchApi;
     this.#redditApi = redditApi;
@@ -135,7 +131,6 @@ export class Bot {
     >([
       [SLASH_COMMAND_NAMES.emote, emoteHandler()],
       [SLASH_COMMAND_NAMES.emoteList, emoteListHandler(this.#emoteMessageBuilders)],
-      [SLASH_COMMAND_NAMES.gemini, geminiHandler(this.#googleGenAI)],
       [SLASH_COMMAND_NAMES.clip, clipHandler(this.#twitchClipMessageBuilders)],
       [SLASH_COMMAND_NAMES.addEmote, addEmoteHandlerSevenTVNotInSet(this.#addedEmotesDatabase)],
       [SLASH_COMMAND_NAMES.shortestUniqueSubstrings, shortestUniqueSubstringsHandler(this.#emoteMessageBuilders)],
@@ -154,7 +149,6 @@ export class Bot {
       ],
       [SLASH_COMMAND_NAMES.media, mediaHandler(this.#mediaDatabase)],
       [SLASH_COMMAND_NAMES.mediaList, mediaListHandler(this.#mediaDatabase, this.#mediaMessageBuilders)],
-      [SLASH_COMMAND_NAMES.drama, dramaHandler(this.#redditApi)],
       [SLASH_COMMAND_NAMES.quote, quoteHandler(this.#quoteDatabase)],
       [SLASH_COMMAND_NAMES.quoteList, quoteListHandler(this.#quoteDatabase, this.#quoteMessageBuilders)]
     ]);
@@ -206,7 +200,9 @@ export class Bot {
         const { JOIN_VOICE_CHANNEL } = process.env;
 
         if (JOIN_VOICE_CHANNEL === 'true') {
-          const cuteDogGeneralChannel = channels.cache.find((channel) => channel.id === GENERAL_CHANNEL_ID_CUTEDOG);
+          const cuteDogGeneralChannel = channels.cache.find(
+            (channel: { readonly id: string }) => channel.id === GENERAL_CHANNEL_ID_CUTEDOG
+          );
 
           if (
             cuteDogGeneralChannel !== undefined &&
@@ -249,7 +245,7 @@ export class Bot {
           return newGuildWithoutPersonalEmotes_;
         })());
 
-      void messageCreateHandler()(this.#cachedUrl, message, guild, this.#mediaDatabase);
+      void messageCreateHandler(this.#client.user?.id ?? null)(this.#cachedUrl, message, guild, this.#mediaDatabase);
     });
 
     //interaction

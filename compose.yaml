@@ -25,10 +25,22 @@ services:
       - MEILI_EXPERIMENTAL_REDUCE_INDEXING_MEMORY_USAGE
       - MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
 
+  chromadb:
+    image: chromadb/chroma:latest
+    volumes:
+      - ./chroma-data:/chroma/chroma # persists your vectors to disk
+    # ports:
+    #   - '8000:8000'
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    restart: unless-stopped
+
   botge:
     depends_on:
       - nginx
       - meilisearch
+      - chromadb
     # Uncomment image, comment build and context for non-local compose.
     # image: ghcr.io/Mrewy/botge:main
     build:
