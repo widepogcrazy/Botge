@@ -29,22 +29,22 @@
 			"path": "src/bot.ts",
 			"bookmarks": [
 				{
-					"line": 65,
+					"line": 58,
 					"column": 0,
 					"label": "bot"
 				},
 				{
-					"line": 131,
+					"line": 120,
 					"column": 0,
 					"label": "commandHandlers"
 				},
 				{
-					"line": 196,
+					"line": 181,
 					"column": 0,
 					"label": "registerHandlers"
 				},
 				{
-					"line": 395,
+					"line": 372,
 					"column": 0,
 					"label": "functions"
 				}
@@ -389,17 +389,17 @@
 					"label": "COMMAND_NAMES"
 				},
 				{
-					"line": 66,
+					"line": 60,
 					"column": 0,
 					"label": "slashCommands"
 				},
 				{
-					"line": 305,
+					"line": 270,
 					"column": 0,
 					"label": "contextMenuCommands"
 				},
 				{
-					"line": 335,
+					"line": 280,
 					"column": 0,
 					"label": "commands"
 				}
