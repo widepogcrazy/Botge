@@ -4,8 +4,9 @@ import fetch from 'node-fetch';
 
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 
-import { MediaMessageBuilder } from '../message-builders/media-message-builder.ts';
 import { getOptionValue } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
+import { MediaMessageBuilder } from '../message-builders/media-message-builder.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
 import type { Guild } from '../guild.ts';
 import type { Media } from '../types.ts';
@@ -84,7 +85,7 @@ export function mediaListHandler(
       await interaction.editReply(reply);
       mediaMessageBuilders.push(mediaMessageBuilder);
     } catch (error) {
-      console.log(`Error at mediaListHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at mediaListHandler');
 
       await defer;
       await interaction.editReply('Failed to show media list.');

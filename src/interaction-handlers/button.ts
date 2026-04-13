@@ -50,6 +50,7 @@ import {
 } from '../message-builders/quote-message-builder.ts';
 import { getSevenTvEmoteSetLinkFromSevenTvApiUlr } from '../utils/interaction-handlers/get-api-url.ts';
 import { booleanToAllowed } from '../utils/boolean-to-string.ts';
+import { logError } from '../utils/log-error.ts';
 import type { PermittedRoleIdsDatabase } from '../api/permitted-role-ids-database.ts';
 import type { AddedEmotesDatabase } from '../api/added-emotes-database.ts';
 import type { MediaDatabase } from '../api/media-database.ts';
@@ -558,7 +559,8 @@ export function buttonHandler(
       await messageBuilderInteraction.editReply(reply);
       return undefined;
     } catch (error) {
-      console.log(`Error at button --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at buttonHandler');
+
       return undefined;
     }
   };

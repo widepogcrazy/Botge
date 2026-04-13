@@ -29,6 +29,7 @@ import { BroadcasterNameAndPersonalEmoteSetsDatabase } from './api/broadcaster-n
 import { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.ts';
 import { AddedEmotesDatabase } from './api/added-emotes-database.ts';
 import { MediaDatabase } from './api/media-database.ts';
+import { QuoteDatabase } from './api/quote-database.js';
 import { PingsDatabase } from './api/ping-database.ts';
 import { CachedUrl } from './api/cached-url.ts';
 import { UsersDatabase } from './api/user.ts';
@@ -36,6 +37,7 @@ import { newTwitchApi } from './utils/constructors/new-twitch-api.ts';
 import { newRedditApi } from './utils/constructors/new-reddit-api.ts';
 import { newGuild } from './utils/constructors/new-guild.ts';
 import { registerPings } from './utils/register-pings.ts';
+import { logError } from './utils/log-error.ts';
 import { DATABASE_DIR, DATABASE_ENDPOINTS, TMP_DIR } from './paths-and-endpoints.ts';
 import { GlobalEmoteMatcherConstructor } from './emote-matcher-constructor.ts';
 import { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.ts';
@@ -45,7 +47,6 @@ import { updateCommands } from './update-commands-docker.ts';
 import type { Guild } from './guild.ts';
 import { User } from './user.js';
 import { Bot } from './bot.ts';
-import { QuoteDatabase } from './api/quote-database.js';
 
 /**
  * Ensures that directories exist.
@@ -212,7 +213,7 @@ function closeFunction(): void {
     bot.usersDatabase.close();
     bot.mediaDatabase.close();
   } catch (error) {
-    console.log(`Error at closeFunction - closing databases: ${error instanceof Error ? error.stack : String(error)}`);
+    logError(error, 'Error at closeFunction - closing databases');
   }
 
   try {
@@ -221,9 +222,7 @@ function closeFunction(): void {
 
     user.setStatus('invisible');
   } catch (error) {
-    console.log(
-      `Error at closeFunction - setting invisible status: ${error instanceof Error ? error.stack : String(error)}`
-    );
+    logError(error, 'Error at closeFunction - setting invisible status');
   }
 
   try {
@@ -231,9 +230,7 @@ function closeFunction(): void {
       connection.destroy();
     });
   } catch (error) {
-    console.log(
-      `Error at closeFunction - destroying voice connections: ${error instanceof Error ? error.stack : String(error)}`
-    );
+    logError(error, 'Error at closeFunction - destroying voice connections');
   }
 }
 
@@ -257,7 +254,7 @@ process.on('uncaughtException', (error: Readonly<Error>): void => {
 });
 
 process.on('unhandledRejection', (error): void => {
-  console.log(`unhandledRejection: ${error instanceof Error ? error.stack : String(error)}`);
+  logError(error, 'unhandledRejection');
 });
 
 const refreshClipsOrRefreshUniqueCreatorNamesAndGameIds: readonly Promise<void>[] =

@@ -42,8 +42,6 @@ With built-in [DeepL Translation](https://www.deepl.com/en/products/translator),
 
 ## Usage
 
-Add the bot by [invitation link](https://discord.com/oauth2/authorize?client_id=1298983961992757328).
-
 Usage of Botge is straightforward if you are familiar with Discord bot usage.
 
 ## Configuration

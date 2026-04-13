@@ -3,6 +3,7 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 import { getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import type { ReadonlyTranslator } from '../types.ts';
 import type { Guild } from '../guild.ts';
 
@@ -25,7 +26,7 @@ export function translateHandler(translator: ReadonlyTranslator | undefined) {
       await defer;
       await interaction.editReply(textResult.text);
     } catch (error: unknown) {
-      console.error(`Error at translate --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at translateHandler');
 
       await defer;
       await interaction.editReply('Failed to translate.');

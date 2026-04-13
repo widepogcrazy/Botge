@@ -6,6 +6,7 @@ import { Events, type ChatInputCommandInteraction, type Client } from 'discord.j
 import { joinVoiceChannel } from '@discordjs/voice';
 
 import { newGuild } from './utils/constructors/new-guild.ts';
+import { logError } from './utils/log-error.ts';
 import { shortestUniqueSubstringsHandler } from './command-handlers/shortest-unique-substrings.ts';
 import { emoteHandler, emotesHandler, emoteListHandler } from './command-handlers/emote.ts';
 import { addEmoteHandlerSevenTVNotInSet } from './command-handlers/add-emote.ts';
@@ -18,7 +19,7 @@ import { pingListHandler } from './command-handlers/ping-list.ts';
 import { settingsHandler } from './command-handlers/settings.ts';
 import { chatgptHandler } from './command-handlers/openai.ts';
 import { geminiHandler } from './command-handlers/gemini.ts';
-import { pingMeHandler } from './command-handlers/pingme.ts';
+import { pingMeHandler } from './command-handlers/ping-me.ts';
 import { steamHandler } from './command-handlers/steam.ts';
 import { mediaHandler } from './command-handlers/media.ts';
 import { quoteHandler } from './command-handlers/quote.ts';
@@ -222,7 +223,7 @@ export class Bot {
           }
         }
       } catch (error) {
-        console.log(`Error at joining voice channel --> ${error instanceof Error ? error.stack : String(error)}`);
+        logError(error, 'Error at joining voice channel');
       }
 
       console.log(`Logged in as ${user.tag}!`);

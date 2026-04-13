@@ -3,6 +3,7 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 import type { RedditApi } from '../api/reddit-api.ts';
+import { logError } from '../utils/log-error.ts';
 import type { Guild } from '../guild.ts';
 
 const { EMBED_SERVER_REDDIT } = process.env;
@@ -30,7 +31,7 @@ export function dramaHandler(redditApi: Readonly<RedditApi> | undefined) {
       await defer;
       await interaction.editReply(`Can't get drama right now.`);
     } catch (error) {
-      console.log(`Error at dramaHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at dramaHandler');
 
       await defer;
       await interaction.editReply('Failed to get drama.');

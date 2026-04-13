@@ -13,6 +13,7 @@ import { parseToken } from '../utils/command-handlers/emote/parse-token.ts';
 import { getOptionValue, getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
 import { stringToPlatform } from '../utils/platform-to-string.ts';
 import { stringToBoolean } from '../utils/boolean-to-string.ts';
+import { logError } from '../utils/log-error.ts';
 import type { CachedUrl } from '../api/cached-url.ts';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.ts';
 import type { AssetInfo, DownloadedAsset } from '../types.ts';
@@ -173,7 +174,7 @@ export function emoteHandler() {
         await interaction.editReply(emoteSizeChange(url, size, platform).replace('.gif', '.webp'));
       else await interaction.editReply(url.replace('.gif', '.webp'));
     } catch (error) {
-      console.log(`Error at emoteSingleHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at emoteSingleHandler');
 
       await defer;
       await interaction.editReply(SOMETHING_WENT_WRONG_REPLY_MESSAGE);
@@ -215,7 +216,7 @@ export function emoteListHandler(emoteMessageBuilders: EmoteMessageBuilder[]) {
       emoteMessageBuilders.push(emoteMessageBuilder);
       return;
     } catch (error) {
-      console.log(`Error at emoteListHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at emoteListHandler');
 
       await defer;
       await interaction.editReply(SOMETHING_WENT_WRONG_REPLY_MESSAGE);
@@ -504,7 +505,8 @@ export function emotesHandler(cachedUrl: Readonly<CachedUrl>) {
 
       // ? await defer;
     } catch (error) {
-      console.log(`Error at emoteCombinedHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at emoteCombinedHandler');
+
       const editReplyMessage =
         error instanceof Error && error.message === DOWNLOAD_ASSET_ERROR_MESSAGE
           ? 'failed to download gif(s)/png(s)'

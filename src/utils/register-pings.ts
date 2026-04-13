@@ -5,8 +5,9 @@ import scheduler, { type Job } from 'node-schedule';
 import type { Client, TextChannel } from 'discord.js';
 
 import { getContent, ContentType } from '../message-builders/ping-for-ping-me-message-builder.ts';
-import { daysAndHoursAndMinutesToMilliseconds } from '../command-handlers/pingme.ts';
+import { daysAndHoursAndMinutesToMilliseconds } from '../command-handlers/ping-me.ts';
 import type { PingsDatabase } from '../api/ping-database.ts';
+import { logError } from './log-error.ts';
 
 function millisecondsToHoursAndMinutes(milliseconds: number): string {
   const hours = Math.floor(milliseconds / 3600000);
@@ -50,7 +51,7 @@ export async function registerPings(
           );
           if (scheduledJobIndex !== -1) scheduledJobs.splice(scheduledJobIndex, 1);
         } catch (error) {
-          console.log(`Error at a scheduled job --> ${error instanceof Error ? error.stack : String(error)}`);
+          logError(error, 'Error at a scheduled job from registerPings');
         }
       });
       scheduledJobs.push(scheduledJob);

@@ -3,6 +3,7 @@
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 
 import { getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
+import { logError } from '../utils/log-error.ts';
 import type { QuoteDatabase } from '../api/quote-database.ts';
 import type { Guild } from '../guild.ts';
 import { GUILD_ID_CUTEDOG } from '../guilds.ts';
@@ -27,7 +28,7 @@ export function quoteHandler(quoteDataBase: Readonly<QuoteDatabase>) {
 
       await interaction.reply(quoteContent);
     } catch (error) {
-      console.log(`Error at quoteHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at quoteHandler');
 
       await interaction.reply({
         content: 'Something went wrong. Please try again later.',

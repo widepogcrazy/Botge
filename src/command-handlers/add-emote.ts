@@ -6,6 +6,7 @@ import { sevenTVUrlToSevenTVNotInSet, SPLITTER } from '../utils/command-handlers
 import { permitted, owner, globalAdministrator } from '../utils/command-handlers/permitted.ts';
 import { getOptionValue, getOptionValueWithoutUndefined } from '../utils/get-option-value.ts';
 import { fetchAndJson } from '../utils/fetch-and-json.ts';
+import { logError } from '../utils/log-error.ts';
 import type { AddedEmotesDatabase } from '../api/added-emotes-database.ts';
 import type { AddedEmote, SevenTVEmoteNotInSet } from '../types.ts';
 import { CDN_ENDPOINTS } from '../paths-and-endpoints.ts';
@@ -77,7 +78,7 @@ export function addEmoteHandlerSevenTVNotInSet(addedEmotesDatabase: Readonly<Add
         `Added emote ${sevenTVUrlToSevenNotInSet_.name}${name !== null ? ` with the name ${name}` : ''}.`
       );
     } catch (error) {
-      console.log(`Error at addEmoteHandlerSevenNotInSet --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at addEmoteHandlerSevenNotInSet');
 
       await defer;
       await interaction.editReply('Failed to add emote.');

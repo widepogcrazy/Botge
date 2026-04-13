@@ -2,11 +2,6 @@
 
 import { MessageFlags, type ModalSubmitInteraction } from 'discord.js';
 
-import {
-  getSevenTvApiUrlFromSevenTvEmoteSetLink,
-  getBttvApiUrlFromBroadcasterName,
-  getFfzApiUrlFromBroadcasterName
-} from '../utils/interaction-handlers/get-api-url.ts';
 import { PingForPingListMessageBuilder } from '../message-builders/ping-for-ping-list-message-builder.ts';
 import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.ts';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.ts';
@@ -23,6 +18,12 @@ import {
 import type { BroadcasterNameAndPersonalEmoteSetsDatabase } from '../api/broadcaster-name-and-personal-emote-sets-database.ts';
 import type { TwitchApi } from '../api/twitch-api.ts';
 import type { UsersDatabase } from '../api/user.js';
+import {
+  getSevenTvApiUrlFromSevenTvEmoteSetLink,
+  getBttvApiUrlFromBroadcasterName,
+  getFfzApiUrlFromBroadcasterName
+} from '../utils/interaction-handlers/get-api-url.ts';
+import { logError } from '../utils/log-error.ts';
 import {
   ASSIGN_EMOTE_SETS_MODAL_CUSTOM_ID,
   BROADCASTER_NAME_TEXT_INPUT_CUSTOM_ID,
@@ -283,7 +284,8 @@ export function modalSubmitHandler(
       if (reply === undefined) return;
       await messageBuilderInteraction.editReply(reply);
     } catch (error) {
-      console.log(`Error at modalSubmit --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at modalSubmitHandler');
+
       if (deferReply !== undefined) {
         await deferReply;
         await interaction.editReply('Something went wrong. Please try again later.');

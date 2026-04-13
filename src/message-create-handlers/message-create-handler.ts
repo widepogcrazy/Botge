@@ -5,6 +5,8 @@ import type { OmitPartialGroupDMChannel, Message } from 'discord.js';
 import type { MediaDatabase } from '../api/media-database.ts';
 import type { CachedUrl } from '../api/cached-url.ts';
 import { EMOTE_COMMAND_IDENTIFIER, emotesHandler } from '../command-handlers/emote.ts';
+import { logError } from '../utils/log-error.ts';
+import { GUILD_ID_CUTEDOG } from '../guilds.ts';
 import type { Guild } from '../guild.ts';
 import { MEDIA_COMMAND_IDENTIFIER, mediaMessageCreateHandler } from './media-message-create-handler.ts';
 
@@ -26,7 +28,7 @@ export function messageCreateHandler() {
         await mediaMessageCreateHandler(message, guild, mediaDataBase);
       }
     } catch (error) {
-      console.log(`Error at messageCreateHandler --> ${error instanceof Error ? error.stack : String(error)}`);
+      logError(error, 'Error at messageCreateHandler');
     }
   };
 }
