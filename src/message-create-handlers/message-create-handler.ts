@@ -29,7 +29,7 @@ export function messageCreateHandler(clientUserId: string | null) {
       }
 
       if (clientUserId !== null) {
-        await ollamaMessageCreateHandler(message);
+        await ollamaMessageCreateHandler(message, clientUserId);
       }
     } catch (error) {
       logError(error, 'Error at messageCreateHandler');

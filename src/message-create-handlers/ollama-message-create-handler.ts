@@ -48,7 +48,10 @@ async function retrieveContext(channelId: string, recentHistory: string): Promis
   }
 }
 
-export async function ollamaMessageCreateHandler(message: Readonly<OmitPartialGroupDMChannel<Message>>): Promise<void> {
+export async function ollamaMessageCreateHandler(
+  message: Readonly<OmitPartialGroupDMChannel<Message>>,
+  clientUserId: string
+): Promise<void> {
   if (!config.activeChatChannels.includes(message.channel.id)) return;
 
   const channelId = message.channel.id;
@@ -69,28 +72,36 @@ export async function ollamaMessageCreateHandler(message: Readonly<OmitPartialGr
   // 3. Need a few messages of context before chiming in
   if (getBufferSize(channelId) < 3) return;
 
-  // 4. Check per-channel cooldown
-  if (isOnCooldown(channelId)) return;
+  // 4. Check per-channel cooldown / direct mention
+  const direct_mention = content.includes(`<@${clientUserId}>`);
+  if (!direct_mention && isOnCooldown(channelId)) return;
   setLastReplyTime(channelId);
 
   // 5. Random gate — skip most messages to avoid being annoying
-  if (Math.random() > config.behavior.evaluationChance) return;
+  if (!direct_mention && Math.random() > config.behavior.evaluationChance) return;
 
   // 6. Score the opportunity using the recent buffer
   const recentHistory = getFormattedHistory(channelId);
   const channelName = 'name' in message.channel ? message.channel.name : channelId;
-  console.log(`🎲 Evaluating reply in #${channelName}...`);
 
-  const scoring = await scoreReplyOpportunity(recentHistory).catch((err: unknown) => {
-    console.error('❌ Scoring failed:', err instanceof Error ? err.message : String(err));
-    return null;
-  });
-  if (scoring === null) return;
+  // skip scoring for direct mention
+  let shouldReply: boolean = direct_mention;
+  if (!direct_mention) {
+    shouldReply = await (async (): Promise<boolean> => {
+      console.log(`🎲 Evaluating reply in #${channelName}...`);
+      const scoring = await scoreReplyOpportunity(recentHistory).catch((err: unknown) => {
+        console.error('❌ Scoring failed:', err instanceof Error ? err.message : String(err));
+        return null;
+      });
+      if (scoring === null) return false;
 
-  console.log(`📊 Score: ${scoring.score}/10 | Reply: ${scoring.shouldReply} | ${scoring.reason}`);
+      console.log(`📊 Score: ${scoring.score}/10 | Reply: ${scoring.shouldReply} | ${scoring.reason}`);
 
-  if (!scoring.shouldReply) return;
-  if (scoring.score < config.behavior.replyScoreThreshold) return;
+      if (!scoring.shouldReply) return false;
+      return scoring.score >= config.behavior.replyScoreThreshold;
+    })();
+  }
+  if (!shouldReply) return;
 
   // 7. Retrieve relevant past messages from vector store
   //    Use the recent chat as the semantic query to find topically relevant history
