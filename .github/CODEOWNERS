@@ -9,7 +9,7 @@
 /src/emote-matcher.ts @gentlebob @Mrewy
 /src/update-commands-docker.ts @gentlebob @Mrewy
 /src/api/ollama.ts @gentlebob @Mrewy
-/src/api/vectorStore.ts @gentlebob @Mrewy
+/src/api/vector-store.ts @gentlebob @Mrewy
 /src/api/cached-url.ts @gentlebob @Mrewy
 /src/command-handlers/emote.ts @gentlebob @Mrewy
 /src/command-handlers/steam.ts @gentlebob @Mrewy

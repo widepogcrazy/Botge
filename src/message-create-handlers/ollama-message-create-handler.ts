@@ -2,7 +2,7 @@
 
 import type { OmitPartialGroupDMChannel, Message } from 'discord.js';
 
-import { storeMessage, findSimilarWithContext } from '../api/vectorStore.ts';
+import { storeMessage, findSimilarWithContext } from '../api/vector-store.ts';
 import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
 import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
