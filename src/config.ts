@@ -1,30 +1,31 @@
 /** @format */
 
-function required(key: string): string | never {
-  const val: string | undefined = process.env[key];
-  if (val === undefined) throw new Error(`Missing required env variable: ${key}`);
-  return val;
-}
-
-function optional(key: string, defaultVal: string): string {
-  return process.env[key] ?? defaultVal;
-}
-
 export type Config = {
-  discord: { token: string };
-  bot: { name: string };
-  ollama: { baseUrl: string; model: string; embeddingModel: string };
-  chroma: { url: string };
-  behavior: {
-    replyScoreThreshold: number;
-    contextWindow: number;
-    evaluationChance: number;
-    cooldownSeconds: number;
-    ragResults: number;
-    ragWindowSize: number;
+  readonly discord: { readonly token: string };
+  readonly bot: { readonly name: string };
+  readonly ollama: { readonly baseUrl: string; readonly model: string; readonly embeddingModel: string };
+  readonly chroma: { readonly url: string };
+  readonly behavior: {
+    readonly replyScoreThreshold: number;
+    readonly contextWindow: number;
+    readonly evaluationChance: number;
+    readonly cooldownSeconds: number;
+    readonly ragResults: number;
+    readonly ragWindowSize: number;
   };
-  activeChatChannels: string[];
+  readonly activeChatChannels: readonly string[];
 };
+
+function required(key: string): string {
+  const value = process.env[key];
+
+  if (value === undefined) throw new Error(`Missing required env variable: ${key}`);
+  return value;
+}
+
+function optional(key: string, defaultValue: string): string {
+  return process.env[key] ?? defaultValue;
+}
 
 export const config: Config = {
   discord: {
@@ -52,6 +53,5 @@ export const config: Config = {
     // Messages to include before and after each semantic hit
     ragWindowSize: Number(optional('RAG_WINDOW_SIZE', '2'))
   },
-  // activeChatChannels: []
   activeChatChannels: ['251211223012474880']
 };

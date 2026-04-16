@@ -42,7 +42,7 @@ import {
   MediaMessageBuilder,
   DELETE_MEDIA_BUTTON_BASE_CUSTOM_ID,
   RENAME_MEDIA_BUTTON_BASE_CUSTOM_ID
-} from '../message-builders/media-message-builder.js';
+} from '../message-builders/media-message-builder.ts';
 import {
   QuoteMessageBuilder,
   DELETE_QUOTE_BUTTON_BASE_CUSTOM_ID,

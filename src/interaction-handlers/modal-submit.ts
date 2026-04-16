@@ -5,7 +5,7 @@ import { MessageFlags, type ModalSubmitInteraction } from 'discord.js';
 import { PingForPingListMessageBuilder } from '../message-builders/ping-for-ping-list-message-builder.ts';
 import { TwitchClipMessageBuilder } from '../message-builders/twitch-clip-message-builder.ts';
 import { EmoteMessageBuilder } from '../message-builders/emote-message-builder.ts';
-import { MediaMessageBuilder } from '../message-builders/media-message-builder.js';
+import { MediaMessageBuilder } from '../message-builders/media-message-builder.ts';
 import {
   getBaseCustomIdFromCustomId,
   getMessageBuilderTypeFromCustomId,
@@ -17,7 +17,7 @@ import {
 } from '../message-builders/base.ts';
 import type { BroadcasterNameAndPersonalEmoteSetsDatabase } from '../api/broadcaster-name-and-personal-emote-sets-database.ts';
 import type { TwitchApi } from '../api/twitch-api.ts';
-import type { UsersDatabase } from '../api/user.js';
+import type { UsersDatabase } from '../api/user.ts';
 import {
   getSevenTvApiUrlFromSevenTvEmoteSetLink,
   getBttvApiUrlFromBroadcasterName,
@@ -33,7 +33,7 @@ import {
 } from './button.ts';
 import { PersonalEmoteSets } from '../personal-emote-sets.ts';
 import type { Guild } from '../guild.ts';
-import { User } from '../user.js';
+import { User } from '../user.ts';
 
 export function modalSubmitHandler(
   twitchClipMessageBuilders: readonly Readonly<TwitchClipMessageBuilder>[],

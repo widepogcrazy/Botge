@@ -4,22 +4,22 @@
 			"path": "src/index.ts",
 			"bookmarks": [
 				{
-					"line": 85,
+					"line": 84,
 					"column": 0,
 					"label": "bot"
 				},
 				{
-					"line": 206,
+					"line": 201,
 					"column": 0,
 					"label": "functions"
 				},
 				{
-					"line": 264,
+					"line": 259,
 					"column": 0,
 					"label": "schedules"
 				},
 				{
-					"line": 295,
+					"line": 290,
 					"column": 0,
 					"label": "registerHandlers"
 				}
@@ -34,17 +34,17 @@
 					"label": "bot"
 				},
 				{
-					"line": 120,
+					"line": 119,
 					"column": 0,
 					"label": "commandHandlers"
 				},
 				{
-					"line": 181,
+					"line": 180,
 					"column": 0,
 					"label": "registerHandlers"
 				},
 				{
-					"line": 372,
+					"line": 371,
 					"column": 0,
 					"label": "functions"
 				}
@@ -444,37 +444,37 @@
 					"label": "DeepReadonly"
 				},
 				{
-					"line": 50,
+					"line": 51,
 					"column": 0,
 					"label": "emotes"
 				},
 				{
-					"line": 143,
+					"line": 144,
 					"column": 0,
 					"label": "asset"
 				},
 				{
-					"line": 162,
+					"line": 163,
 					"column": 0,
 					"label": "twitchClip"
 				},
 				{
-					"line": 180,
+					"line": 181,
 					"column": 0,
 					"label": "ping"
 				},
 				{
-					"line": 192,
+					"line": 193,
 					"column": 0,
 					"label": "media"
 				},
 				{
-					"line": 205,
+					"line": 206,
 					"column": 0,
 					"label": "messageBuilderTransformFunctionReturnTypes"
 				},
 				{
-					"line": 241,
+					"line": 242,
 					"column": 0,
 					"label": "declareModule"
 				}

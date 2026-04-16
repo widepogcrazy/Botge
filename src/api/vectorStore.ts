@@ -1,16 +1,57 @@
 /** @format */
 
-import { ChromaClient, type Collection, type GetResult, type Metadata } from 'chromadb';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { config } from '../config.ts';
-import { embed } from '../utils/embeddings.js';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
+import { ChromaClient, type Collection, type GetResult } from 'chromadb';
+
+import { DATABASE_ENDPOINTS } from '../paths-and-endpoints.ts';
+import type { ReadonlyMetaData } from '../types.ts';
+import { config } from '../config.ts';
+
+type StoreMessageParams = {
+  readonly id: string;
+  readonly author: string;
+  readonly content: string;
+  readonly channelId: string;
+  readonly timestamp: number | Readonly<Date>;
+  readonly seqNum?: number;
+};
+
+type OllamaEmbeddingsResponse = {
+  readonly embedding?: readonly number[];
+};
+
+type SeqNums = Record<string, number>;
+
+const { seqFile } = DATABASE_ENDPOINTS;
 const chromaUrl = new URL(config.chroma.url);
 const client: ChromaClient = new ChromaClient({
   ssl: chromaUrl.protocol === 'https:',
   host: chromaUrl.hostname,
   port: Number(chromaUrl.port) || (chromaUrl.protocol === 'https:' ? 443 : 80)
 });
+
+/**
+ * Generate a vector embedding for a piece of text using the local Ollama model.
+ * Returns a float array representing the text's position in semantic space.
+ */
+async function embed(text: string): Promise<readonly number[]> {
+  const { baseUrl, embeddingModel } = config.ollama;
+  const res = await fetch(`${baseUrl}/api/embeddings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: embeddingModel,
+      prompt: text
+    })
+  });
+  if (!res.ok) throw new Error(`Ollama embeddings error ${res.status}: ${await res.text()}`);
+
+  const data = (await res.json()) as OllamaEmbeddingsResponse;
+  if (!data.embedding) throw new Error('Ollama returned no embedding. Is the model pulled?');
+
+  return data.embedding;
+}
 
 // ─── Collection naming ────────────────────────────────────────────────────────
 //
@@ -26,23 +67,24 @@ const client: ChromaClient = new ChromaClient({
 // Discord history — nothing is lost.
 
 function getCollectionName(): string {
-  const model = config.ollama.embeddingModel;
   // ChromaDB rules: 3–63 chars, alphanumeric + hyphens/underscores,
   // must start and end with alphanumeric.
+  const model = config.ollama.embeddingModel;
   const safe = model
     .replace(/[^a-zA-Z0-9_-]/g, '_') // sanitize special chars
     .replace(/[_-]+$/, ''); // strip trailing separators
+
   return `messages_${safe}`.slice(0, 63);
 }
 
 // Cached collection promise — avoids race conditions on concurrent first calls
-let _collectionPromise: Promise<Collection> | null = null;
-
 async function getCollection(): Promise<Collection> {
+  let _collectionPromise: Promise<Collection> | null = null;
   _collectionPromise ??= client.getOrCreateCollection({
     name: getCollectionName(),
     metadata: { 'hnsw:space': 'cosine' } // cosine similarity for chat text
   });
+
   return _collectionPromise;
 }
 
@@ -56,56 +98,39 @@ async function getCollection(): Promise<Collection> {
 // Sequence numbers are persisted to disk so they survive restarts and stay
 // consistent with what's already stored in ChromaDB.
 
-const SEQ_FILE = '/app/data/seqNums.json';
-
-type SeqNums = Record<string, number>;
-
 function loadSeqNums(): SeqNums {
-  if (!existsSync(SEQ_FILE)) return {};
+  if (!existsSync(seqFile)) return {};
+
   try {
-    return JSON.parse(readFileSync(SEQ_FILE, 'utf8')) as SeqNums;
+    return JSON.parse(readFileSync(seqFile, 'utf8')) as SeqNums;
   } catch {
     return {};
   }
 }
 
 function saveSeqNums(seqNums: Readonly<SeqNums>): void {
-  writeFileSync(SEQ_FILE, JSON.stringify(seqNums, null, 2));
+  writeFileSync(seqFile, JSON.stringify(seqNums, null, 2));
 }
 
 // In-memory cache, synced to disk on every write
-let seqNums: SeqNums = loadSeqNums();
+const seqNums = loadSeqNums();
 
 function nextSeqNum(channelId: string): number {
   const next = (seqNums[channelId] ?? 0) + 1;
   seqNums[channelId] = next;
   saveSeqNums(seqNums);
+
   return next;
 }
-
-// ─── Public API ───────────────────────────────────────────────────────────────
-
-type StoreMessageParams = {
-  id: string;
-  author: string;
-  content: string;
-  channelId: string;
-  timestamp: Date | number;
-  seqNum?: number;
-};
 
 /**
  * Store a message. Uses upsert so re-indexing is safe and idempotent.
  * Assigns a per-channel sequence number used for contextual window expansion.
  */
-export async function storeMessage({
-  id,
-  author,
-  content,
-  channelId,
-  timestamp,
-  seqNum
-}: Readonly<StoreMessageParams>): Promise<void> {
+export async function storeMessage(storeMessageParams: StoreMessageParams): Promise<void> {
+  const { id, author, content, channelId, seqNum } = storeMessageParams;
+  const timestamp_: number | Date = storeMessageParams.timestamp;
+
   const collection = await getCollection();
   const text = `${author}: ${content}`;
   const vector = await embed(text);
@@ -113,14 +138,14 @@ export async function storeMessage({
 
   await collection.upsert({
     ids: [id],
-    embeddings: [vector],
+    embeddings: [[...vector]],
     documents: [text],
     metadatas: [
       {
         author,
         channelId,
         seqNum: seq,
-        timestamp: timestamp instanceof Date ? timestamp.getTime() : timestamp
+        timestamp: timestamp_ instanceof Date ? timestamp_.getTime() : timestamp_
       }
     ]
   });
@@ -142,7 +167,7 @@ export async function findSimilarWithContext(
   channelId: string,
   nResults = 5,
   windowSize = 2
-): Promise<string[]> {
+): Promise<readonly string[]> {
   const collection = await getCollection();
 
   const total = await collection.count();
@@ -151,7 +176,7 @@ export async function findSimilarWithContext(
   // 1. Semantic search — find the most relevant individual messages
   const queryVector = await embed(queryText);
   const hits = await collection.query({
-    queryEmbeddings: [queryVector],
+    queryEmbeddings: [[...queryVector]],
     nResults: Math.min(nResults, total),
     where: { channelId }
   });
@@ -162,7 +187,7 @@ export async function findSimilarWithContext(
   // 2. Expand each hit into a [seqNum-windowSize … seqNum+windowSize] range.
   //    Merge overlapping ranges so nearby hits don't produce duplicate messages.
   const ranges = hitMetadatas
-    .map((m: Readonly<Metadata> | null) => ({
+    .map((m: ReadonlyMetaData | null) => ({
       lo: (m?.['seqNum'] as number) - windowSize,
       hi: (m?.['seqNum'] as number) + windowSize
     }))
@@ -171,6 +196,7 @@ export async function findSimilarWithContext(
   const merged: { lo: number; hi: number }[] = [];
   for (const range of ranges) {
     const prev = merged.at(-1);
+
     if (prev !== undefined && range.lo <= prev.hi + 1) {
       // Overlapping or adjacent — extend the previous range
       prev.hi = Math.max(prev.hi, range.hi);
@@ -190,10 +216,9 @@ export async function findSimilarWithContext(
     })
   );
 
-  const windowResults = await Promise.all(windowFetches);
-
   // 4. Each range becomes one context block: messages sorted by seqNum,
   //    formatted as "Author: message" lines joined with newlines.
+  const windowResults = await Promise.all(windowFetches);
   const blocks = windowResults.map((result: Readonly<GetResult>) => {
     const pairs = result.documents
       .map((doc: string | null, i: number) => ({
@@ -209,40 +234,4 @@ export async function findSimilarWithContext(
   });
 
   return blocks.filter(Boolean);
-}
-
-/**
- * Drop and recreate the current collection.
- * Use this when upgrading to a new embedding model:
- *   node backfill.js reset \{channelId\}
- */
-export async function resetCollection(): Promise<void> {
-  const name = getCollectionName();
-  try {
-    await client.deleteCollection({ name });
-    console.log(`🗑️  Deleted collection: ${name}`);
-  } catch {
-    // Collection might not exist yet — that's fine
-  }
-  _collectionPromise = null;
-  seqNums = {}; // reset in-memory sequence numbers
-  saveSeqNums(seqNums);
-  await getCollection(); // recreate fresh
-  console.log(`✅ Created new collection: ${name}`);
-}
-
-/**
- * List all message collections that exist in ChromaDB.
- * Useful to audit what model versions have been indexed.
- */
-export async function listCollections(): Promise<Awaited<ReturnType<ChromaClient['listCollections']>>> {
-  const all = await client.listCollections();
-  return all.filter((c: Readonly<Collection>) => c.name.startsWith('messages_'));
-}
-
-/**
- * The name of the active collection (for logging/debugging).
- */
-export function activeCollectionName(): string {
-  return getCollectionName();
 }

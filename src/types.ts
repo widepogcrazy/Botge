@@ -2,11 +2,9 @@
 
 import type { DeepReadonly } from 'ts-essentials';
 import type OpenAI from 'openai';
-import type { GoogleGenAI } from '@google/genai';
 import type { Hit, RecordAny } from 'meilisearch';
 import type { Translator } from 'deepl-node';
-
-import type { Platform } from './enums.ts';
+import type { Metadata } from 'chromadb';
 
 import type {
   SlashCommandOptionsOnlyBuilder,
@@ -24,8 +22,9 @@ import type {
   Attachment
 } from 'discord.js';
 
+import type { Platform } from './enums.ts';
+
 export type ReadonlyOpenAI = DeepReadonly<OpenAI>;
-export type ReadonlyGoogleGenAI = DeepReadonly<GoogleGenAI>;
 export type ReadonlyTranslator = DeepReadonly<Translator>;
 export type ReadonlyHit = DeepReadonly<Hit>;
 export type ReadonlyRecordAny = DeepReadonly<RecordAny>;
@@ -47,6 +46,8 @@ export type ReadonlyEmbed = DeepReadonly<Embed>;
 export type ReadonlyAttachment = DeepReadonly<Attachment>;
 export type OpenAIResponseInput = OpenAI.Responses.ResponseInput;
 export type OpenAIResponseInputImage = OpenAI.Responses.ResponseInputImage;
+
+export type ReadonlyMetaData = DeepReadonly<Metadata>;
 
 export type SevenTVEmoteFile = {
   readonly name: string;

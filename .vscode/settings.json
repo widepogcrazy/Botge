@@ -30,11 +30,11 @@
   "js/ts.implicitProjectConfig.module": "NodeNext",
   "js/ts.implicitProjectConfig.target": "ESNext",
 
-  "typescript.check.npmIsInstalled": true,
-  "typescript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.preferTypeOnlyAutoImports": true,
-  "typescript.preferences.quoteStyle": "single",
-  "typescript.format.semicolons": "insert",
+  "js/ts.tsserver.checkNpmIsInstalled": true,
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "js/ts.preferences.preferTypeOnlyAutoImports": true,
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.format.semicolons": "insert",
 
   "docker.lsp.experimental.vulnerabilityScanning": true,
   "docker.lsp.experimental.scout.notPinnedDigest": false,
@@ -116,6 +116,10 @@
     "Vitest",
     "axios",
 
+    "nomic",
+    "mxbai",
+    "hnsw",
+
     // Specific
     "FrankerFaceZ",
     "BetterTTV",
@@ -126,6 +130,9 @@
     "DeepL",
     "GenAI",
     "BTTV",
+    "Ollama",
+    "ARPG",
+    "chromadb",
 
     // Names
     "Botge",
@@ -133,7 +140,7 @@
     "gentlebob",
     "widepogcrazy",
     "TimotronPrime",
-    "santirack",
+    "ravenuy",
 
     "CuteDog",
     "zackrawrr",
@@ -144,6 +151,8 @@
     "cooldown",
     "analyse",
     "unforgeable",
+    "metadatas",
+    "nums",
 
     // DevContainer
     "moby",

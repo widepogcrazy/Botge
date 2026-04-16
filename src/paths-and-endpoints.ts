@@ -16,6 +16,7 @@ export const DATABASE_ENDPOINTS: {
   readonly users: 'data/users.sqlite';
   readonly media: 'data/media.sqlite';
   readonly quote: 'data/quote.sqlite';
+  readonly seqFile: 'data/seqNums.json';
 } = {
   addedEmotes: `${DATABASE_DIR}/addedEmotes.sqlite`,
   pings: `${DATABASE_DIR}/pings.sqlite`,
@@ -23,7 +24,8 @@ export const DATABASE_ENDPOINTS: {
   broadcasterNameAndPersonalEmoteSets: `${DATABASE_DIR}/broadcasterNameAndPersonalEmoteSets.sqlite`,
   users: `${DATABASE_DIR}/users.sqlite`,
   media: `${DATABASE_DIR}/media.sqlite`,
-  quote: `${DATABASE_DIR}/quote.sqlite`
+  quote: `${DATABASE_DIR}/quote.sqlite`,
+  seqFile: `${DATABASE_DIR}/seqNums.json`
 } as const;
 
 export const CDN_ENDPOINTS = {

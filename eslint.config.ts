@@ -23,7 +23,18 @@ const globalConfig: readonly Config[] = defineConfig([
     }
   },
   globalIgnores(
-    ['.github/', '.husky/_/', 'assets/', 'data/', 'dist/', 'docs/', 'meili_data/', 'nginx/cache/', 'tmp/'],
+    [
+      '.github/',
+      '.husky/_/',
+      'assets/',
+      'data/',
+      'dist/',
+      'docs/',
+      'chroma-data',
+      'meili-data/',
+      'nginx/cache/',
+      'tmp/'
+    ],
     'globalIgnores'
   )
 ]);

@@ -1,6 +1,7 @@
 /** @format */
 
 import { describe, expect, test } from 'vitest';
+
 import type { ChatInputCommandInteraction } from 'discord.js';
 
 import { getAllSubstrings } from 'src/command-handlers/shortest-unique-substrings.ts';

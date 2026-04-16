@@ -17,8 +17,6 @@ We do not share any personal data with third parties expect the below mentioned.
 By using the /chatgpt command you agree to OpenAI's Privacy Policy. [OpenAI Privacy Policy](https://openai.com/policies/privacy-policy)
 By using the /chatgpt command you also agree to sending your Discord user ID (not username) to OpenAI for detecting abuse.
 
-By using the /gemini command you agree to Google's Terms. [Gemini Terms](https://ai.google.dev/gemini-api/terms)
-
 ## Changes to This Policy
 
 We may update our Privacy Policy from time to time. Any changes will be posted on this page, and we encourage you to review our Privacy Policy periodically.

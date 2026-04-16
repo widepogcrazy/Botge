@@ -17,7 +17,6 @@ import { scheduleJob } from 'node-schedule';
 import { join } from 'node:path';
 import { ensureDir, type Dirent } from 'fs-extra';
 
-import { GoogleGenAI } from '@google/genai';
 import { Meilisearch } from 'meilisearch';
 import { Translator } from 'deepl-node';
 import OpenAI from 'openai';
@@ -29,7 +28,7 @@ import { BroadcasterNameAndPersonalEmoteSetsDatabase } from './api/broadcaster-n
 import { PermittedRoleIdsDatabase } from './api/permitted-role-ids-database.ts';
 import { AddedEmotesDatabase } from './api/added-emotes-database.ts';
 import { MediaDatabase } from './api/media-database.ts';
-import { QuoteDatabase } from './api/quote-database.js';
+import { QuoteDatabase } from './api/quote-database.ts';
 import { PingsDatabase } from './api/ping-database.ts';
 import { CachedUrl } from './api/cached-url.ts';
 import { UsersDatabase } from './api/user.ts';
@@ -45,7 +44,7 @@ import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.ts';
 import type { PersonalEmoteSets } from './personal-emote-sets.ts';
 import { updateCommands } from './update-commands-docker.ts';
 import type { Guild } from './guild.ts';
-import { User } from './user.js';
+import { User } from './user.ts';
 import { Bot } from './bot.ts';
 
 /**
@@ -93,8 +92,7 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
     REDDIT_SECRET,
     MEILISEARCH_HOST,
     MEILI_MASTER_KEY,
-    LOCAL_CACHE_BASE,
-    GEMINI_API_KEY
+    LOCAL_CACHE_BASE
   } = process.env;
 
   const client: Client = new Client({
@@ -103,8 +101,6 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
 
   const openai: ReadonlyOpenAI | undefined =
     OPENAI_API_KEY !== undefined ? new OpenAI({ apiKey: OPENAI_API_KEY }) : undefined;
-
-  const googleGenAI = GEMINI_API_KEY !== undefined ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : undefined;
 
   const translator: ReadonlyTranslator | undefined =
     DEEPL_API_KEY !== undefined ? new Translator(DEEPL_API_KEY) : undefined;
@@ -183,7 +179,6 @@ const bot = await (async (): Promise<Readonly<Bot>> => {
   return new Bot(
     client,
     openai,
-    googleGenAI,
     translator,
     await twitchApi,
     await redditApi,

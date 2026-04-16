@@ -25,7 +25,7 @@
     "gentlebob",
     "widepogcrazy",
     "TimotronPrime",
-    "santirack"
+    "ravenuy"
   ],
   "type": "module",
   "main": "dist/index.js",
@@ -43,11 +43,10 @@
   "dependencies": {
     "@chroma-core/default-embed": "0.1.9",
     "@discordjs/voice": "^0.19.2",
-    "@google/genai": "1.49.0",
     "@twemoji/api": "^17.0.2",
     "chromadb": "3.4.3",
     "deepl-node": "^1.26.0",
-    "discord.js": "^14.26.2",
+    "discord.js": "^14.26.3",
     "fs-extra": "^11.3.4",
     "meilisearch": "^0.57.0",
     "node-fetch": "^3.3.2",
@@ -66,11 +65,11 @@
     "eslint-plugin-tsdoc": "0.5.2",
     "husky": "^9.1.7",
     "markdownlint": "0.40.0",
-    "prettier": "^3.8.2",
+    "prettier": "^3.8.3",
     "prettier-plugin-sh": "0.18.1",
     "ts-essentials": "^10.1.1",
     "typescript": "^6.0.2",
-    "typescript-eslint": "8.58.1",
+    "typescript-eslint": "8.58.2",
     "vitest": "^4.1.4"
   },
   "engines": {

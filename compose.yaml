@@ -17,7 +17,7 @@ services:
       retries: 3
       timeout: 5s
     volumes:
-      - ./meili_data:/meili_data
+      - ./meili-data:/meili-data
     env_file:
       - .env
     environment:
@@ -27,14 +27,12 @@ services:
 
   chromadb:
     image: chromadb/chroma:latest
+    restart: unless-stopped
     volumes:
       - ./chroma-data:/chroma/chroma # persists your vectors to disk
-    # ports:
-    #   - '8000:8000'
     environment:
       - IS_PERSISTENT=TRUE
       - ANONYMIZED_TELEMETRY=FALSE
-    restart: unless-stopped
 
   botge:
     depends_on:

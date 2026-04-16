@@ -23,7 +23,7 @@
 
 Botge is a [Discord](https://discord.com) bot that provides functionalities inspired by the [Twitch](https://www.twitch.tv) chat experience to your server.  
 It offers seamless emote handling, Twitch clip searching, and other powerful features that enhance Discord interactions.  
-With built-in [DeepL Translation](https://www.deepl.com/en/products/translator), integration with [OpenAI's](https://openai.com) GPT models and [Google's Gemini](https://gemini.google.com) models, Botge makes conversations more dynamic, engaging, and intelligent.
+With built-in [DeepL Translation](https://www.deepl.com/en/products/translator), integration with [OpenAI's](https://openai.com) GPT models, Botge makes conversations more dynamic, engaging, and intelligent.
 
 ## Features
 
@@ -34,7 +34,6 @@ With built-in [DeepL Translation](https://www.deepl.com/en/products/translator),
 - **Add Emote**: Add an emote to the emote pool.
 - **Shortest unique substring**: Display the shortest unique substring for the specified emote(s) compared to other emotes in the emote pool.
 - **ChatGPT Integration**: Interact with OpenAI's GPT models for generating responses.
-- **Gemini Integration**: Interact with Google's Gemini models for generating responses.
 - **Translation**: Translate text to English using DeepL.
 - **Transient Messages**: Send messages that auto-delete after a specified duration.
 - **Find the emoji**: Generates an x by x grid where each element is a random, non-animated server emoji hidden in a spoiler tag, with only a single occurrence of the specified emoji.

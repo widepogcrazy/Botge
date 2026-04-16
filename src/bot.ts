@@ -44,7 +44,7 @@ import type { PingForPingMeMessageBuilder } from './message-builders/ping-for-pi
 import type { MediaMessageBuilder } from './message-builders/media-message-builder.ts';
 import type { QuoteMessageBuilder } from './message-builders/quote-message-builder.ts';
 import { messageCreateHandler } from './message-create-handlers/message-create-handler.ts';
-import type { ReadonlyGoogleGenAI, ReadonlyOpenAI, ReadonlyTranslator } from './types.ts';
+import type { ReadonlyOpenAI, ReadonlyTranslator } from './types.ts';
 import type { TwitchClipsMeiliSearch } from './twitch-clips-meili-search.ts';
 import { GENERAL_CHANNEL_ID_CUTEDOG } from './guilds.ts';
 import { SLASH_COMMAND_NAMES } from './commands.ts';
@@ -93,7 +93,6 @@ export class Bot {
   public constructor(
     client: Client,
     openai: ReadonlyOpenAI | undefined,
-    googleGenAI: ReadonlyGoogleGenAI | undefined,
     translator: ReadonlyTranslator | undefined,
     twitchApi: Readonly<TwitchApi> | undefined,
     redditApi: Readonly<RedditApi> | undefined,

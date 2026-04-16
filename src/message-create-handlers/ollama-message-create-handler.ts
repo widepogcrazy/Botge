@@ -1,26 +1,19 @@
 /** @format */
 
 import type { OmitPartialGroupDMChannel, Message } from 'discord.js';
-import { config } from '../config.js';
-import { addMessage, getFormattedHistory, getBufferSize } from '../utils/messageBuffer.js';
-import { scoreReplyOpportunity, generateReply } from '../api/ollama.js';
-import { storeMessage, findSimilarWithContext } from '../api/vectorStore.js';
 
+import { storeMessage, findSimilarWithContext } from '../api/vectorStore.ts';
+import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
+import { logError } from '../utils/log-error.ts';
+import { config } from '../config.ts';
+
+type BufferEntry = { readonly author: string; readonly content: string; readonly timestamp: string };
+
+// Map of channelId → array of message objects
+const buffers = new Map<string, BufferEntry[]>();
 const lastReplyTime = new Map<string, number>();
 
-function isOnCooldown(channelId: string): boolean {
-  const last = lastReplyTime.get(channelId) ?? 0;
-  return (Date.now() - last) / 1000 < config.behavior.cooldownSeconds;
-}
-
-function setLastReplyTime(channelId: string): void {
-  lastReplyTime.set(channelId, Date.now());
-}
-
-async function persistToVectorStore(
-  message: Readonly<OmitPartialGroupDMChannel<Message>>,
-  author: string
-): Promise<void> {
+async function persistToVectorStore(message: OmitPartialGroupDMChannel<Message>, author: string): Promise<void> {
   try {
     await storeMessage({
       id: message.id,
@@ -29,45 +22,77 @@ async function persistToVectorStore(
       channelId: message.channel.id,
       timestamp: message.createdAt
     });
-  } catch (err) {
-    console.warn('⚠️  Vector store write failed:', err instanceof Error ? err.message : String(err));
+  } catch (error) {
+    logError(error, 'Vector store write failed');
   }
 }
 
-async function retrieveContext(channelId: string, recentHistory: string): Promise<string[]> {
+async function retrieveContext(channelId: string, recentHistory: string): Promise<readonly string[]> {
   try {
-    return await findSimilarWithContext(
-      recentHistory,
-      channelId,
-      config.behavior.ragResults,
-      config.behavior.ragWindowSize
-    );
-  } catch (err) {
-    console.warn('⚠️  Vector store query failed:', err instanceof Error ? err.message : String(err));
+    const { ragResults, ragWindowSize } = config.behavior;
+
+    return await findSimilarWithContext(recentHistory, channelId, ragResults, ragWindowSize);
+  } catch (error) {
+    logError(error, 'Vector store query failed');
     return [];
   }
 }
 
+/**
+ * Format a channel's chat history as a readable string for the prompt.
+ */
+function getFormattedHistory(channelId: string): string {
+  const buffer = buffers.get(channelId) ?? [];
+
+  return buffer.map((msg: BufferEntry) => `${msg.author}: ${msg.content}`).join('\n');
+}
+
+/**
+ * Add a message to a channel's rolling buffer.
+ */
+function addMessage(channelId: string, authorName: string, content: string): void {
+  const buffer = buffers.get(channelId) ?? [];
+
+  buffer.push({ author: authorName, content, timestamp: new Date().toISOString() });
+
+  const { contextWindow } = config.behavior;
+
+  if (buffer.length > contextWindow) buffer.splice(0, buffer.length - contextWindow);
+  buffers.set(channelId, buffer);
+}
+
+/**
+ * How many messages are buffered for a channel.
+ */
+function getBufferSize(channelId: string): number {
+  return buffers.get(channelId)?.length ?? 0;
+}
+function isOnCooldown(channelId: string): boolean {
+  const last = lastReplyTime.get(channelId) ?? 0;
+  return (Date.now() - last) / 1000 < config.behavior.cooldownSeconds;
+}
+function setLastReplyTime(channelId: string): void {
+  lastReplyTime.set(channelId, Date.now());
+}
+
 export async function ollamaMessageCreateHandler(
-  message: Readonly<OmitPartialGroupDMChannel<Message>>,
+  message: OmitPartialGroupDMChannel<Message>,
   clientUserId: string
 ): Promise<void> {
   if (!config.activeChatChannels.includes(message.channel.id)) return;
 
   const channelId = message.channel.id;
-  const author = message.member?.displayName ?? message.author.username;
+  const authorName = message.author.displayName;
   const content = message.content.trim();
-
-  if (!content) return;
 
   // console.log('got message: ' + channelId + ' ' + content);
 
   // 1. Add to in-memory rolling buffer (fast, synchronous)
-  addMessage(channelId, author, content);
+  addMessage(channelId, authorName, content);
 
   // 2. Persist to vector store in the background (async, non-blocking)
   //    This ensures all messages are indexed even when the bot doesn't reply
-  void persistToVectorStore(message, author);
+  void persistToVectorStore(message, authorName);
 
   // 3. Need a few messages of context before chiming in
   if (getBufferSize(channelId) < 3) return;
@@ -83,7 +108,6 @@ export async function ollamaMessageCreateHandler(
   // 6. Score the opportunity using the recent buffer
   const recentHistory = getFormattedHistory(channelId);
   const channelName = 'name' in message.channel ? message.channel.name : channelId;
-
   // skip scoring for direct mention
   let shouldReply: boolean = direct_mention;
   if (!direct_mention) {
@@ -114,7 +138,6 @@ export async function ollamaMessageCreateHandler(
   //    sendTyping() expires after 10s, so we pulse it every 8s until the
   //    model finishes. This way the user sees "Alex is typing..." the whole
   //    time without any extra wait after the reply is ready.
-  let reply: string | undefined = undefined;
   let typingTimer: ReturnType<typeof setInterval> | undefined = undefined;
 
   async function startTyping(): Promise<void> {
@@ -136,17 +159,18 @@ export async function ollamaMessageCreateHandler(
     clearInterval(typingTimer);
   }
 
+  let reply: string | undefined = undefined;
   try {
     const [, generatedReply] = await Promise.all([startTyping(), generateReply(recentHistory, retrievedContext)]);
     reply = generatedReply;
-  } catch (err) {
-    console.error('❌ Reply generation failed:', err instanceof Error ? err.message : String(err));
+  } catch (error) {
+    logError(error, 'Reply generation failed:');
+
     stopTyping();
     return;
   }
 
   stopTyping();
-
   if (!reply) return;
 
   // 9. Send the message and persist it too
@@ -167,7 +191,7 @@ export async function ollamaMessageCreateHandler(
     });
 
     console.log(`✅ Sent: "${reply}"`);
-  } catch (err) {
-    console.error('❌ Failed to send:', err instanceof Error ? err.message : String(err));
+  } catch (error) {
+    logError(error, 'Failed to send');
   }
 }
