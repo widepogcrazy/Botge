@@ -74,22 +74,22 @@
 			"path": "src/command-handlers/emote.ts",
 			"bookmarks": [
 				{
-					"line": 39,
+					"line": 40,
 					"column": 0,
 					"label": "horizontalStackElements"
 				},
 				{
-					"line": 145,
+					"line": 146,
 					"column": 0,
 					"label": "emoteHandler"
 				},
 				{
-					"line": 184,
+					"line": 185,
 					"column": 0,
 					"label": "emoteListHandler"
 				},
 				{
-					"line": 227,
+					"line": 228,
 					"column": 0,
 					"label": "emotesHandler"
 				}

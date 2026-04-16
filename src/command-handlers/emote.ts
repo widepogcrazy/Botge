@@ -22,6 +22,7 @@ import { GUILD_ID_CUTEDOG } from '../guilds.ts';
 import type { Guild } from '../guild.ts';
 
 export const EMOTE_COMMAND_IDENTIFIER = '+' as const;
+export const EMOTE_SIZE_IDENTIFIER = ':' as const;
 
 const DEFAULT_FPS = 25 as const;
 const MAXWIDTH = 192 as const;
@@ -243,20 +244,58 @@ export function emotesHandler(cachedUrl: Readonly<CachedUrl>) {
     const outdir = ((): string => {
       if (interaction !== undefined) return join(TMP_DIR, interaction.id);
       else if (message !== undefined) return join(TMP_DIR, message.id);
+
       throw new Error('Interaction and Message undefined.');
     })();
 
     try {
       const emoteNotFoundReply = interaction?.guildId === GUILD_ID_CUTEDOG ? 'jij' : 'emote not found';
 
+      const sizeRegExp = new RegExp(`\\s*${EMOTE_SIZE_IDENTIFIER}\\s*[1-4]`, 'g');
+      const fullSizeRegExp = new RegExp(`\\s*${EMOTE_SIZE_IDENTIFIER}\\s*fullSize`, 'gi');
+      const mentionRegExp = /\s*<@\d{18,19}>/g;
+
       const emotes = ((): readonly string[] => {
-        if (interaction !== undefined)
+        if (interaction !== undefined) {
           return getOptionValueWithoutUndefined<string>(interaction, 'emotes').split(/\s+/);
-        else if (message !== undefined) return message.content.slice(EMOTE_COMMAND_IDENTIFIER.length).split(/\s+/);
+        } else if (message !== undefined) {
+          const emotes_: readonly string[] = message.content
+            .trim()
+            .replaceAll(sizeRegExp, '')
+            .replaceAll(fullSizeRegExp, '')
+            .replaceAll(mentionRegExp, '')
+            .slice(EMOTE_COMMAND_IDENTIFIER.length)
+            .split(/\s+/);
+
+          return emotes_;
+        }
+
         throw new Error('Interaction and Message undefined.');
       })();
-      const size = interaction !== undefined ? getOptionValue(interaction, 'size', Number) : undefined;
-      const fullSize = interaction !== undefined ? (getOptionValue(interaction, 'fullsize', Boolean) ?? false) : false;
+      const size = ((): number | undefined => {
+        if (interaction !== undefined) {
+          return getOptionValue(interaction, 'size', Number);
+        } else if (message !== undefined) {
+          const message_ = message.content.trim().replaceAll(fullSizeRegExp, '').replaceAll(mentionRegExp, '');
+          const exec_ = sizeRegExp.exec(message_);
+
+          if (exec_ === null) return undefined;
+          return Number(exec_[0].trim().replace(EMOTE_SIZE_IDENTIFIER, ''));
+        }
+
+        return undefined;
+      })();
+      const fullSize = ((): boolean => {
+        if (interaction !== undefined) {
+          return getOptionValue(interaction, 'fullsize', Boolean) ?? false;
+        } else if (message !== undefined) {
+          if (size !== undefined && size === 4) return true;
+
+          return fullSizeRegExp.test(message.content.trim());
+        }
+
+        return false;
+      })();
       const stretch = interaction !== undefined ? (getOptionValue(interaction, 'stretch', Boolean) ?? false) : false;
 
       if (emotes.length === 1) {
