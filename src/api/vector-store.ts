@@ -185,7 +185,9 @@ export async function findSimilarWithContext(
   const hits = await collection.query({
     queryEmbeddings: [[...queryVector]],
     nResults: Math.min(nResults, total),
-    where: { channelId }
+    where: {
+      $and: [{ channelId: { $eq: channelId } }, { author: { $ne: config.bot.name } }]
+    }
   });
 
   const [hitMetadatas] = hits.metadatas;
