@@ -8,7 +8,8 @@ const viteUserConfig: ViteUserConfig = defineConfig({
   },
   test: {
     name: { label: 'Testge', color: 'cyan' },
-    logHeapUsage: true
+    logHeapUsage: true,
+    setupFiles: ['./tests/setup.ts']
   }
 });
 

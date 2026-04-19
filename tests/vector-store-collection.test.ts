@@ -2,9 +2,6 @@
 
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
-// config.ts requires DISCORD_TOKEN at module load; stub it so vector-store can import.
-process.env.DISCORD_TOKEN ??= 'test-token';
-
 // We need to control what ChromaClient.getOrCreateCollection does to assert caching.
 vi.mock('chromadb', () => {
   const getOrCreateCollection = vi.fn().mockResolvedValue({ id: 'test-collection' });
