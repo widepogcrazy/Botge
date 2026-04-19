@@ -8,6 +8,7 @@ import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
 import { isOnCooldown, setLastReplyTime } from './ollama-cooldown.ts';
 import { shouldReplyBasedOnScore } from './ollama-gate.ts';
+import { narrowRagQuery } from './ollama-rag-query.ts';
 
 type BufferEntry = { readonly author: string; readonly content: string; readonly timestamp: string };
 
@@ -121,7 +122,7 @@ export async function ollamaMessageCreateHandler(
 
   // 7. Retrieve relevant past messages from vector store
   //    Use the recent chat as the semantic query to find topically relevant history
-  const retrievedContext = await retrieveContext(channelId, recentHistory);
+  const retrievedContext = await retrieveContext(channelId, narrowRagQuery(recentHistory));
   // if (retrievedContext.length > 0) {
   console.log(`🔍 Retrieved ${retrievedContext.length} relevant past messages`);
   // }
