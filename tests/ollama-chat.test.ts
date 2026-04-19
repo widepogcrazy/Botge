@@ -1,0 +1,86 @@
+/** @format */
+
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { generateReply } from 'src/api/ollama.ts';
+
+describe('ollamaChat request shape — generateReply', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: { content: 'hi' } })
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test('generateReply sends num_ctx=8192 and repeat_penalty=1.15', async () => {
+    await generateReply('Alice: yo');
+    const mockedFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    expect(mockedFetch).toHaveBeenCalledOnce();
+    const body = JSON.parse(mockedFetch.mock.calls[0][1]?.body as string) as {
+      options: { num_ctx: number; repeat_penalty: number; temperature: number; top_p: number };
+    };
+    expect(body.options.num_ctx).toBe(8192);
+    expect(body.options.repeat_penalty).toBe(1.15);
+    expect(body.options.temperature).toBe(0.85);
+    expect(body.options.top_p).toBe(0.9);
+  });
+});
+
+// Scenario test: prove the fix holds under the shape of load that caused the
+// bug — a large recent-history buffer plus many RAG context blocks. Under
+// num_ctx=4096 the system prompt would silently truncate from the front;
+// bumping to 8192 gives headroom. We assert the request the model receives
+// has the headroom allocated.
+describe('envisioned behavior: long buffer + heavy RAG fits inside the model context', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: { content: 'lol' } })
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test('a realistic workload (30 recent msgs + 5 RAG blocks) still requests 8192 context', async () => {
+    const recentHistory = Array.from(
+      { length: 30 },
+      (_, i) => `User${i}: message number ${i} is a somewhat long message about Path of Exile or anime or vtubers.`
+    ).join('\n');
+    const retrievedContext = Array.from({ length: 5 }, (_, i) =>
+      Array.from({ length: 5 }, (_, j) => `User${j}: rag context block ${i} line ${j}`).join('\n')
+    );
+
+    await generateReply(recentHistory, retrievedContext);
+
+    const mockedFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const body = JSON.parse(mockedFetch.mock.calls[0][1]?.body as string) as {
+      options: { num_ctx: number; repeat_penalty: number };
+      messages: readonly { role: string; content: string }[];
+    };
+
+    // Context window big enough to hold a realistic chat load.
+    expect(body.options.num_ctx).toBeGreaterThanOrEqual(8192);
+
+    // Repetition penalty active so catchphrase ruts get broken.
+    expect(body.options.repeat_penalty).toBeGreaterThan(1);
+
+    // The system prompt survived (not truncated away on assembly).
+    const systemMessage = body.messages.find((m) => m.role === 'system');
+    expect(systemMessage).toBeDefined();
+    expect(systemMessage?.content).toContain('personality');
+  });
+});

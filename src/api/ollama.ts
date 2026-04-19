@@ -31,8 +31,9 @@ async function ollamaChat(systemPrompt: string, userPrompt: string): Promise<str
       stream: false,
       options: {
         temperature: 0.85,
-        num_ctx: 4096,
-        top_p: 0.9
+        num_ctx: 8192,
+        top_p: 0.9,
+        repeat_penalty: 1.15
       },
       messages: [
         { role: 'system', content: systemPrompt },
