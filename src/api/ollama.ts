@@ -49,15 +49,11 @@ async function ollamaChat(
 
   const data = (await response.json()) as OllamaChatResponse;
 
-  console.log(
-    'systemPrompt: ' +
-      systemPrompt +
-      '\nuserPrompt: ' +
-      userPrompt +
-      '\nResponse' +
-      (data.message?.content?.trim() ?? '')
-  );
-  return data.message?.content?.trim() ?? '';
+  const reply = data.message?.content?.trim() ?? '';
+  if (process.env['DEBUG_OLLAMA']) {
+    console.log('systemPrompt: ' + systemPrompt + '\nuserPrompt: ' + userPrompt + '\nResponse: ' + reply);
+  }
+  return reply;
 }
 
 /**
