@@ -1,16 +1,29 @@
 /** @format */
 
+type NarrowOptions = {
+  readonly excludeAuthor?: string;
+  readonly limit?: number;
+};
+
+const DEFAULT_LIMIT = 6;
+
 /**
- * Returns only the last 3 lines of the formatted chat history, so the RAG
- * query vector reflects the *current* moment rather than an averaged blur
- * of the whole 30-message buffer.
+ * Narrow a formatted chat history down to the last `limit` lines for use as a
+ * RAG query. Optionally filters out lines authored by `excludeAuthor` (useful
+ * for excluding the bot's own past replies so the query reflects only what
+ * the *humans* just said — avoids self-referential embedding).
  *
- * If the input has 3 or fewer lines, returns it unchanged.
+ * Lines are formatted as `${author}: ${content}`. A line is considered
+ * authored by `excludeAuthor` if it starts with `${excludeAuthor}:`.
+ *
+ * If the filtered result has `limit` or fewer lines, returns all of them.
  * Empty input returns empty string.
  */
-export function narrowRagQuery(recentHistory: string): string {
+export function narrowRagQuery(recentHistory: string, options: NarrowOptions = {}): string {
   if (recentHistory === '') return '';
+  const { excludeAuthor, limit = DEFAULT_LIMIT } = options;
   const lines = recentHistory.split('\n');
-  if (lines.length <= 3) return recentHistory;
-  return lines.slice(-3).join('\n');
+  const filtered = excludeAuthor !== undefined ? lines.filter((line) => !line.startsWith(`${excludeAuthor}:`)) : lines;
+  if (filtered.length <= limit) return filtered.join('\n');
+  return filtered.slice(-limit).join('\n');
 }

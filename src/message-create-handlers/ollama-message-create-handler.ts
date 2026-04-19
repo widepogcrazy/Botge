@@ -124,7 +124,10 @@ export async function ollamaMessageCreateHandler(
 
   // 7. Retrieve relevant past messages from vector store
   //    Use the recent chat as the semantic query to find topically relevant history
-  const retrievedContext = await retrieveContext(channelId, narrowRagQuery(recentHistory));
+  const retrievedContext = await retrieveContext(
+    channelId,
+    narrowRagQuery(recentHistory, { excludeAuthor: config.bot.name, limit: 6 })
+  );
   // if (retrievedContext.length > 0) {
   console.log(`🔍 Retrieved ${retrievedContext.length} relevant past messages`);
   // }
