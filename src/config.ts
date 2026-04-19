@@ -36,7 +36,7 @@ export const config: Config = {
   },
   ollama: {
     baseUrl: optional('OLLAMA_BASE_URL', 'http://localhost:11434'),
-    model: optional('OLLAMA_MODEL', 'gemma4:26b'),
+    model: optional('OLLAMA_MODEL', 'gemma3:27b'),
     // Embedding model is versioned separately from the chat model.
     // Changing this requires re-running: node backfill.js reset <channelId>
     embeddingModel: optional('EMBEDDING_MODEL', 'nomic-embed-text')
