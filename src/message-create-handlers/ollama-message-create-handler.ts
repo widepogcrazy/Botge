@@ -4,6 +4,8 @@ import type { OmitPartialGroupDMChannel, Message } from 'discord.js';
 
 import { storeMessage, findSimilarWithContext } from '../api/vector-store.ts';
 import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
+import { applyReplyEditor } from '../api/reply-editor.ts';
+import { addBotOutput } from '../api/recent-bot-output.ts';
 import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
 import { isOnCooldown, setLastReplyTime } from './ollama-cooldown.ts';
@@ -152,10 +154,10 @@ export async function ollamaMessageCreateHandler(
     clearInterval(typingTimer);
   }
 
-  let reply: string | undefined = undefined;
+  let rawReply: string | undefined = undefined;
   try {
     const [, generatedReply] = await Promise.all([startTyping(), generateReply(recentHistory, retrievedContext)]);
-    reply = generatedReply;
+    rawReply = generatedReply;
   } catch (error) {
     logError(error, 'Reply generation failed:');
 
@@ -164,9 +166,29 @@ export async function ollamaMessageCreateHandler(
   }
 
   stopTyping();
-  if (!reply) return;
+  if (!rawReply) return;
 
-  // 9. Send the message and persist it too
+  // 9a. Run the deterministic editor (strips AI tells, rejects dupes/banned
+  //     openers). On rejection, regenerate ONCE with a stricter directive.
+  let edited = await applyReplyEditor(rawReply, channelId);
+  if (!edited.accepted) {
+    console.log(`🧹 Editor rejected: ${edited.reason}. Regenerating.`);
+    const stricterHint = `\n[IMPORTANT: do NOT start with "Absolutely", "Great", "Sure,", or "I ". Do NOT wrap in quotes or markdown. Keep it under 280 chars.]`;
+    try {
+      const retry = await generateReply(recentHistory + stricterHint, retrievedContext);
+      edited = await applyReplyEditor(retry, channelId);
+    } catch (error) {
+      logError(error, 'Regeneration failed:');
+      return;
+    }
+    if (!edited.accepted) {
+      console.log(`🧹 Editor rejected regen too: ${edited.reason}. Staying silent.`);
+      return;
+    }
+  }
+  const reply = edited.text!;
+
+  // 9b. Send and record.
   try {
     await message.reply(reply);
     setLastReplyTime(channelId);
@@ -174,6 +196,9 @@ export async function ollamaMessageCreateHandler(
 
     // Add own reply to the in-memory buffer
     addMessage(channelId, config.bot.name, reply);
+
+    // Record for next-call dedupe (per-channel ring buffer).
+    await addBotOutput(channelId, reply);
 
     // And index own reply in the vector store
     void storeMessage({
