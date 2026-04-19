@@ -189,7 +189,9 @@ export async function ollamaMessageCreateHandler(
       return;
     }
   }
-  const reply = edited.text!;
+  // edited.accepted === true here — discriminated union narrows edited.text to string
+  if (!edited.accepted) return;
+  const reply = edited.text;
 
   // 9b. Send and record.
   try {

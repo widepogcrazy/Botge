@@ -8,11 +8,9 @@ const SIMILARITY_THRESHOLD = 0.85;
 
 const BANNED_OPENERS: readonly string[] = ['absolutely', 'great', 'sure,', 'i '];
 
-export type ReplyEditorResult = {
-  readonly accepted: boolean;
-  readonly text?: string;
-  readonly reason?: string;
-};
+export type ReplyEditorResult =
+  | { readonly accepted: true; readonly text: string }
+  | { readonly accepted: false; readonly reason: string };
 
 /**
  * Apply deterministic post-processing to a raw model reply.

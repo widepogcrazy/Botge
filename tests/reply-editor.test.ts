@@ -114,10 +114,12 @@ describe('envisioned behavior: AI tells and duplicates never reach Discord', () 
   test('a second, effectively-identical reply in the same channel is rejected', async () => {
     const first = await applyReplyEditor('lmao fair', 'general');
     expect(first.accepted).toBe(true);
+    if (!first.accepted) return; // type narrow
     const { addBotOutput } = await import('src/api/recent-bot-output.ts');
-    await addBotOutput('general', first.text!);
+    await addBotOutput('general', first.text);
     const second = await applyReplyEditor('lmao fair enough', 'general');
     expect(second.accepted).toBe(false);
+    if (second.accepted) return; // type narrow
     expect(second.reason).toMatch(/similar|duplicate/i);
   });
 });
