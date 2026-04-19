@@ -2,7 +2,11 @@
 
 import { describe, test, expect, beforeEach, vi, afterEach } from 'vitest';
 
-import { isOnCooldown, setLastReplyTime, resetCooldownForTesting } from 'src/message-create-handlers/ollama-cooldown.ts';
+import {
+  isOnCooldown,
+  setLastReplyTime,
+  resetCooldownForTesting
+} from 'src/message-create-handlers/ollama-cooldown.ts';
 
 describe('ollama-cooldown', () => {
   beforeEach(() => {
