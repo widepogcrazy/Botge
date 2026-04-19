@@ -77,15 +77,22 @@ function getCollectionName(): string {
   return `messages_${safe}`.slice(0, 63);
 }
 
-// Cached collection promise — avoids race conditions on concurrent first calls
-async function getCollection(): Promise<Collection> {
-  let _collectionPromise: Promise<Collection> | null = null;
-  _collectionPromise ??= client.getOrCreateCollection({
+// Cached at module scope — one collection promise for the lifetime of the process.
+let collectionPromise: Promise<Collection> | null = null;
+
+function getCollection(): Promise<Collection> {
+  collectionPromise ??= client.getOrCreateCollection({
     name: getCollectionName(),
     metadata: { 'hnsw:space': 'cosine' } // cosine similarity for chat text
   });
+  return collectionPromise;
+}
 
-  return _collectionPromise;
+/**
+ * Test-only export. Returns the same cached promise getCollection uses.
+ */
+export function getCollectionForTesting(): Promise<Collection> {
+  return getCollection();
 }
 
 // ─── Per-channel sequence numbers ────────────────────────────────────────────
