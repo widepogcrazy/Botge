@@ -7,6 +7,7 @@ import { ChromaClient, type Collection, type GetResult } from 'chromadb';
 import { DATABASE_ENDPOINTS } from '../paths-and-endpoints.ts';
 import type { ReadonlyMetaData } from '../types.ts';
 import { config } from '../config.ts';
+import { embed } from './ollama-embed.ts';
 
 type StoreMessageParams = {
   readonly id: string;
@@ -15,10 +16,7 @@ type StoreMessageParams = {
   readonly channelId: string;
   readonly timestamp: number | Readonly<Date>;
   readonly seqNum?: number;
-};
-
-type OllamaEmbeddingsResponse = {
-  readonly embedding?: readonly number[];
+  readonly tags?: readonly string[];
 };
 
 type SeqNums = Record<string, number>;
@@ -30,28 +28,6 @@ const client: ChromaClient = new ChromaClient({
   host: chromaUrl.hostname,
   port: Number(chromaUrl.port) || (chromaUrl.protocol === 'https:' ? 443 : 80)
 });
-
-/**
- * Generate a vector embedding for a piece of text using the local Ollama model.
- * Returns a float array representing the text's position in semantic space.
- */
-async function embed(text: string): Promise<readonly number[]> {
-  const { baseUrl, embeddingModel } = config.ollama;
-  const res = await fetch(`${baseUrl}/api/embeddings`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: embeddingModel,
-      prompt: text
-    })
-  });
-  if (!res.ok) throw new Error(`Ollama embeddings error ${res.status}: ${await res.text()}`);
-
-  const data = (await res.json()) as OllamaEmbeddingsResponse;
-  if (!data.embedding) throw new Error('Ollama returned no embedding. Is the model pulled?');
-
-  return data.embedding;
-}
 
 // ─── Collection naming ────────────────────────────────────────────────────────
 //
@@ -143,6 +119,10 @@ export async function storeMessage(storeMessageParams: StoreMessageParams): Prom
   const vector = await embed(text);
   const seq = seqNum ?? nextSeqNum(channelId);
 
+  const tagsString =
+    storeMessageParams.tags !== undefined && storeMessageParams.tags.length > 0
+      ? storeMessageParams.tags.join(',')
+      : '';
   await collection.upsert({
     ids: [id],
     embeddings: [[...vector]],
@@ -152,7 +132,8 @@ export async function storeMessage(storeMessageParams: StoreMessageParams): Prom
         author,
         channelId,
         seqNum: seq,
-        timestamp: timestamp_ instanceof Date ? timestamp_.getTime() : timestamp_
+        timestamp: timestamp_ instanceof Date ? timestamp_.getTime() : timestamp_,
+        tags: tagsString
       }
     ]
   });

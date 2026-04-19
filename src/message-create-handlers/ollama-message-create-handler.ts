@@ -6,6 +6,8 @@ import { storeMessage, findSimilarWithContext } from '../api/vector-store.ts';
 import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
 import { applyReplyEditor } from '../api/reply-editor.ts';
 import { addBotOutput } from '../api/recent-bot-output.ts';
+import { tagMessage } from '../api/tagger.ts';
+import { appendReplyLogEntry, type ReplyLogEntry } from '../api/reply-log.ts';
 import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
 import { isOnCooldown, setLastReplyTime } from './ollama-cooldown.ts';
@@ -19,12 +21,14 @@ const buffers = new Map<string, BufferEntry[]>();
 
 async function persistToVectorStore(message: OmitPartialGroupDMChannel<Message>, author: string): Promise<void> {
   try {
+    const tags = await tagMessage(message.content).catch(() => [] as readonly string[]);
     await storeMessage({
       id: message.id,
       author,
       content: message.content,
       channelId: message.channel.id,
-      timestamp: message.createdAt
+      timestamp: message.createdAt,
+      tags
     });
   } catch (error) {
     logError(error, 'Vector store write failed');
@@ -40,6 +44,31 @@ async function retrieveContext(channelId: string, recentHistory: string): Promis
     logError(error, 'Vector store query failed');
     return [];
   }
+}
+
+function makeLogEntry(partial: Partial<ReplyLogEntry>, triggerMessageId: string, channelId: string): ReplyLogEntry {
+  return {
+    timestamp: new Date().toISOString(),
+    channelId,
+    triggerMessageId,
+    scout: {
+      topic: 'unknown',
+      moment_type: 'unknown',
+      persona: 'default',
+      should_reply: false,
+      score: 0,
+      reason: ''
+    },
+    retrieved_context_ids: [],
+    candidates: [],
+    director_pick: { text: '', reasoning: '' },
+    editor_decisions: [],
+    final_reply: null,
+    reply_message_id: null,
+    post_reactions: [],
+    promoted: false,
+    ...partial
+  };
 }
 
 /**
@@ -120,7 +149,26 @@ export async function ollamaMessageCreateHandler(
       return pass;
     })();
   }
-  if (!shouldReply) return;
+  if (!shouldReply) {
+    appendReplyLogEntry(
+      makeLogEntry(
+        {
+          scout: {
+            topic: 'unknown',
+            moment_type: 'unknown',
+            persona: 'default',
+            should_reply: false,
+            score: 0,
+            reason: 'gate failed'
+          },
+          editor_decisions: ['gate: score below threshold']
+        },
+        message.id,
+        channelId
+      )
+    );
+    return;
+  }
 
   // 7. Retrieve relevant past messages from vector store
   //    Use the recent chat as the semantic query to find topically relevant history
@@ -182,10 +230,33 @@ export async function ollamaMessageCreateHandler(
       edited = await applyReplyEditor(retry, channelId);
     } catch (error) {
       logError(error, 'Regeneration failed:');
+      appendReplyLogEntry(
+        makeLogEntry(
+          {
+            candidates: [{ source: 'generateReply', text: rawReply }],
+            editor_decisions: ['regen-threw']
+          },
+          message.id,
+          channelId
+        )
+      );
       return;
     }
     if (!edited.accepted) {
       console.log(`🧹 Editor rejected regen too: ${edited.reason}. Staying silent.`);
+      appendReplyLogEntry(
+        makeLogEntry(
+          {
+            candidates: [
+              { source: 'generateReply', text: rawReply },
+              { source: 'generateReply:regen', text: '' }
+            ],
+            editor_decisions: [`rejected: ${edited.reason}`]
+          },
+          message.id,
+          channelId
+        )
+      );
       return;
     }
   }
@@ -206,15 +277,32 @@ export async function ollamaMessageCreateHandler(
     await addBotOutput(channelId, reply);
 
     // And index own reply in the vector store
-    void storeMessage({
-      id: `bot_${Date.now()}`,
-      author: config.bot.name,
-      content: reply,
-      channelId,
-      timestamp: new Date()
-    });
+    void (async (): Promise<void> => {
+      const botTags = await tagMessage(reply).catch(() => [] as readonly string[]);
+      await storeMessage({
+        id: `bot_${Date.now()}`,
+        author: config.bot.name,
+        content: reply,
+        channelId,
+        timestamp: new Date(),
+        tags: botTags
+      });
+    })();
 
     console.log(`✅ Sent: "${reply}"`);
+    appendReplyLogEntry(
+      makeLogEntry(
+        {
+          candidates: [{ source: 'generateReply', text: reply }],
+          director_pick: { text: reply, reasoning: 'only candidate (phase 0/1 handler)' },
+          editor_decisions: ['passed'],
+          final_reply: reply,
+          reply_message_id: null
+        },
+        message.id,
+        channelId
+      )
+    );
   } catch (error) {
     logError(error, 'Failed to send');
   }

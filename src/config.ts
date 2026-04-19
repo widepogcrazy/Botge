@@ -3,7 +3,12 @@
 export type Config = {
   readonly discord: { readonly token: string };
   readonly bot: { readonly name: string };
-  readonly ollama: { readonly baseUrl: string; readonly model: string; readonly embeddingModel: string };
+  readonly ollama: {
+    readonly baseUrl: string;
+    readonly model: string;
+    readonly embeddingModel: string;
+    readonly taggerModel: string;
+  };
   readonly chroma: { readonly url: string };
   readonly behavior: {
     readonly replyScoreThreshold: number;
@@ -39,7 +44,10 @@ export const config: Config = {
     model: optional('OLLAMA_MODEL', 'gemma3:27b'),
     // Embedding model is versioned separately from the chat model.
     // Changing this requires re-running: node backfill.js reset <channelId>
-    embeddingModel: optional('EMBEDDING_MODEL', 'nomic-embed-text')
+    embeddingModel: optional('EMBEDDING_MODEL', 'nomic-embed-text'),
+    // Small fast model used for topic tagging on ingest. 3B is enough for
+    // closed-taxonomy classification and keeps ingest latency low.
+    taggerModel: optional('TAGGER_MODEL', 'llama3.2:3b')
   },
   chroma: {
     url: optional('CHROMA_URL', 'http://chromadb:8000')
