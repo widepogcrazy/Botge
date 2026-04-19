@@ -62,7 +62,7 @@ async function ollamaChat(
 
 /**
  * Ask the model to score whether a reply opportunity exists.
- * Returns an object with shouldReply, reason, and score fields.
+ * Returns { score, reason }; the reply decision lives in ollama-gate.ts.
  */
 export async function scoreReplyOpportunity(chatHistory: string): Promise<ScoreReplyOpportunityResult> {
   const { name } = config.bot;
