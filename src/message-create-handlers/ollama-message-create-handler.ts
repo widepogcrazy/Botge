@@ -7,6 +7,7 @@ import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
 import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
 import { isOnCooldown, setLastReplyTime } from './ollama-cooldown.ts';
+import { shouldReplyBasedOnScore } from './ollama-gate.ts';
 
 type BufferEntry = { readonly author: string; readonly content: string; readonly timestamp: string };
 
@@ -111,10 +112,9 @@ export async function ollamaMessageCreateHandler(
       });
       if (scoring === null) return false;
 
-      console.log(`📊 Score: ${scoring.score}/10 | Reply: ${scoring.shouldReply} | ${scoring.reason}`);
-
-      if (!scoring.shouldReply) return false;
-      return scoring.score >= config.behavior.replyScoreThreshold;
+      const pass = shouldReplyBasedOnScore(scoring, config.behavior.replyScoreThreshold);
+      console.log(`📊 Score: ${scoring.score}/10 | Pass: ${pass} | ${scoring.reason}`);
+      return pass;
     })();
   }
   if (!shouldReply) return;

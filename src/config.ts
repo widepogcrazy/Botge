@@ -45,7 +45,7 @@ export const config: Config = {
     url: optional('CHROMA_URL', 'http://chromadb:8000')
   },
   behavior: {
-    replyScoreThreshold: Number(optional('REPLY_SCORE_THRESHOLD', '2')),
+    replyScoreThreshold: Number(optional('REPLY_SCORE_THRESHOLD', '6')),
     contextWindow: Number(optional('CONTEXT_WINDOW', '30')),
     evaluationChance: Number(optional('EVALUATION_CHANCE', '0.8')),
     cooldownSeconds: Number(optional('COOLDOWN_SECONDS', '60')),

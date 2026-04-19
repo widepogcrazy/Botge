@@ -3,6 +3,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { generateReply } from 'src/api/ollama.ts';
+import { scoreReplyOpportunity } from 'src/api/ollama.ts';
 
 describe('ollamaChat request shape — generateReply', () => {
   beforeEach(() => {
@@ -82,5 +83,44 @@ describe('envisioned behavior: long buffer + heavy RAG fits inside the model con
     const systemMessage = body.messages.find((m) => m.role === 'system');
     expect(systemMessage).toBeDefined();
     expect(systemMessage?.content).toContain('personality');
+  });
+});
+
+describe('ollamaChat request shape — scoreReplyOpportunity', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: { content: '{"score":7,"reason":"good"}' } })
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test('scoreReplyOpportunity sends format: "json" and parses the clean response', async () => {
+    const result = await scoreReplyOpportunity('Alice: yo\nBob: sup');
+    const mockedFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const body = JSON.parse(mockedFetch.mock.calls[0][1]?.body as string) as { format?: string };
+    expect(body.format).toBe('json');
+    expect(result.score).toBe(7);
+    expect(result.reason).toBe('good');
+  });
+
+  test('scoreReplyOpportunity returns score=0 on malformed JSON without throwing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: { content: 'not json at all' } })
+      })
+    );
+    const result = await scoreReplyOpportunity('Alice: yo');
+    expect(result.score).toBe(0);
+    expect(result.reason).toContain('parse error');
   });
 });

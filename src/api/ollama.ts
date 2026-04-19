@@ -6,40 +6,44 @@ type OllamaChatResponse = {
   readonly message?: { readonly content?: string };
 };
 
-type ScoreReplyOpportunityResult = {
+export type ScoreReplyOpportunityResult = {
   readonly score: number;
-  readonly shouldReply: boolean;
   readonly reason: string;
 };
 
 type ScoreReplyOpportunityResponse = {
   readonly score?: number;
-  readonly should_reply?: boolean;
   readonly reason?: string;
 };
 
 /**
  * Send a chat request to the local Ollama instance.
  */
-async function ollamaChat(systemPrompt: string, userPrompt: string): Promise<string> {
+async function ollamaChat(
+  systemPrompt: string,
+  userPrompt: string,
+  options: { readonly format?: 'json' } = {}
+): Promise<string> {
   const { baseUrl, model } = config.ollama;
+  const requestBody: Record<string, unknown> = {
+    model,
+    stream: false,
+    options: {
+      temperature: 0.85,
+      num_ctx: 8192,
+      top_p: 0.9,
+      repeat_penalty: 1.15
+    },
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ]
+  };
+  if (options.format === 'json') requestBody['format'] = 'json';
   const response = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      options: {
-        temperature: 0.85,
-        num_ctx: 8192,
-        top_p: 0.9,
-        repeat_penalty: 1.15
-      },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
-    })
+    body: JSON.stringify(requestBody)
   });
   if (!response.ok) throw new Error(`Ollama API error ${response.status}: ${await response.text()}`);
 
@@ -62,10 +66,9 @@ async function ollamaChat(systemPrompt: string, userPrompt: string): Promise<str
  */
 export async function scoreReplyOpportunity(chatHistory: string): Promise<ScoreReplyOpportunityResult> {
   const { name } = config.bot;
-  const systemPrompt = `You are a silent observer of a group chat. Your job is to decide if ${name} — a witty, laid-back human — should chime in.
+  const systemPrompt = `You are a silent observer of a group chat. Your job is to score whether ${name} — a witty, laid-back chat member — should chime in.
 
-Reply ONLY with a valid JSON object, no markdown, no explanation. Example:
-{"score": 7, "should_reply": true, "reason": "Good setup for a pun"}
+Reply ONLY with a valid JSON object of the form {"score": <1-10 integer>, "reason": "<short string>"}.
 
 Score criteria (1-10):
 - 8-10: Clear joke opportunity, direct question to the group, fascinating claim worth a quip
@@ -73,23 +76,18 @@ Score criteria (1-10):
 - 1-4: Mid-conversation, serious topic, nothing to add
 
 Be conservative. It's better to stay silent than to force a response.`;
-  const userPrompt = `Recent chat:\n${chatHistory}\n\nShould ${name} reply? Respond with JSON only.`;
-  const raw = await ollamaChat(systemPrompt, userPrompt);
+  const userPrompt = `Recent chat:\n${chatHistory}\n\nReturn only the JSON object.`;
+  const raw = await ollamaChat(systemPrompt, userPrompt, { format: 'json' });
 
   try {
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean) as ScoreReplyOpportunityResponse;
-
+    const parsed = JSON.parse(raw) as ScoreReplyOpportunityResponse;
     return {
       score: parsed.score ?? 0,
-      shouldReply: parsed.should_reply === true,
-      // shouldReply: (parsed.score ?? 0) >= 7,
       reason: parsed.reason ?? ''
     };
   } catch {
     console.warn('⚠️  Failed to parse scoring JSON:', raw);
-
-    return { score: 0, shouldReply: false, reason: 'parse error' };
+    return { score: 0, reason: 'parse error' };
   }
 }
 
