@@ -6,6 +6,7 @@ import { storeMessage, findSimilarWithContext } from '../api/vector-store.ts';
 import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
 import { applyReplyEditor } from '../api/reply-editor.ts';
 import { addBotOutput } from '../api/recent-bot-output.ts';
+import { tagMessage } from '../api/tagger.ts';
 import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
 import { isOnCooldown, setLastReplyTime } from './ollama-cooldown.ts';
@@ -19,12 +20,14 @@ const buffers = new Map<string, BufferEntry[]>();
 
 async function persistToVectorStore(message: OmitPartialGroupDMChannel<Message>, author: string): Promise<void> {
   try {
+    const tags = await tagMessage(message.content).catch(() => [] as readonly string[]);
     await storeMessage({
       id: message.id,
       author,
       content: message.content,
       channelId: message.channel.id,
-      timestamp: message.createdAt
+      timestamp: message.createdAt,
+      tags
     });
   } catch (error) {
     logError(error, 'Vector store write failed');
@@ -206,13 +209,17 @@ export async function ollamaMessageCreateHandler(
     await addBotOutput(channelId, reply);
 
     // And index own reply in the vector store
-    void storeMessage({
-      id: `bot_${Date.now()}`,
-      author: config.bot.name,
-      content: reply,
-      channelId,
-      timestamp: new Date()
-    });
+    void (async (): Promise<void> => {
+      const botTags = await tagMessage(reply).catch(() => [] as readonly string[]);
+      await storeMessage({
+        id: `bot_${Date.now()}`,
+        author: config.bot.name,
+        content: reply,
+        channelId,
+        timestamp: new Date(),
+        tags: botTags
+      });
+    })();
 
     console.log(`✅ Sent: "${reply}"`);
   } catch (error) {

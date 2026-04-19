@@ -16,6 +16,7 @@ type StoreMessageParams = {
   readonly channelId: string;
   readonly timestamp: number | Readonly<Date>;
   readonly seqNum?: number;
+  readonly tags?: readonly string[];
 };
 
 type SeqNums = Record<string, number>;
@@ -118,6 +119,10 @@ export async function storeMessage(storeMessageParams: StoreMessageParams): Prom
   const vector = await embed(text);
   const seq = seqNum ?? nextSeqNum(channelId);
 
+  const tagsString =
+    storeMessageParams.tags !== undefined && storeMessageParams.tags.length > 0
+      ? storeMessageParams.tags.join(',')
+      : '';
   await collection.upsert({
     ids: [id],
     embeddings: [[...vector]],
@@ -127,7 +132,8 @@ export async function storeMessage(storeMessageParams: StoreMessageParams): Prom
         author,
         channelId,
         seqNum: seq,
-        timestamp: timestamp_ instanceof Date ? timestamp_.getTime() : timestamp_
+        timestamp: timestamp_ instanceof Date ? timestamp_.getTime() : timestamp_,
+        tags: tagsString
       }
     ]
   });
