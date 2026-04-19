@@ -156,3 +156,35 @@ describe('envisioned behavior: RAG directive invites callbacks, does not forbid 
     expect(userMessage?.content).not.toContain('context only');
   });
 });
+
+describe('envisioned behavior: generation prompt includes current weekday + hour in UTC', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-18T03:00:00Z')); // Saturday 03:00 UTC
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: { content: 'ok' } })
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test('system prompt names the current weekday and hour so time jokes can land', async () => {
+    await generateReply('alice: still up?');
+    const mockedFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const body = JSON.parse(mockedFetch.mock.calls[0][1]?.body as string) as {
+      messages: readonly { role: string; content: string }[];
+    };
+    const systemMessage = body.messages.find((m) => m.role === 'system');
+    expect(systemMessage).toBeDefined();
+    expect(systemMessage?.content).toMatch(/saturday/i);
+    expect(systemMessage?.content).toMatch(/03:00 utc|3:00 utc|03 utc|3 utc/i);
+  });
+});

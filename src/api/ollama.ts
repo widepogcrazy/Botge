@@ -87,6 +87,12 @@ Be conservative. It's better to stay silent than to force a response.`;
   }
 }
 
+function currentTimeBanner(now: Readonly<Date> = new Date()): string {
+  const weekday = now.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+  const hour = now.getUTCHours().toString().padStart(2, '0');
+  return `It is ${weekday} ${hour}:00 UTC.`;
+}
+
 /**
  * Generate a reply given recent chat history and optionally retrieved past messages.
  *
@@ -95,7 +101,7 @@ Be conservative. It's better to stay silent than to force a response.`;
  */
 export async function generateReply(recentHistory: string, retrievedContext: readonly string[] = []): Promise<string> {
   const { name } = config.bot;
-  const systemPrompt = `You are ${name}, a Bot member of this Discord group chat.
+  const systemPrompt = `You are ${name}, a Bot member of this Discord group chat. ${currentTimeBanner()}
 
 Your personality:
 - Witty, dry, maybe sarcastic, but never try-hard
