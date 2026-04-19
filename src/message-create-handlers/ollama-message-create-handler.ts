@@ -6,12 +6,12 @@ import { storeMessage, findSimilarWithContext } from '../api/vector-store.ts';
 import { scoreReplyOpportunity, generateReply } from '../api/ollama.ts';
 import { logError } from '../utils/log-error.ts';
 import { config } from '../config.ts';
+import { isOnCooldown, setLastReplyTime } from './ollama-cooldown.ts';
 
 type BufferEntry = { readonly author: string; readonly content: string; readonly timestamp: string };
 
 // Map of channelId → array of message objects
 const buffers = new Map<string, BufferEntry[]>();
-const lastReplyTime = new Map<string, number>();
 
 async function persistToVectorStore(message: OmitPartialGroupDMChannel<Message>, author: string): Promise<void> {
   try {
@@ -67,13 +67,6 @@ function addMessage(channelId: string, authorName: string, content: string): voi
 function getBufferSize(channelId: string): number {
   return buffers.get(channelId)?.length ?? 0;
 }
-function isOnCooldown(channelId: string): boolean {
-  const last = lastReplyTime.get(channelId) ?? 0;
-  return (Date.now() - last) / 1000 < config.behavior.cooldownSeconds;
-}
-function setLastReplyTime(channelId: string): void {
-  lastReplyTime.set(channelId, Date.now());
-}
 
 export async function ollamaMessageCreateHandler(
   message: OmitPartialGroupDMChannel<Message>,
@@ -99,8 +92,7 @@ export async function ollamaMessageCreateHandler(
 
   // 4. Check per-channel cooldown / direct mention
   const direct_mention = content.includes(`<@${clientUserId}>`);
-  if (!direct_mention && isOnCooldown(channelId)) return;
-  setLastReplyTime(channelId);
+  if (!direct_mention && isOnCooldown(channelId, config.behavior.cooldownSeconds)) return;
 
   // 5. Random gate — skip most messages to avoid being annoying
   if (!direct_mention && Math.random() > config.behavior.evaluationChance) return;
@@ -176,6 +168,7 @@ export async function ollamaMessageCreateHandler(
   // 9. Send the message and persist it too
   try {
     await message.reply(reply);
+    setLastReplyTime(channelId);
     // console.log('OLLAMA: ' + reply);
 
     // Add own reply to the in-memory buffer
