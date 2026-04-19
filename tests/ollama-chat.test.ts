@@ -124,3 +124,35 @@ describe('ollamaChat request shape — scoreReplyOpportunity', () => {
     expect(result.reason).toContain('parse error');
   });
 });
+
+describe('envisioned behavior: RAG directive invites callbacks, does not forbid them', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: { content: 'ok' } })
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  test('when RAG context is present, the prompt allows callbacks instead of forbidding references', async () => {
+    await generateReply('alice: yo', ['carol: remember when bob got one-shot by a rare pack']);
+    const mockedFetch = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const body = JSON.parse(mockedFetch.mock.calls[0][1]?.body as string) as {
+      messages: readonly { role: string; content: string }[];
+    };
+    const userMessage = body.messages.find((m) => m.role === 'user');
+    expect(userMessage).toBeDefined();
+    // New phrasing: callbacks are welcome
+    expect(userMessage?.content).toMatch(/callback|reference if it fits|natural callback/i);
+    // Old phrasing must be gone
+    expect(userMessage?.content).not.toContain('do not reference directly');
+    expect(userMessage?.content).not.toContain('context only');
+  });
+});

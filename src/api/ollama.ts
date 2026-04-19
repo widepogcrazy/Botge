@@ -113,7 +113,7 @@ Your goal: contribute one natural, human message. Make it count.\n`;
   // are distinct conversation snippets, not one continuous thread.
   const ragSection =
     retrievedContext.length > 0
-      ? `[Relevant past conversations — use for context only, do not reference directly]\n${retrievedContext.join('\n---\n')}\n\n`
+      ? `[Relevant past conversations — if a natural callback exists, reference it. Do not invent events that did not happen.]\n${retrievedContext.join('\n---\n')}\n\n`
       : '';
   const userPrompt = `${ragSection}[Recent chat]\n${recentHistory}\n\nWrite your reply as ${name}. One short message only.`;
 
