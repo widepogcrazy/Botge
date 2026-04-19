@@ -1,0 +1,48 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+
+{
+  "name": "Botge",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false,
+      "installDockerBuildx": true,
+      "azureDnsAutoDetection": false
+    },
+    "ghcr.io/devcontainers/features/node:1": { "version": "latest", "nodeGypDependencies": false },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "postCreateCommand": {
+    "install-and-build": "npm install && npm run build",
+    "directories": "mkdir -p data tmp nginx/cache/tmp && sudo chmod -R a+rwx data && sudo chmod -R a+rwx tmp && sudo chmod -R a+rx nginx/cache"
+  },
+
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["package.json", "tsconfig.json", "src/index.ts"]
+    },
+    "vscode": {
+      "extensions": [
+        // Project
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "eamodio.gitlens",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+
+        // Syntax
+        "streetsidesoftware.code-spell-checker",
+        "DavidAnson.vscode-markdownlint",
+        "redhat.vscode-yaml",
+
+        // Extras
+        "vscode-icons-team.vscode-icons",
+        "aaron-bond.better-comments",
+        "alefragnani.Bookmarks"
+      ]
+    }
+  }
+}

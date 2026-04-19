@@ -1,33 +1,27 @@
-# Include any files or directories that you don't want to be copied to your
-# container here (e.g., local build artifacts, temporary files, etc.).
-#
-# For more help, visit the .dockerignore file reference guide at
-# https://docs.docker.com/go/build-context-dockerignore/
+.github
+.vscode
+.husky
+!.husky/install.ts
+assets
+data
+dist
+docs
+!docs/Docker.png
+!docs/CHANGELOG.md
+!docs/PRIVACY.md
+!docs/TERMS.md
+chroma-data
+meili-data
+nginx/cache
+node_modules
+tests
+tmp
 
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/.next
-**/.cache
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/charts
-**/docker-compose*
-**/compose.y*ml
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
-**/build
-**/dist
-LICENSE
-README.md
+.dockerignore
+.env
+.gitattributes
+.gitignore
+.prettierrc.json
+compose*.yaml
+Dockerfile
+eslint.config.ts

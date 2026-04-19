@@ -1,13 +1,15 @@
-import type { Index } from 'meilisearch';
+/** @format */
 
-import { GUILD_ID_CUTEDOG } from './guilds.js';
-import type { EmoteMatcher } from './emote-matcher.js';
-import type { PersonalEmoteMatcherConstructor } from './emote-matcher-constructor.js';
-import type { TwitchApi } from './api/twitch-api.js';
-import { listCutedogClipIds } from './utils/list-cutedog-clip-ids.js';
-import { getClipsWithGameNameFromBroadcasterName, getClipsWithGameNameFromIds } from './utils/twitch-api-utils.js';
-import type { ReadonlyRecordAny, TwitchClip } from './types.js';
-import type { PersonalEmoteSets } from './personal-emote-sets.js';
+import type { EnqueuedTaskPromise, Index } from 'meilisearch';
+
+import { getClipsWithGameNameFromBroadcasterName, getClipsWithGameNameFromIds } from './utils/api/twitch-api-utils.ts';
+import { listCutedogClipIds } from './utils/list-cutedog-clip-ids.ts';
+import type { TwitchApi } from './api/twitch-api.ts';
+import type { PersonalEmoteMatcherConstructor } from './emote-matcher-constructor.ts';
+import type { PersonalEmoteSets } from './personal-emote-sets.ts';
+import type { ReadonlyRecordAny, TwitchClip } from './types.ts';
+import type { EmoteMatcher } from './emote-matcher.ts';
+import { GUILD_ID_CUTEDOG } from './guilds.ts';
 
 export class Guild {
   readonly #id: string;
@@ -99,7 +101,7 @@ export class Guild {
     twitchApi: Readonly<TwitchApi> | undefined,
     broadcasterName: string
   ): Promise<void> {
-    //if (this.#broadcasterName === broadcasterName) return;
+    // ? if (this.#broadcasterName === broadcasterName) return;
 
     this.#broadcasterName = broadcasterName;
     await this.refreshClips(twitchApi, true);
@@ -117,12 +119,13 @@ export class Guild {
     this.#uniqueCreatorNames = [];
     this.#uniqueGameIds = [];
 
+    const updateDocumentsQueue: Readonly<EnqueuedTaskPromise>[] = [];
     let updated = 0;
 
     if (deleteOld !== undefined && deleteOld) await this.#twitchClipsMeiliSearchIndex.deleteAllDocuments().waitTask();
 
     if (this.#id === GUILD_ID_CUTEDOG) {
-      //custom clips
+      // custom clips
       const increment = 100;
       const clipIds = await listCutedogClipIds();
 
@@ -132,11 +135,11 @@ export class Guild {
           else return clip;
         });
 
-        await this.#twitchClipsMeiliSearchIndex.updateDocuments(clips).waitTask();
+        updateDocumentsQueue.push(this.#twitchClipsMeiliSearchIndex.updateDocuments(clips));
         updated += clips.length;
       }
     } else {
-      //get top 1000 most viewed clips
+      // get top 1000 most viewed clips
       let getClipsWithGameNameFromBroadcasterName_ = await getClipsWithGameNameFromBroadcasterName(
         twitchApi,
         this.#broadcasterName
@@ -148,7 +151,7 @@ export class Guild {
         else return clip;
       });
 
-      await this.#twitchClipsMeiliSearchIndex.updateDocuments(clips).waitTask();
+      updateDocumentsQueue.push(this.#twitchClipsMeiliSearchIndex.updateDocuments(clips));
       updated += clips.length;
 
       for (let i = 0; i < 9 && cursor !== undefined; i++) {
@@ -164,11 +167,12 @@ export class Guild {
           else return clip;
         });
 
-        await this.#twitchClipsMeiliSearchIndex.updateDocuments(clips).waitTask();
+        updateDocumentsQueue.push(this.#twitchClipsMeiliSearchIndex.updateDocuments(clips));
         updated += clips.length;
       }
     }
 
+    await Promise.all(updateDocumentsQueue.map(async (updateDocuments) => updateDocuments.waitTask()));
     await this.refreshUniqueCreatorNamesAndGameIds();
     console.log(`Updated ${updated} clips.`);
   }

@@ -1,13 +1,15 @@
-import type { ChatInputCommandInteraction } from 'discord.js';
+/** @format */
+
 import { describe, expect, test } from 'vitest';
 
-import { getAllSubstrings } from '../src/command/shortest-unique-substrings';
-import { EmoteMessageBuilder } from '../src/message-builders/emote-message-builder';
-import type { AssetInfo } from '../src/types';
-import { Platform } from '../src/enums';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
-const EMOTES_LENGTH = 4;
-if (EMOTES_LENGTH < 4) throw new Error('EMOTES_LENGTH at least 4.');
+import { getAllSubstrings } from 'src/command-handlers/shortest-unique-substrings.ts';
+import { EmoteMessageBuilder } from 'src/message-builders/emote-message-builder.ts';
+import type { AssetInfo } from 'src/types.ts';
+import { Platform } from 'src/enums.ts';
+
+const EMOTES_LENGTH = 4 as const; //at least 4
 
 function getTestName(index: number): string {
   return `testName${index}`;
@@ -45,34 +47,34 @@ describe('EmoteMessageBuilder', () => {
     expect(emoteMessageBuilder.next()).toBeUndefined();
   });
 
-  test('jumpToIdentifer exact, same jumpTo & jumpToIdentifer', () => {
+  test('jumpToIdentifier exact, same jumpTo & jumpToIdentifier', () => {
     expect(emoteMessageBuilder.jumpTo(EMOTES_LENGTH - 2)).toBeDefined();
     expect(emoteMessageBuilder.jumpTo(EMOTES_LENGTH - 2)).toBeUndefined();
 
-    expect(emoteMessageBuilder.jumpToIdentifer(getTestName(EMOTES_LENGTH - 1))).toBeDefined();
-    expect(emoteMessageBuilder.jumpToIdentifer(getTestName(EMOTES_LENGTH - 1))).toBeUndefined();
+    expect(emoteMessageBuilder.jumpToIdentifier(getTestName(EMOTES_LENGTH - 1))).toBeDefined();
+    expect(emoteMessageBuilder.jumpToIdentifier(getTestName(EMOTES_LENGTH - 1))).toBeUndefined();
   });
 
-  test('jumpToIdentifer lowercase', () => {
-    expect(emoteMessageBuilder.jumpToIdentifer(getTestName(1).toLowerCase())).toBeDefined();
+  test('jumpToIdentifier lowercase', () => {
+    expect(emoteMessageBuilder.jumpToIdentifier(getTestName(1).toLowerCase())).toBeDefined();
   });
 
-  test('jumpToIdentifer includes', () => {
+  test('jumpToIdentifier includes', () => {
     const identifier = getTestName(0);
     const allSubstrings = getAllSubstrings(identifier);
 
     for (const substring of allSubstrings) {
-      expect(emoteMessageBuilder.jumpToIdentifer(substring)).toBeDefined();
+      expect(emoteMessageBuilder.jumpToIdentifier(substring)).toBeDefined();
       emoteMessageBuilder.last();
     }
   });
 
-  test('jumpTo & jumpToIdentifer out of bounds', () => {
+  test('jumpTo & jumpToIdentifier out of bounds', () => {
     expect(emoteMessageBuilder.jumpTo(-1)).toBeUndefined();
     expect(emoteMessageBuilder.jumpTo(EMOTES_LENGTH)).toBeUndefined();
 
-    expect(emoteMessageBuilder.jumpToIdentifer('')).toBeUndefined();
-    expect(emoteMessageBuilder.jumpToIdentifer(getTestName(EMOTES_LENGTH))).toBeUndefined();
+    expect(emoteMessageBuilder.jumpToIdentifier('')).toBeUndefined();
+    expect(emoteMessageBuilder.jumpToIdentifier(getTestName(EMOTES_LENGTH))).toBeUndefined();
   });
 
   test('markCurrentAsDeleted', () => {

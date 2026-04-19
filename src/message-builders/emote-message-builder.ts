@@ -1,3 +1,5 @@
+/** @format */
+
 import {
   EmbedBuilder,
   ButtonBuilder,
@@ -8,24 +10,29 @@ import {
   type MessageActionRowComponentBuilder
 } from 'discord.js';
 
+import {
+  emoteCdnUrlToEmoteApiCdnUrl,
+  emoteCdnUrlToEmoteUrl
+} from '../utils/message-builders/emote-cdn-url-to-emote-url.ts';
+import { platformToString } from '../utils/platform-to-string.ts';
+import { booleanToString } from '../utils/boolean-to-string.ts';
 import type {
   AddedEmote,
   AssetInfo,
   EmoteMessageBuilderTransformFunctionReturnType,
   ReadonlyActionRowBuilderMessageActionRowComponentBuilder
-} from '../types.js';
-import { BaseMessageBuilder, getCustomId, DELETE_BUTTON_BASE_CUSTOM_ID } from './base.js';
-import { emoteCdnUrlToEmoteApiCdnUrl, emoteCdnUrlToEmoteUrl } from '../utils/emote-cdn-url-to-emote-url.js';
-import { platformToString } from '../utils/platform-to-string.js';
-import { booleanToString } from '../utils/boolean-to-string.js';
-import { Platform } from '../enums.js';
+} from '../types.ts';
+import { BaseMessageBuilder, getCustomId } from './base.ts';
+import { Platform } from '../enums.ts';
+
+export const DELETE_EMOTE_BUTTON_BASE_CUSTOM_ID = 'deleteEmoteButton' as const;
 
 export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMessageBuilderTransformFunctionReturnType> {
-  public static readonly messageBuilderType = 'Emote';
+  public static readonly messageBuilderType = 'Emote' as const;
   static #staticCounter = 0;
   readonly #extraRow: ReadonlyActionRowBuilderMessageActionRowComponentBuilder | undefined = undefined;
   readonly #shortestUniqueSubstrings: readonly string[] | undefined;
-  readonly #markedAsDeleteds: number[] | undefined = undefined;
+  readonly #markedAsDeletedArray: number[] | undefined = undefined;
 
   public constructor(
     interaction: ChatInputCommandInteraction | ButtonInteraction,
@@ -40,11 +47,11 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
 
       if (this.#shortestUniqueSubstrings !== undefined)
         embed.addFields({
-          name: 'Shortest Unqiue Substrings',
+          name: 'Shortest Unique Substrings',
           value: this.#shortestUniqueSubstrings[this.currentIndex]
         });
 
-      if (this.#markedAsDeleteds !== undefined && this.#markedAsDeleteds.includes(this.currentIndex))
+      if (this.#markedAsDeletedArray !== undefined && this.#markedAsDeletedArray.includes(this.currentIndex))
         embed.setDescription('❌ DELETED ❌');
 
       embed
@@ -65,7 +72,7 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
       return {
         embeds: [embed],
         components: this.#extraRow !== undefined ? [this.row, this.#extraRow] : [this.row]
-      } as EmoteMessageBuilderTransformFunctionReturnType;
+      };
     };
 
     const getIdentifierFunction = (assetInfo: AssetInfo): string => {
@@ -85,19 +92,21 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
     if (isAddedEmoteDeleteMode) {
       this.#extraRow = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
         new ButtonBuilder()
-          .setCustomId(getCustomId(DELETE_BUTTON_BASE_CUSTOM_ID, EmoteMessageBuilder.messageBuilderType, this.counter))
+          .setCustomId(
+            getCustomId(DELETE_EMOTE_BUTTON_BASE_CUSTOM_ID, EmoteMessageBuilder.messageBuilderType, this.counter)
+          )
           .setLabel('Delete')
           .setStyle(ButtonStyle.Danger)
       );
-      this.#markedAsDeleteds = [];
+      this.#markedAsDeletedArray = [];
     }
 
     this.#shortestUniqueSubstrings = shortestUniqueSubstrings;
   }
 
   public get currentAddedEmote(): AddedEmote | undefined {
-    if (this.#markedAsDeleteds === undefined) return undefined;
-    if (this.#markedAsDeleteds.includes(this.currentIndex)) return undefined;
+    if (this.#markedAsDeletedArray === undefined) return undefined;
+    if (this.#markedAsDeletedArray.includes(this.currentIndex)) return undefined;
 
     const currentEmote = this.currentItem;
     if (currentEmote.platform !== Platform.sevenNotInSet) return undefined;
@@ -108,14 +117,14 @@ export class EmoteMessageBuilder extends BaseMessageBuilder<AssetInfo, EmoteMess
     return {
       alias: currentEmote.name,
       url: emoteCdnUrlToEmoteApiCdnUrl_
-    } as AddedEmote;
+    };
   }
 
   public markCurrentAsDeleted(): EmoteMessageBuilderTransformFunctionReturnType | undefined {
-    if (this.#markedAsDeleteds === undefined) return undefined;
-    if (this.#markedAsDeleteds.includes(this.currentIndex)) return undefined;
+    if (this.#markedAsDeletedArray === undefined) return undefined;
+    if (this.#markedAsDeletedArray.includes(this.currentIndex)) return undefined;
 
-    this.#markedAsDeleteds.push(this.currentIndex);
+    this.#markedAsDeletedArray.push(this.currentIndex);
     return this.current();
   }
 }

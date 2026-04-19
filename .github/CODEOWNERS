@@ -1,0 +1,19 @@
+* @Mrewy
+/nginx/default.conf @gentlebob
+
+/src/bot.ts @Mrewy @gentlebob
+/src/index.ts @Mrewy @gentlebob
+
+/compose.sample.yaml @gentlebob @Mrewy
+/src/config.ts @gentlebob @Mrewy
+/src/emote-matcher.ts @gentlebob @Mrewy
+/src/update-commands-docker.ts @gentlebob @Mrewy
+/src/api/ollama.ts @gentlebob @Mrewy
+/src/api/vector-store.ts @gentlebob @Mrewy
+/src/api/cached-url.ts @gentlebob @Mrewy
+/src/command-handlers/emote.ts @gentlebob @Mrewy
+/src/command-handlers/steam.ts @gentlebob @Mrewy
+/src/command-handlers/transient.ts @gentlebob @Mrewy
+/src/message-create-handlers/ollama-message-create-handler.ts @gentlebob @Mrewy
+/src/utils/command-handlers/emote/download-asset.ts @gentlebob @Mrewy
+/src/utils/command-handlers/emote/ffprobe-utils.ts @gentlebob @Mrewy

@@ -1,10 +1,29 @@
-# <img src="assets/peepoCute.png" alt="Botge Logo" width="36"> Botge
+<!-- @format -->
 
-![GitHub last commit](https://img.shields.io/github/last-commit/Tresster/Botge) ![GitHub License](https://img.shields.io/github/license/Tresster/Botge)
+# ![Botge Website Logo](assets/peepoCute2x.png) Botge
 
-<img src="assets/peepoCute.png" alt="Botge Website Logo" width="18"> [Botge Website](https://botge.gitbook.io/)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/Mrewy/Botge)
+![GitHub last commit](https://img.shields.io/github/last-commit/Mrewy/Botge)
+![GitHub Created At](https://img.shields.io/github/created-at/Mrewy/Botge)
+![GitHub License](https://img.shields.io/github/license/Mrewy/Botge)  
+![GitHub issue custom search in repo enhancement](https://img.shields.io/github/issues-search/Mrewy/Botge?query=label%3Aenhancement&label=enhancement%20issues)
+![GitHub issue custom search in repo help wanted](https://img.shields.io/github/issues-search/Mrewy/Botge?query=label%3A%22help%20wanted%22&label=help%20wanted%20issues)
+![GitHub issue custom search in repo good first issue](https://img.shields.io/github/issues-search/Mrewy/Botge?query=label%3A%22good%20first%20issue%22&label=good%20first%20issues)
 
-Botge is a [Discord](https://discord.com) bot that provides functionalities inspired by the [Twitch](https://www.twitch.tv) chat experience to your server. It offers seamless emote handling, Twitch clip searching, and other powerful features that enhance Discord interactions. With built-in [DeepL Translation](https://www.deepl.com/en/products/translator), integration with [OpenAI's](https://openai.com) GPT models and [Google's Gemini](https://gemini.google.com) models, Botge makes conversations more dynamic, engaging, and intelligent.
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
+- [License](#license)
+
+## Introduction
+
+Botge is a [Discord](https://discord.com) bot that provides functionalities inspired by the [Twitch](https://www.twitch.tv) chat experience to your server.  
+It offers seamless emote handling, Twitch clip searching, and other powerful features that enhance Discord interactions.  
+With built-in [DeepL Translation](https://www.deepl.com/en/products/translator), integration with [OpenAI's](https://openai.com) GPT models, Botge makes conversations more dynamic, engaging, and intelligent.
 
 ## Features
 
@@ -15,28 +34,24 @@ Botge is a [Discord](https://discord.com) bot that provides functionalities insp
 - **Add Emote**: Add an emote to the emote pool.
 - **Shortest unique substring**: Display the shortest unique substring for the specified emote(s) compared to other emotes in the emote pool.
 - **ChatGPT Integration**: Interact with OpenAI's GPT models for generating responses.
-- **Gemini Integration**: Interact with Google's Gemini models for generating responses.
 - **Translation**: Translate text to English using DeepL.
 - **Transient Messages**: Send messages that auto-delete after a specified duration.
 - **Find the emoji**: Generates an x by x grid where each element is a random, non-animated server emoji hidden in a spoiler tag, with only a single occurrence of the specified emoji.
 - **Ping Me**: Pings you after a specified time, optionally with a message.
 
+## Usage
+
+Usage of Botge is straightforward if you are familiar with Discord bot usage.
+
 ## Configuration
 
 Configure the bot in the `/settings` command.
 
-Further help in configuration is available on the [website](https://botge.gitbook.io/botge/getting-started/configuration).
-
-## Usage
-
-Add the bot by [link](https://discord.com/oauth2/authorize?client_id=1298983961992757328).\
-Usage of Botge is straightforward if you are familiar with Discord bot usage.
-
-Read about advanced usage on the [website](https://botge.gitbook.io/botge/getting-started/usage).
-
 ## Documentation
 
-The documentation is available on the [website](https://botge.gitbook.io/botge/documentation/documentation).
+![Docker docks](docs/Docker.png)
+
+More documentation is available in the [docs](docs) folder.
 
 ## License
 

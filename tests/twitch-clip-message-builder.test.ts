@@ -1,12 +1,14 @@
-import type { ChatInputCommandInteraction } from 'discord.js';
+/** @format */
+
 import { describe, expect, test } from 'vitest';
 
-import { getAllSubstrings } from '../src/command/shortest-unique-substrings';
-import { TwitchClipMessageBuilder } from '../src/message-builders/twitch-clip-message-builder';
-import type { TwitchClip } from '../src/types';
+import type { ChatInputCommandInteraction } from 'discord.js';
 
-const TWITCH_CLIPS_LENGTH = 4;
-if (TWITCH_CLIPS_LENGTH < 4) throw new Error('TWITCH_CLIPS_LENGTH at least 4.');
+import { getAllSubstrings } from 'src/command-handlers/shortest-unique-substrings.ts';
+import { TwitchClipMessageBuilder } from 'src/message-builders/twitch-clip-message-builder.ts';
+import type { TwitchClip } from 'src/types.ts';
+
+const TWITCH_CLIPS_LENGTH = 4 as const; //at least 4
 
 function getTestTitle(index: number): string {
   return `testTitle${index}`;
@@ -30,24 +32,25 @@ describe('TwitchClipMessageBuilder', () => {
 
     return twitchClips_;
   })();
-  const twitchClipMessageBuilder = new TwitchClipMessageBuilder(chatInputCommandInteraction, twitchClips, undefined);
 
-  test('jumpToIdentifer exact', () => {
+  const twitchClipMessageBuilder = new TwitchClipMessageBuilder(chatInputCommandInteraction, twitchClips, false);
+
+  test('jumpToIdentifier exact', () => {
     twitchClipMessageBuilder.first();
 
-    expect(twitchClipMessageBuilder.jumpToIdentifer(getTestTitle(1))).toBeDefined();
+    expect(twitchClipMessageBuilder.jumpToIdentifier(getTestTitle(1))).toBeDefined();
   });
 
-  test('jumpToIdentifer lowercase', () => {
-    expect(twitchClipMessageBuilder.jumpToIdentifer(getTestTitle(2).toLowerCase())).toBeDefined();
+  test('jumpToIdentifier lowercase', () => {
+    expect(twitchClipMessageBuilder.jumpToIdentifier(getTestTitle(2).toLowerCase())).toBeDefined();
   });
 
-  test('jumpToIdentifer includes', () => {
+  test('jumpToIdentifier includes', () => {
     const identifier = getTestTitle(0);
     const allSubstrings = getAllSubstrings(identifier);
 
     for (const substring of allSubstrings) {
-      expect(twitchClipMessageBuilder.jumpToIdentifer(substring)).toBeDefined();
+      expect(twitchClipMessageBuilder.jumpToIdentifier(substring)).toBeDefined();
       twitchClipMessageBuilder.last();
     }
   });

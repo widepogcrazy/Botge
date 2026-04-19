@@ -1,0 +1,65 @@
+# @format
+
+services:
+  nginx:
+    image: nginx:1.29.6-alpine
+    mem_limit: 256m
+    restart: always
+    volumes:
+      - ./nginx/cache:/var/www/cache:rw
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.40
+    mem_limit: 512m
+    healthcheck:
+      test: set -o pipefail;curl -fsS http://localhost:7700/health | grep -q '{"status":"available"}'
+      retries: 3
+      timeout: 5s
+    volumes:
+      - ./meili-data:/meili-data
+    env_file:
+      - .env
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_EXPERIMENTAL_REDUCE_INDEXING_MEMORY_USAGE
+      - MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
+
+  chromadb:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    volumes:
+      - ./chroma-data:/chroma/chroma # persists your vectors to disk
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+
+  botge:
+    depends_on:
+      - nginx
+      - meilisearch
+      - chromadb
+    # Uncomment image, comment build and context for non-local compose.
+    # image: ghcr.io/Mrewy/botge:main
+    build:
+      context: .
+    mem_limit: 512m
+    restart: always
+    volumes:
+      - ./data:/app/data
+      - ./tmp:/app/tmp
+    env_file:
+      - .env
+    environment:
+      # Node
+      - NODE_ENV=production
+
+      # MeiliSearch
+      - MEILISEARCH_HOST=http://meilisearch:7700
+
+      # NGINX
+      - LOCAL_CACHE_BASE=http://nginx:80
+
+      # Miscellaneous
+      - UPDATE_CLIPS_ON_STARTUP=false
+      - JOIN_VOICE_CHANNEL=false

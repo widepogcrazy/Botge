@@ -1,4 +1,6 @@
-import type { Platform } from './enums.js';
+/** @format */
+
+import type { Platform } from './enums.ts';
 import type {
   SevenTVEmoteNotInSet,
   BTTVEmote,
@@ -8,27 +10,43 @@ import type {
   FFZGlobalEmotes,
   TwitchGlobalEmotes,
   AssetInfo
-} from './types.js';
-
+} from './types.ts';
 import {
   sevenTVInSetToAsset,
   sevenTVNotInSetToAsset,
   bttvToAsset,
   ffzToAsset,
   twitchToAsset
-} from './utils/emote-to-asset.js';
+} from './utils/emote-to-asset.ts';
 
-const FFZGLOBALSETSKEY = 3;
+const FFZ_GLOBAL_SETS_KEY = 3 as const;
 
 class EmoteNode {
-  public highestPriority: number;
-  public assets: AssetInfo[];
-  public uniquePath: boolean;
+  #highestPriority: number;
+  readonly #assets: AssetInfo[];
+  #uniquePath: boolean;
 
   public constructor(priority: number, asset: AssetInfo) {
-    this.highestPriority = priority;
-    this.assets = [asset];
-    this.uniquePath = true;
+    this.#highestPriority = priority;
+    this.#assets = [asset];
+    this.#uniquePath = true;
+  }
+
+  public get highestPriority(): number {
+    return this.#highestPriority;
+  }
+  public get assets(): AssetInfo[] {
+    return this.#assets;
+  }
+  public get uniquePath(): boolean {
+    return this.#uniquePath;
+  }
+
+  public set highestPriority(highestPriority: number) {
+    this.#highestPriority = highestPriority;
+  }
+  public set uniquePath(uniquePath: boolean) {
+    this.#uniquePath = uniquePath;
   }
 }
 
@@ -37,7 +55,7 @@ class SuffixTree {
   #data: EmoteNode | undefined;
 
   public constructor() {
-    this.#paths = new Map();
+    this.#paths = new Map<string, SuffixTree>();
     this.#data = undefined;
   }
 
@@ -98,7 +116,6 @@ class SuffixTree {
     if (suffix !== '') {
       const tree = this.#getOrAddTree(suffix.charAt(0));
       tree?._addAllSuffix(suffix.slice(1), priority, asset);
-      return;
     }
   }
 
@@ -163,7 +180,6 @@ class SuffixTree {
 
     if (assets.length === 0) return undefined;
 
-    //reached the end of the iteration, return
     if (sortByDateAdded !== undefined && sortByDateAdded) {
       const assetsTimestampNotUndefined = assets.filter((asset) => asset.timestamp !== undefined);
       const assetsTimestampUndefined = assets.filter((asset) => asset.timestamp === undefined);
@@ -268,33 +284,45 @@ export class EmoteMatcher {
     for (const emote of sevenGlobal.emotes) this.#root.addAllSuffix(sevenTVInSetToAsset(emote), priority);
     priority--;
 
-    for (const emote of bttvGlobal) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    try {
+      for (const emote of bttvGlobal) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    } catch {}
     priority--;
 
-    for (const emote of ffzGlobal.sets[`${FFZGLOBALSETSKEY}`].emoticons)
-      this.#root.addAllSuffix(ffzToAsset(emote), priority);
+    try {
+      for (const emote of ffzGlobal.sets[`${FFZ_GLOBAL_SETS_KEY}`].emoticons)
+        this.#root.addAllSuffix(ffzToAsset(emote), priority);
+    } catch {}
     priority--;
 
-    for (const emote of twitchGlobal?.data ?? []) this.#root.addAllSuffix(twitchToAsset(emote), priority);
+    try {
+      for (const emote of twitchGlobal?.data ?? []) this.#root.addAllSuffix(twitchToAsset(emote), priority);
+    } catch {}
     if (twitchGlobal !== undefined) priority--;
 
     for (const emote of sevenPersonal?.emotes ?? []) this.#root.addAllSuffix(sevenTVInSetToAsset(emote), priority);
     if (sevenPersonal !== undefined) priority--;
 
-    for (const emote of bttvPersonal?.channelEmotes ?? []) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    try {
+      for (const emote of bttvPersonal?.channelEmotes ?? []) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    } catch {}
     if (bttvPersonal !== undefined) priority--;
 
-    for (const emote of bttvPersonal?.sharedEmotes ?? []) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    try {
+      for (const emote of bttvPersonal?.sharedEmotes ?? []) this.#root.addAllSuffix(bttvToAsset(emote), priority);
+    } catch {}
     if (bttvPersonal !== undefined) priority--;
 
-    for (const emote of ffzPersonal?.sets[ffzPersonal.room.set].emoticons ?? [])
-      this.#root.addAllSuffix(ffzToAsset(emote), priority);
+    try {
+      for (const emote of ffzPersonal?.sets[ffzPersonal.room.set].emoticons ?? [])
+        this.#root.addAllSuffix(ffzToAsset(emote), priority);
+    } catch {}
     if (ffzPersonal !== undefined) priority--;
 
     for (const emote of sevenNotInSet ?? []) {
-      //there may be a case where an emote was added with /addemote
-      //and afterwards added to the channel
-      //or it was added to 7tv global emotes
+      // there may be a case where an emote was added with /addemote
+      // and afterwards added to the channel
+      // or it was added to 7tv global emotes
       if (emote.error !== undefined) continue;
       if (this.matchSingleExact(emote.name)) continue;
 

@@ -1,6 +1,6 @@
 {
   "name": "botge",
-  "version": "2.0.0",
+  "version": "2.8.3",
   "description": "Search emotes, clips, use zero-width emotes and other such commands.",
   "keywords": [
     "bot",
@@ -8,49 +8,81 @@
     "discord-bot",
     "emotes"
   ],
-  "homepage": "https://botge.gitbook.io",
+  "bugs": {
+    "url": "https://github.com/Mrewy/Botge/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tresster/Botge.git"
+    "url": "git+https://github.com/Mrewy/Botge.git"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/Mrewy"
   },
   "license": "MIT",
-  "author": "",
+  "author": "Mrewy",
+  "contributors": [
+    "gentlebob",
+    "widepogcrazy",
+    "TimotronPrime",
+    "ravenuy"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "commandgeupdate": "tsc && node dist/update-commands.js",
-    "lint": "eslint src",
-    "tests-lint": "eslint tests",
-    "prepare": "husky || true",
-    "prettier-format": "prettier --config .prettierrc . --write",
-    "tests-prettier-format": "prettier --config .prettierrc tests --write",
-    "start": "tsc && node dist/index.js",
+    "build": "tsc --build src",
+    "build:clean": "tsc --build --clean src",
+    "build:production": "tsc --project src/tsconfig.production.json",
+    "eslint": "eslint . --flag unstable_native_nodejs_ts_config --concurrency=auto",
+    "prepare": "node .husky/install.ts",
+    "prettier": "prettier . --write",
+    "start": "docker image prune --force && docker-compose up --build",
+    "stop": "docker compose stop",
     "test": "vitest tests"
   },
   "dependencies": {
-    "@google/genai": "^1.0.0",
-    "@twemoji/api": "^16.0.1",
-    "better-sqlite3": "^11.10.0",
-    "deepl-node": "^1.18.0",
-    "discord.js": "^14.19.3",
-    "dotenv": "^16.5.0",
-    "fs-extra": "^11.3.0",
-    "meilisearch": "^0.50.0",
+    "@chroma-core/default-embed": "0.1.9",
+    "@discordjs/voice": "^0.19.2",
+    "@twemoji/api": "^17.0.2",
+    "chromadb": "3.4.3",
+    "deepl-node": "^1.26.0",
+    "discord.js": "^14.26.3",
+    "fs-extra": "^11.3.4",
+    "meilisearch": "^0.57.0",
     "node-fetch": "^3.3.2",
     "node-schedule": "^2.1.1",
-    "openai": "^4.102.0"
+    "openai": "6.34.0",
+    "sql.js": "1.14.1",
+    "timezones-list": "^3.1.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
+    "@eslint/js": "10.0.1",
+    "@microsoft/tsdoc-config": "0.18.1",
     "@types/fs-extra": "^11.0.4",
-    "@types/node-schedule": "^2.1.7",
-    "eslint": "^9.27.0",
+    "@types/node-schedule": "^2.1.8",
+    "@types/sql.js": "1.4.11",
+    "eslint": "10.2.0",
+    "eslint-plugin-tsdoc": "0.5.2",
     "husky": "^9.1.7",
-    "prettier": "^3.5.3",
-    "ts-essentials": "^10.0.4",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.32.1",
-    "vitest": "^3.1.4"
-  }
+    "markdownlint": "0.40.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-sh": "0.18.1",
+    "ts-essentials": "^10.1.1",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "8.58.2",
+    "vitest": "^4.1.4"
+  },
+  "engines": {
+    "node": "v25.9.0",
+    "npm": ">=11.12.1"
+  },
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
 }

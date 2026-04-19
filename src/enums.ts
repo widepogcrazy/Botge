@@ -1,4 +1,6 @@
-export enum Platform {
+/** @format */
+
+export const enum Platform {
   sevenInSet = 0,
   sevenNotInSet = 1,
   bttv = 2,
